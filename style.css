@@ -25,7 +25,7 @@ position: relative; font-family: 'Inter', sans-serif; font-size: 10vw; font-weig
 line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30; pointer-events: none;
 }
 
-#portfolio-page { position: fixed; inset: 0; background: #000; z-index: 100; display: none; opacity: 0; transition: opacity 0.5s ease; overflow: hidden; }
+#portfolio-page { position: center; inset: 0; background: #000; z-index: 100; display: none; opacity: 0; transition: opacity 0.5s ease; overflow: hidden; }
 #portfolio-page.active { display: block; opacity: 1; }
 .exit-btn { padding: 2.5rem; text-align: right; cursor: pointer; opacity: 0.3; font-size: 9px; letter-spacing: 0.3em; position: absolute; top: 0; right: 0; z-index: 200; }
 #asdf-transition-layer { position: absolute; inset: 0; pointer-events: none; }
@@ -71,6 +71,7 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
 .ticker:hover {
     animation-play-state: paused;
 }
+
 
 
 
