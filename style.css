@@ -35,29 +35,21 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
 .album-photo img { height: 100%; width: auto; object-fit: contain; }
 .asdf-stamp { position: absolute; pointer-events: none; z-index: 110; mix-blend-mode: lighten; filter: url(#asdf-sideways-filter); }
 /* --- HIGH-SPEED COMPACT TICKER --- */
-.ticker-wrap {
-    width: 100%;
-    overflow: hidden;
-    background: transparent;
-    border-top: 1px solid rgba(255,255,255,0.05);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    padding: 1rem 0; /* Reduced vertical height */
-    margin: 1.5rem 0;
-}
-
 .ticker {
     display: flex;
-    width: fit-content;
+    width: max-content; /* Ensures it stays in one line regardless of length */
+    min-width: 200%;    /* Forces the container to be wide enough for both groups */
     flex-wrap: nowrap;
-    /* 15s is significantly faster; use 10s if you want it even faster */
-    animation: marquee-ltr 7s linear infinite; 
+    animation: marquee-ltr 9s linear infinite;
+    will-change: transform; /* Helps browser render high-speed motion smoothly */
 }
 
 .ticker__item {
     flex-shrink: 0;
-    padding: 0 2rem; /* Reduced space between brands */
-    font-size: 16px; /* Smaller, sharper text */
-    letter-spacing: 0.2em; /* Tighter letter spacing */
+    white-space: nowrap; /* Prevents the brand name itself from breaking into two lines */
+    padding: 0 2.5rem;
+    font-size: 18px;
+    letter-spacing: 0.2em;
     color: rgba(255,255,255,0.3);
     font-family: 'Space Mono', monospace;
     text-transform: uppercase;
@@ -67,9 +59,3 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
     0% { transform: translateX(-50%); }
     100% { transform: translateX(0); }
 }
-
-.ticker:hover {
-    animation-play-state: paused;
-}
-
-
