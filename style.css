@@ -129,6 +129,13 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
     animation-play-state: paused;
 }
 
+footer .section-label {
+    margin-bottom: 0;      /* Removes the bottom margin usually on labels */
+    padding-bottom: 5px;   /* Fine-tune this to align with the baseline of the email text */
+    white-space: nowrap;   /* Prevents it from breaking into two lines */
+    text-align: right;
+}
+
 
 
 
