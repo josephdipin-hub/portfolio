@@ -1,84 +1,153 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DIPIN JOSEPH | SYNTH_STABLE_20</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono&family=Inter:wght@900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIPIN JOSEPH | SYNTH_STABLE_20</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono&family=Inter:wght@900&display=swap" rel="stylesheet">
+    <style>
+        /* EXISTING STYLES */
+        body { background: #000; color: #fff; font-family: 'Space Mono', monospace; overflow-x: hidden; margin: 0; }
+        .grain-overlay { position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: 0.06; background: url('https://media.giphy.com/media/oEI9uWUqnW6re/giphy.gif'); }
+        .main-content { position: relative; z-index: 20; mix-blend-mode: screen; }
+        #brush-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
+        .brush-stamp { position: absolute; width: 100%; filter: url(#datamosh-filter); opacity: 0.7; pointer-events: none; }
+        .hero-text { font-family: 'Inter', sans-serif; font-size: 13vw; line-height: 0.8; letter-spacing: -0.06em; text-transform: uppercase; }
+        .section-label { font-size: 10px; opacity: 0.3; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 2rem; display: block; }
+        .golden-container { display: grid; grid-template-columns: 1.618fr 1fr; gap: 4rem; }
+
+        /* NEW: HIGH-SPEED TICKER STYLES */
+        .ticker-wrap {
+            width: 100%;
+            overflow: hidden;
+            background: transparent;
+            border-top: 1px solid rgba(255,255,255,0.05);
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding: 1.2rem 0;
+            margin: 2rem 0;
+        }
+        .ticker {
+            display: flex;
+            width: max-content;
+            flex-wrap: nowrap;
+            animation: marquee-ltr 12s linear infinite; /* FASTER SPEED */
+            will-change: transform;
+        }
+        .ticker__item {
+            flex-shrink: 0;
+            white-space: nowrap;
+            padding: 0 2.5rem;
+            font-size: 10px;
+            letter-spacing: 0.2em;
+            color: rgba(255,255,255,0.3);
+            text-transform: uppercase;
+        }
+        @keyframes marquee-ltr {
+            0% { transform: translateX(-50%); }
+            100% { transform: translateX(0); }
+        }
+        .ticker:hover { animation-play-state: paused; }
+        .ticker__item:hover { color: #fff; }
+
+        /* PORTFOLIO & GALLERY STYLES */
+        .portfolio-bg-container { position: relative; width: 100%; height: 30vw; overflow: hidden; display: flex; align-items: center; justify-content: center; border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; }
+        .portfolio-bg-container img { position: absolute; width: 100%; height: 100%; object-fit: cover; filter: grayscale(1) brightness(0.3); transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1); }
+        .portfolio-bg-container:hover img { filter: grayscale(0.2) brightness(0.5); transform: scale(1.02); }
+        .portfolio-trigger { position: relative; font-family: 'Inter', sans-serif; font-size: 10vw; font-weight: 900; line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30; pointer-events: none; }
+        #portfolio-page { position: fixed; inset: 0; background: #000; z-index: 100; display: none; opacity: 0; transition: opacity 0.5s ease; overflow: hidden; }
+        #portfolio-page.active { display: block; opacity: 1; }
+        .exit-btn { padding: 2.5rem; text-align: right; cursor: pointer; opacity: 0.3; font-size: 9px; letter-spacing: 0.3em; position: absolute; top: 0; right: 0; z-index: 200; }
+        .horizontal-scroll { display: flex; overflow-x: auto; height: 100vh; padding: 0 10vw; gap: 20vw; align-items: center; scrollbar-width: none; }
+        .album-photo { flex: 0 0 auto; height: 70vh; display: flex; align-items: center; justify-content: center; position: relative; }
+        .album-photo img { height: 100%; width: auto; object-fit: contain; }
+    </style>
 </head>
 <body>
-<div class="grain-overlay"></div>
-<div id="brush-container"></div>
+    <div class="grain-overlay"></div>
+    <div id="brush-container"></div>
 
-<div id="portfolio-page">
-<div class="exit-btn" onclick="togglePortfolio(false)">[ EXIT ]</div>
-<div id="asdf-transition-layer"></div>
-<div class="horizontal-scroll" id="album-scroll">
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo1.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo2.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo3.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo4.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo5.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo6.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo7.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo8.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo9.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo10.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo11.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo12.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo13.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo14.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo15.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo16.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo17.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo18.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo19.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo20.jpg"></div>
-</div>
-</div>
+    <div id="portfolio-page">
+        <div class="exit-btn" onclick="togglePortfolio(false)">[ EXIT ]</div>
+        <div id="asdf-transition-layer"></div>
+        <div class="horizontal-scroll" id="album-scroll">
+            <div class="album-photo"><img src="images/photo1.jpg"></div>
+            <div class="album-photo"><img src="images/photo2.jpg"></div>
+            </div>
+    </div>
 
-<svg style="position: absolute; width: 0; height: 0;">
-<filter id="datamosh-filter" x="-10%" y="-20%" width="120%" height="200%">
-<feTurbulence type="fractalNoise" baseFrequency="0.06 0.06" numOctaves="1" result="moshNoise" />
-<feDisplacementMap in="SourceGraphic" in2="moshNoise" scale="35" xChannelSelector="R" yChannelSelector="G" result="moshed" />
-<feColorMatrix in="moshed" type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.7 0" />
-</filter>
-<filter id="asdf-sideways-filter">
-<feTurbulence type="fractalNoise" baseFrequency="0.01 2.5" numOctaves="2" result="sortLines" />
-<feDisplacementMap in="SourceGraphic" in2="sortLines" scale="200" xChannelSelector="R" yChannelSelector="G" result="glitchLayer" />
-<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2126 0.7152 0.0722 0 0" result="luma" />
-<feComponentTransfer in="luma" result="mask"><feFuncA type="linear" slope="5" intercept="-1.25" /></feComponentTransfer>
-<feComposite in="glitchLayer" in2="mask" operator="in" />
-<feComponentTransfer><feFuncA type="linear" slope="0.8" /></feComponentTransfer>
-</filter>
-</svg>
+    <svg style="position: absolute; width: 0; height: 0;">
+        <filter id="datamosh-filter"><feTurbulence type="fractalNoise" baseFrequency="0.06" numOctaves="1" result="mosh" /><feDisplacementMap in="SourceGraphic" in2="mosh" scale="35" /></filter>
+    </svg>
 
-<main class="main-content" id="master-site">
-<section class="min-h-screen flex flex-col justify-center px-10 md:px-24">
-<div class="golden-container">
-<div>
-<span class="section-label">ADITYA_STUDIO // 2015-2025</span>
-<h1 class="hero-text">DIPIN<br>JOSEPH</h1>
-</div>
-</div>
-</section>
+    <main class="main-content" id="master-site">
+        
+        <section class="min-h-screen flex flex-col justify-center px-10 md:px-24">
+            <div class="golden-container">
+                <div>
+                    <span class="section-label">ADITYA_STUDIO // 2015-2025</span>
+                    <h1 class="hero-text">DIPIN<br>JOSEPH</h1>
+                </div>
+            </div>
+        </section>
 
-<section class="relative">
-<div class="portfolio-bg-container" onclick="togglePortfolio(true)">
-<img crossorigin="anonymous" src="images/photo1.jpg">
-<div class="portfolio-trigger">SYNTH_GALLERY</div>
-</div>
-</section>
+        <section class="px-10 md:px-24 py-10">
+            <div class="golden-container">
+                <div>
+                    <span class="section-label">// PROFILE_DATA</span>
+                    <p class="max-w-xl text-lg md:text-2xl leading-relaxed opacity-80 uppercase">
+                        9 years of visual architecture. Evolution from foundational studio roots to high-fashion commerciality. 
+                        Former lead photographer for ABFRL. Now operating independently, capturing the technical essence of style.
+                    </p>
+                </div>
+            </div>
+        </section>
 
-<footer class="px-10 md:px-24 pt-40 pb-20 border-t border-white/5">
-<div class="golden-container">
-<a href="mailto:hello@dipinjoseph.com" class="text-4xl md:text-7xl font-bold">CONTACT@SYNC</a>
-<span class="section-label text-right self-end">EST_2015</span>
-</div>
-</footer>
-</main>
-<script src="script.js"></script>
+        <section class="ticker-wrap">
+            <div class="ticker">
+                <div class="ticker__item">LOUIS PHILIPPE</div>
+                <div class="ticker__item">ALLEN SOLLY</div>
+                <div class="ticker__item">VAN HEUSEN</div>
+                <div class="ticker__item">REEBOK INDIA</div>
+                <div class="ticker__item">PETER ENGLAND</div>
+                <div class="ticker__item">FOREVER 21</div>
+                <div class="ticker__item">SIMON CARTER</div>
+                <div class="ticker__item">SKULT</div>
+                <div class="ticker__item">ADITYA BIRLA GROUP</div>
+                <div class="ticker__item">LOUIS PHILIPPE</div>
+                <div class="ticker__item">ALLEN SOLLY</div>
+                <div class="ticker__item">VAN HEUSEN</div>
+                <div class="ticker__item">REEBOK INDIA</div>
+                <div class="ticker__item">PETER ENGLAND</div>
+                <div class="ticker__item">FOREVER 21</div>
+                <div class="ticker__item">SIMON CARTER</div>
+                <div class="ticker__item">SKULT</div>
+                <div class="ticker__item">ADITYA BIRLA GROUP</div>
+            </div>
+        </section>
+
+        <section class="relative">
+            <div class="portfolio-bg-container" onclick="togglePortfolio(true)">
+                <img src="images/photo1.jpg">
+                <div class="portfolio-trigger">SYNTH_GALLERY</div>
+            </div>
+        </section>
+
+        <footer class="px-10 md:px-24 pt-40 pb-20 border-t border-white/5">
+            <div class="golden-container">
+                <a href="mailto:joseph.dipin@gmail.com" class="text-4xl md:text-7xl font-bold">CONTACT@SYNC</a>
+                <span class="section-label text-right self-end">EST_2015</span>
+            </div>
+        </footer>
+    </main>
+
+    <script>
+        // Place your script.js logic here or link it
+        function togglePortfolio(open) {
+            const page = document.getElementById('portfolio-page');
+            page.classList.toggle('active', open);
+            document.body.style.overflow = open ? 'hidden' : 'auto';
+        }
+    </script>
 </body>
 </html>
