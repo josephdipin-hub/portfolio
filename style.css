@@ -4,8 +4,8 @@ body { background: #000; color: #fff; font-family: 'Space Mono', monospace; over
 .main-content { position: relative; z-index: 20; mix-blend-mode: screen; }
 #brush-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 .brush-stamp { position: absolute; width: 100%; filter: url(#datamosh-filter); opacity: 0.6; pointer-events: none; }
-.hero-text { font-family: 'Inter', sans-serif; font-size: 16vw; line-height: 0.8; letter-spacing: -0.06em; text-transform: uppercase; }
-.section-label { font-size: 5px; opacity: 0.3; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 2rem; display: block; }
+.hero-text { font-family: 'Inter', sans-serif; font-size: 14vw; line-height: 0.8; letter-spacing: -0.06em; text-transform: uppercase; }
+.section-label { font-size: 12px; opacity: 0.3; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 2rem; display: block; }
 .golden-container { display: grid; grid-template-columns: 1.618fr 1fr; gap: 4rem; }
 
 .portfolio-bg-container {
@@ -71,6 +71,7 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
 .ticker:hover {
     animation-play-state: paused;
 }
+
 
 
 
