@@ -1,5 +1,5 @@
 body { background: #000; color: #fff; font-family: 'Space Mono', monospace; overflow-x: hidden; margin: 0; }
-.grain-overlay { position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: 0.06; background: url('https://media.giphy.com/media/oEI9uWUqnW6re/giphy.gif'); }
+/*.grain-overlay { position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: 0.06; background: url('https://media.giphy.com/media/oEI9uWUqnW6re/giphy.gif'); }*/
 
 .main-content { position: relative; z-index: 20; mix-blend-mode: screen; }
 #brush-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
@@ -71,6 +71,7 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
 .ticker:hover {
     animation-play-state: paused;
 }
+
 
 
 
