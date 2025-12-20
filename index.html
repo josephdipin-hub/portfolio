@@ -47,7 +47,7 @@
 <feDisplacementMap in="SourceGraphic" in2="moshNoise" scale="35" xChannelSelector="R" yChannelSelector="G" result="moshed" />
 <feColorMatrix in="moshed" type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.7 0" />
 </filter>
-<filter id="asdf-sideways-filter">
+<!--<filter id="asdf-sideways-filter">
 <feTurbulence type="fractalNoise" baseFrequency="0.01 2.5" numOctaves="2" result="sortLines" />
 <feDisplacementMap in="SourceGraphic" in2="sortLines" scale="200" xChannelSelector="R" yChannelSelector="G" result="glitchLayer" />
 <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2126 0.7152 0.0722 0 0" result="luma" />
@@ -57,7 +57,16 @@
 
 <feComposite in="glitchLayer" in2="mask" operator="in" />
 <feComponentTransfer><feFuncA type="linear" slope="0.8" /></feComponentTransfer>
+</filter>-->
+    <filter id="asdf-sideways-filter">
+    <feTurbulence type="fractalNoise" baseFrequency="0.01 2.5" numOctaves="2" result="sortLines" />
+    <feDisplacementMap in="SourceGraphic" in2="sortLines" scale="-200" xChannelSelector="R" yChannelSelector="G" result="glitchLayer" />
+    <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2126 0.7152 0.0722 0 0" result="luma" />
+    <feComponentTransfer in="luma" result="mask"><feFuncA type="linear" slope="5" intercept="-1.25" /></feComponentTransfer>
+    <feComposite in="glitchLayer" in2="mask" operator="in" />
+    <feComponentTransfer><feFuncA type="linear" slope="0.8" /></feComponentTransfer>
 </filter>
+
 </svg>
 
 <main class="main-content" id="master-site">
@@ -131,6 +140,7 @@
 <script src="script.js"></script>
 </body>
 </html>
+
 
 
 
