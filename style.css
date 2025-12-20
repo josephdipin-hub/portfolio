@@ -35,15 +35,21 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
 .album-photo img { height: 100%; width: auto; object-fit: contain; }*/
 .horizontal-scroll {
     display: flex;
-    overflow-x: auto;
-    height: 100vh;      /* Takes up 100% of the viewport height */
+    flex-direction: row;
+    align-items: center; /* Centers photos vertically */
+    
+    width: 100%;
+    height: 100%; /* Occupies the full height of #portfolio-page */
+    
     padding: 0 10vw;
-    gap: 20vw;
-    align-items: center; /* THIS CENTERS THEM VERTICALLY */
-    justify-content: flex-start;
-    scrollbar-width: none;
-    -ms-overflow-style: none; /* Hides scrollbar for IE/Edge */
+    gap: 15vw;
+    
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none; /* Firefox */
 }
+
+
 
 .horizontal-scroll::-webkit-scrollbar {
     display: none; /* Hides scrollbar for Chrome/Safari */
@@ -51,7 +57,7 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
 
 .album-photo {
     flex: 0 0 auto;
-    height: 80vh;      /* Limits photo height to 80% of screen */
+    height: 70vh;      /* Limits photo height to 80% of screen */
     display: flex;
     align-items: center; 
     justify-content: center;
@@ -101,6 +107,7 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
 .ticker:hover {
     animation-play-state: paused;
 }
+
 
 
 
