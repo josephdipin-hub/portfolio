@@ -50,7 +50,7 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
     width: fit-content;
     flex-wrap: nowrap;
     /* 15s is significantly faster; use 10s if you want it even faster */
-    animation: marquee-ltr 12s linear infinite; 
+    animation: marquee-ltr 7s linear infinite; 
 }
 
 .ticker__item {
@@ -71,4 +71,5 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
 .ticker:hover {
     animation-play-state: paused;
 }
+
 
