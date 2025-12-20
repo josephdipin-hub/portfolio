@@ -34,41 +34,46 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
 .album-photo { flex: 0 0 auto; height: 70vh; display: flex; align-items: center; justify-content: center; position: relative; }
 .album-photo img { height: 100%; width: auto; object-fit: contain; }
 .asdf-stamp { position: absolute; pointer-events: none; z-index: 110; mix-blend-mode: lighten; filter: url(#asdf-sideways-filter); }
-/* Ticker Container */
-.ticker-wrap {
-    width: 100%;
-    overflow: hidden; /* Hides the text outside the box */
-    background-color: transparent; 
-    padding: 40px 0;
-    border-top: 1px solid #222;
-    border-bottom: 1px solid #222;
-}
-
-/* --- BRAND TICKER SYSTEM --- */
+/* --- TV STYLE BREAKING NEWS TICKER (LTR) --- */
 .ticker-wrap {
     width: 100%;
     overflow: hidden;
     background: transparent;
     border-top: 1px solid rgba(255,255,255,0.05);
     border-bottom: 1px solid rgba(255,255,255,0.05);
-    padding: 2rem 0;
-    margin: 4rem 0;
+    padding: 1.5rem 0;
+    margin: 2rem 0;
 }
 
 .ticker {
     display: flex;
-    white-space: nowrap;
-    animation: marquee 40s linear infinite;
+    width: fit-content;
+    flex-wrap: nowrap;
+    /* Animation starts from -50% to 0 to move Left-to-Right */
+    animation: marquee-ltr 30s linear infinite;
 }
 
 .ticker__item {
-    padding: 0 3rem;
+    flex-shrink: 0;
+    padding: 0 4rem;
     font-size: 11px;
     letter-spacing: 0.4em;
-    color: rgba(255,255,255,0.5);
-    transition: color 0.3s ease;
+    color: rgba(255,255,255,0.4);
+    font-family: 'Space Mono', monospace;
+    text-transform: uppercase;
 }
 
+/* Keyframes for Left-to-Right Movement */
+@keyframes marquee-ltr {
+    0% {
+        transform: translateX(-50%);
+    }
+    100% {
+        transform: translateX(0);
+    }
+}
+
+/* Pause on hover just like news tickers often do */
 .ticker:hover {
     animation-play-state: paused;
 }
@@ -76,17 +81,3 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
 .ticker__item:hover {
     color: #fff;
 }
-
-@keyframes marquee {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-}
-
-/* Response Adjustments */
-@media (max-width: 768px) {
-    .ticker__item {
-        padding: 0 1.5rem;
-        font-size: 9px;
-    }
-}
-
