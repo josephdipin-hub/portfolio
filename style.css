@@ -44,3 +44,49 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
     border-bottom: 1px solid #222;
 }
 
+/* --- BRAND TICKER SYSTEM --- */
+.ticker-wrap {
+    width: 100%;
+    overflow: hidden;
+    background: transparent;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding: 2rem 0;
+    margin: 4rem 0;
+}
+
+.ticker {
+    display: flex;
+    white-space: nowrap;
+    animation: marquee 40s linear infinite;
+}
+
+.ticker__item {
+    padding: 0 3rem;
+    font-size: 11px;
+    letter-spacing: 0.4em;
+    color: rgba(255,255,255,0.5);
+    transition: color 0.3s ease;
+}
+
+.ticker:hover {
+    animation-play-state: paused;
+}
+
+.ticker__item:hover {
+    color: #fff;
+}
+
+@keyframes marquee {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* Response Adjustments */
+@media (max-width: 768px) {
+    .ticker__item {
+        padding: 0 1.5rem;
+        font-size: 9px;
+    }
+}
+
