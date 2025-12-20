@@ -1,137 +1,122 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DYPIN JOSEPH | SYNTH_STABLE_20</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono&family=Inter:wght@900&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="style.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DIPIN JOSEPH | SYNTH_STABLE_20</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Mono&family=Inter:wght@900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    
+    <div class="grain-overlay"></div>
+    <div id="brush-container"></div>
 
-<div class="grain-overlay"></div>
-<div id="brush-container"></div>
-
-<div id="portfolio-page">
-<div class="exit-btn" onclick="togglePortfolio(false)">[ EXIT ]</div>
-<div id="asdf-transition-layer"></div>
-<div class="horizontal-scroll" id="album-scroll">
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo1.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo2.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo3.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo4.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo5.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo6.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo7.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo8.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo9.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo10.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo11.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo12.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo13.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo14.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo15.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo16.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo17.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo18.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo19.jpg"></div>
-<div class="album-photo"><img crossorigin="anonymous" src="images/photo20.jpg"></div>
-</div>
-</div>
-
-<svg style="position: absolute; width: 0; height: 0;">
-<filter id="datamosh-filter" x="-10%" y="-20%" width="120%" height="200%">
-<feTurbulence type="fractalNoise" baseFrequency="0.06 0.06" numOctaves="1" result="moshNoise" />
-<feDisplacementMap in="SourceGraphic" in2="moshNoise" scale="35" xChannelSelector="R" yChannelSelector="G" result="moshed" />
-<feColorMatrix in="moshed" type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.7 0" />
-</filter>
-<filter id="asdf-sideways-filter">
-<feTurbulence type="fractalNoise" baseFrequency="0.01 2.5" numOctaves="2" result="sortLines" />
-<feDisplacementMap in="SourceGraphic" in2="sortLines" scale="200" xChannelSelector="R" yChannelSelector="G" result="glitchLayer" />
-<feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2126 0.7152 0.0722 0 0" result="luma" />
-<feComponentTransfer in="luma" result="mask">
-    <feFuncA type="table" tableValues="0 0 1 1 1 0 0" />
-</feComponentTransfer>
-
-<feComposite in="glitchLayer" in2="mask" operator="in" />
-<feComponentTransfer><feFuncA type="linear" slope="0.8" /></feComponentTransfer>
-</filter>
-</svg>
-
-<main class="main-content" id="master-site">
-<section class="min-h-screen flex flex-col justify-center px-10 md:px-24">
-<div class="golden-container">
-<div>
-<span class="section-label">VISUAL_SYNTH_EXPERT // 2015-2025</span>
-<h1 class="hero-text">DYPIN<br>JOSEPH</h1>
-</div>
-</div>
-</section>
-<section class="px-10 md:px-24 py-20">
-    <div class="golden-container">
-        <div>
-            <span class="section-label">// PROFILE_DATA</span>
-            <p class="max-w-xl text-lg md:text-2xl leading-relaxed opacity-80 uppercase">
-                9 years of visual architecture. Evolution from foundational studio roots to high-fashion commerciality. 
-                Former lead photographer for ABFRL. Now operating independently, capturing the technical essence of style.
-            </p>
+    <div id="portfolio-page">
+        <div class="exit-btn" onclick="togglePortfolio(false)">[ EXIT ]</div>
+        <div id="asdf-transition-layer"></div>
+        <div class="horizontal-scroll" id="album-scroll">
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo1.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo2.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo3.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo4.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo5.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo6.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo7.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo8.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo9.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo10.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo11.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo12.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo13.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo14.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo15.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo16.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo17.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo18.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo19.jpg"></div>
+            <div class="album-photo"><img crossorigin="anonymous" src="images/photo20.jpg"></div>
         </div>
     </div>
-</section>
 
-<section class="ticker-wrap">
-    <div class="ticker">
-        <div class="ticker__item">LOUIS PHILIPPE</div>
-        <div class="ticker__item">ALLEN SOLLY</div>
-        <div class="ticker__item">VAN HEUSEN</div>
-        <div class="ticker__item">REEBOK INDIA</div>
-        <div class="ticker__item">PETER ENGLAND</div>
-        <div class="ticker__item">FOREVER 21</div>
-        <div class="ticker__item">SIMON CARTER</div>
-        <div class="ticker__item">SKULT</div>
-        <div class="ticker__item">WILDCRAFT</div>
-        <div class="ticker__item">LOUIS PHILIPPE</div>
-        <div class="ticker__item">ALLEN SOLLY</div>
-        <div class="ticker__item">VAN HEUSEN</div>
-        <div class="ticker__item">REEBOK INDIA</div>
-        <div class="ticker__item">PETER ENGLAND</div>
-        <div class="ticker__item">FOREVER 21</div>
-        <div class="ticker__item">SIMON CARTER</div>
-        <div class="ticker__item">SKULT</div>
-        <div class="ticker__item">WILDCRAFT</div>
-    </div>
-</section>
+    <svg style="position: absolute; width: 0; height: 0;">
+        <filter id="datamosh-filter" x="-10%" y="-20%" width="120%" height="200%">
+            <feTurbulence type="fractalNoise" baseFrequency="0.06 0.06" numOctaves="1" result="moshNoise" />
+            <feDisplacementMap in="SourceGraphic" in2="moshNoise" scale="35" xChannelSelector="R" yChannelSelector="G" result="moshed" />
+            <feColorMatrix in="moshed" type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 0.7 0" />
+        </filter>
+        <filter id="asdf-sideways-filter">
+            <feTurbulence type="fractalNoise" baseFrequency="0.01 2.5" numOctaves="2" result="sortLines" />
+            <feDisplacementMap in="SourceGraphic" in2="sortLines" scale="200" xChannelSelector="R" yChannelSelector="G" result="glitchLayer" />
+            <feColorMatrix in="SourceGraphic" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.2126 0.7152 0.0722 0 0" result="luma" />
+            <feComponentTransfer in="luma" result="mask"><feFuncA type="linear" slope="5" intercept="-1.25" /></feComponentTransfer>
+            <feComposite in="glitchLayer" in2="mask" operator="in" />
+            <feComponentTransfer><feFuncA type="linear" slope="0.8" /></feComponentTransfer>
+        </filter>
+    </svg>
 
+    <main class="main-content" id="master-site">
+        <section class="min-h-screen flex flex-col justify-center px-10 md:px-24">
+            <div class="golden-container">
+                <div>
+                    <span class="section-label">ADITYA_STUDIO // 2015-2025</span>
+                    <h1 class="hero-text">DIPIN<br>JOSEPH</h1>
+                </div>
+            </div>
+        </section>
 
-<section class="relative">
-<div class="portfolio-bg-container" onclick="togglePortfolio(true)">
-<img crossorigin="anonymous" src="images/photo1.jpg">
-<div class="portfolio-trigger">SYNTH_GALLERY</div>
-</div>
-</section>
+        <section class="px-10 md:px-24 py-10">
+            <div class="golden-container">
+                <div>
+                    <span class="section-label">// PROFILE_DATA</span>
+                    <p class="max-w-xl text-lg md:text-2xl leading-relaxed opacity-80 uppercase">
+                        9 years of visual architecture. Evolution from foundational studio roots to high-fashion commerciality. 
+                        Former lead photographer for ABFRL. Now operating independently, capturing the technical essence of style.
+                    </p>
+                </div>
+            </div>
+        </section>
 
-<footer class="px-10 md:px-24 pt-40 pb-20 border-t border-white/5">
-<div class="golden-container">
-<a href="mailto:joseph.dipin@gmail.com" class="text-4xl md:text-7xl font-bold">CONTACT@SYNC</a>
-<span class="section-label text-right self-end">EST_2015</span>
-</div>
-</footer>
-</main>
-<script src="script.js"></script>
+        <section class="ticker-wrap">
+            <div class="ticker">
+                <div class="ticker__item">LOUIS PHILIPPE</div>
+                <div class="ticker__item">ALLEN SOLLY</div>
+                <div class="ticker__item">VAN HEUSEN</div>
+                <div class="ticker__item">REEBOK INDIA</div>
+                <div class="ticker__item">PETER ENGLAND</div>
+                <div class="ticker__item">FOREVER 21</div>
+                <div class="ticker__item">SIMON CARTER</div>
+                <div class="ticker__item">SKULT</div>
+                <div class="ticker__item">WILDCRAFT</div>
+                <div class="ticker__item">LOUIS PHILIPPE</div>
+                <div class="ticker__item">ALLEN SOLLY</div>
+                <div class="ticker__item">VAN HEUSEN</div>
+                <div class="ticker__item">REEBOK INDIA</div>
+                <div class="ticker__item">PETER ENGLAND</div>
+                <div class="ticker__item">FOREVER 21</div>
+                <div class="ticker__item">SIMON CARTER</div>
+                <div class="ticker__item">SKULT</div>
+                <div class="ticker__item">WILDCRAFT</div>
+            </div>
+        </section>
+
+        <section class="relative">
+            <div class="portfolio-bg-container" onclick="togglePortfolio(true)">
+                <img crossorigin="anonymous" src="images/photo1.jpg">
+                <div class="portfolio-trigger">SYNTH_GALLERY</div>
+            </div>
+        </section>
+
+        <footer class="px-10 md:px-24 pt-40 pb-20 border-t border-white/5">
+            <div class="golden-container">
+                <a href="mailto:joseph.dipin@gmail.com" class="text-4xl md:text-7xl font-bold">CONTACT@SYNC</a>
+                <span class="section-label text-right self-end">EST_2015</span>
+            </div>
+        </footer>
+    </main>
+    <script src="script.js"></script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
 
 
 
