@@ -34,3 +34,45 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
 .album-photo { flex: 0 0 auto; height: 70vh; display: flex; align-items: center; justify-content: center; position: relative; }
 .album-photo img { height: 100%; width: auto; object-fit: contain; }
 .asdf-stamp { position: absolute; pointer-events: none; z-index: 110; mix-blend-mode: lighten; filter: url(#asdf-sideways-filter); }
+/* Ticker Container */
+.ticker-wrap {
+    width: 100%;
+    overflow: hidden; /* Hides the text outside the box */
+    background-color: transparent; 
+    padding: 40px 0;
+    border-top: 1px solid #222;
+    border-bottom: 1px solid #222;
+}
+
+/* The Moving Element */
+.ticker {
+    display: flex;
+    white-space: nowrap;
+    animation: marquee 30s linear infinite; /* Adjust '30s' for speed */
+}
+
+.ticker__item {
+    display: inline-block;
+    padding: 0 40px;
+    font-size: 0.8rem;
+    font-family: 'Courier New', monospace;
+    color: #fff;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+}
+
+/* The Animation Logic */
+@keyframes marquee {
+    0% {
+        transform: translateX(0);
+    }
+    100% {
+        transform: translateX(-50%);
+    }
+}
+
+/* Pause on hover for readability */
+.ticker-wrap:hover .ticker {
+    animation-play-state: paused;
+}
+
