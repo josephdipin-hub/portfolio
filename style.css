@@ -102,13 +102,26 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
     margin: 1.5rem 0;
 }
 
-.ticker {
+/*  .ticker {
     display: flex;
     width: fit-content;
     flex-wrap: nowrap;
     /* 15s is significantly faster; use 10s if you want it even faster */
-    animation: marquee-ltr 10s linear infinite; 
+    /*animation: marquee-ltr 10s linear infinite; 
+}  */
+.ticker {
+    display: flex;
+    width: max-content;
+    /* Speed set to 10s for smooth RTL motion */
+    animation: marquee-rtl 10s linear infinite; 
+    will-change: transform;
 }
+
+@keyframes marquee-rtl {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
 
 .ticker__item {
     flex-shrink: 0;
@@ -135,6 +148,7 @@ footer .section-label {
     white-space: nowrap;   /* Prevents it from breaking into two lines */
     text-align: right;
 }
+
 
 
 
