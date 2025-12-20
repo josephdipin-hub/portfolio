@@ -50,13 +50,13 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
     width: fit-content;
     flex-wrap: nowrap;
     /* Animation starts from -50% to 0 to move Left-to-Right */
-    animation: marquee-ltr 30s linear infinite;
+    animation: marquee-ltr 15s linear infinite;
 }
 
 .ticker__item {
     flex-shrink: 0;
-    padding: 0 4rem;
-    font-size: 11px;
+    padding: 0 2rem;
+    font-size: 14px;
     letter-spacing: 0.4em;
     color: rgba(255,255,255,0.4);
     font-family: 'Space Mono', monospace;
@@ -81,3 +81,4 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
 .ticker__item:hover {
     color: #fff;
 }
+
