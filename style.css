@@ -58,4 +58,4 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
 @keyframes marquee-ltr {
     0% { transform: translateX(-50%); }
     100% { transform: translateX(0); }
-}
+    }
