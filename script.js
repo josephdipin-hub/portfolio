@@ -92,9 +92,7 @@ albumScroll.addEventListener('scroll', () => {
     }
     
     // 2. Hide the Horizontal Hint (Visual Patch)
-    if (currentLeft > 30) {
-        portfolioPage.classList.add('portfolio-scrolled');
-    }
+    
 }, { passive: true });
 
 // Mousewheel support
@@ -102,3 +100,4 @@ albumScroll.addEventListener('wheel', (e) => {
     e.preventDefault(); 
     albumScroll.scrollLeft += e.deltaY; 
 }, { passive: false });
+
