@@ -81,3 +81,19 @@ window.addEventListener('scroll', () => {
     }
 });
 
+let lastScrollTop = 0;
+const displacementMap = document.querySelector('#asdf-sideways-filter feDisplacementMap');
+
+window.addEventListener('scroll', () => {
+    let st = window.pageYOffset || document.documentElement.scrollTop;
+    
+    if (st > lastScrollTop) {
+        // Scrolling Down / RTL Logic
+        displacementMap.setAttribute('scale', '-200');
+    } else {
+        // Scrolling Up / LTR Logic
+        displacementMap.setAttribute('scale', '200');
+    }
+    lastScrollTop = st <= 0 ? 0 : st;
+}, false);
+
