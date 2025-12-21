@@ -64,10 +64,8 @@ section.min-h-screen {
 .golden-container { 
     display: grid; 
     grid-template-columns: 1.618fr 1fr; 
-    gap: 4rem;
-    width: 100%; /* Ensure it spans the full width */
+    gap: 4rem; 
 }
-
 
 /* --- THE HOMEPAGE SCROLL HINT (The Vertical Arrowmark) --- */
 .scroll-proceed {
@@ -254,5 +252,3 @@ footer .section-label {
     white-space: nowrap;
     text-align: right;
 }
-
-
