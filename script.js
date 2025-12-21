@@ -73,3 +73,11 @@ lastLeft = albumScroll.scrollLeft;
 });
 
 albumScroll.addEventListener('wheel', (e) => { e.preventDefault(); albumScroll.scrollLeft += e.deltaY; });
+window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+        document.body.classList.add('scrolled');
+    } else {
+        document.body.classList.remove('scrolled');
+    }
+});
+
