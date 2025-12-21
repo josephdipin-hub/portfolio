@@ -81,19 +81,3 @@ window.addEventListener('scroll', () => {
     }
 });
 
-const scrollContainer = document.querySelector('.horizontal-scroll');
-const portfolioDisplacement = document.querySelector('#asdf-sideways-filter feDisplacementMap');
-let lastLeft = 0;
-
-scrollContainer.addEventListener('scroll', () => {
-    let currentLeft = scrollContainer.scrollLeft;
-
-    if (currentLeft > lastLeft) {
-        // SCROLLING RIGHT (Images move Left): Scale must be negative to trail right
-        portfolioDisplacement.setAttribute('scale', '-200');
-    } else {
-        // SCROLLING LEFT (Images move Right): Scale must be positive to trail left
-        portfolioDisplacement.setAttribute('scale', '200');
-    }
-    lastLeft = currentLeft;
-});
