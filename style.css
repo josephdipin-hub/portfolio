@@ -109,6 +109,9 @@ section.min-h-screen {
     height: 100%;
     width: auto;
     object-fit: contain;
+    /* ADDed THESE TWO LINES */
+    filter: url(#asdf-sideways-filter); 
+    will-change: filter;
 }
 
 .asdf-stamp { position: absolute; pointer-events: none; z-index: 110; mix-blend-mode: lighten; filter: url(#asdf-sideways-filter); }
@@ -196,6 +199,7 @@ footer .section-label {
     white-space: nowrap;
     text-align: right;
 }
+
 
 
 
