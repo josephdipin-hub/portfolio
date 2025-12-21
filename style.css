@@ -1,30 +1,53 @@
-body { background: #000; color: #fff; font-family: 'Space Mono', monospace; overflow-x: hidden; margin: 0; }
+/* --- CORE STYLES --- */
+body { 
+    background: #000; 
+    color: #fff; 
+    font-family: 'Space Mono', monospace; 
+    overflow-x: hidden; 
+    margin: 0; 
+}
+
+/* Commented out as requested */
 /*.grain-overlay { position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: 0.06; background: url('https://media.giphy.com/media/oEI9uWUqnW6re/giphy.gif'); }*/
 
 .main-content { position: relative; z-index: 20; mix-blend-mode: screen; }
+
+/* --- HERO SECTION --- */
+section.min-h-screen {
+    position: relative; /* Anchor for Scroll Hint */
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+
 #brush-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 .brush-stamp { position: absolute; width: 100%; filter: url(#datamosh-filter); opacity: 0.6; pointer-events: none; }
 .hero-text { font-family: 'Inter', sans-serif; font-size: 14vw; line-height: 0.8; letter-spacing: -0.06em; text-transform: uppercase; }
 .section-label { font-size: 12px; opacity: 0.3; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 2rem; display: block; }
 .golden-container { display: grid; grid-template-columns: 1.618fr 1fr; gap: 4rem; }
 
+/* --- PORTFOLIO TRIGGER --- */
 .portfolio-bg-container {
-position: relative; width: 100%; height: 30vw; overflow: hidden;
-display: flex; align-items: center; justify-content: center;
-border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1);
-cursor: pointer;
+    position: relative; width: 100%; height: 30vw; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1);
+    cursor: pointer;
 }
 .portfolio-bg-container img {
-position: absolute; width: 100%; height: 100%; object-fit: cover;
-filter: grayscale(1) brightness(0.3);
-transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+    position: absolute; width: 100%; height: 100%; object-fit: cover;
+    filter: grayscale(1) brightness(0.3);
+    transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
 }
 .portfolio-bg-container:hover img { filter: grayscale(0.2) brightness(0.5); transform: scale(1.02); }
 .portfolio-trigger {
-position: relative; font-family: 'Inter', sans-serif; font-size: 10vw; font-weight: 900;
-line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30; pointer-events: none;
+    position: relative; font-family: 'Inter', sans-serif; font-size: 10vw; font-weight: 900;
+    line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30; pointer-events: none;
 }
 
+/* --- FULLSCREEN PORTFOLIO OVERLAY --- */
 #portfolio-page {
     position: fixed;
     inset: 0;
@@ -32,110 +55,98 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
     height: 100vh;
     background: #000;
     z-index: 1000;
-    
-    /* Center the horizontal scroll within the screen */
-    display: none; /* Changed to flex via the .active class below */
+    display: none; /* Becomes flex via JS .active class */
     align-items: center; 
     justify-content: center;
-    
     opacity: 0;
     transition: opacity 0.5s ease;
     overflow: hidden;
 }
 
 #portfolio-page.active {
-    display: flex; /* Forces the layout to activate centering when opened */
+    display: flex;
     opacity: 1;
 }
 
-.exit-btn { padding: 2.5rem; text-align: right; cursor: pointer; opacity: 0.6; font-size: 9px; letter-spacing: 0.3em; position: absolute; top: 0; right: 0; z-index: 200; }
-#asdf-transition-layer { position: absolute; inset: 0; pointer-events: none; }
-/*.horizontal-scroll { display: flex; overflow-x: auto; height: 100vh; padding: 0 10vw; gap: 20vw; align-items: center; scrollbar-width: none; }
-.horizontal-scroll::-webkit-scrollbar { display: none; }
-.album-photo { flex: 0 0 auto; height: 70vh; display: flex; align-items: center; justify-content: center; position: center; }
-.album-photo img { height: 100%; width: auto; object-fit: contain; }*/
+.exit-btn { 
+    padding: 2.5rem; 
+    text-align: right; 
+    cursor: pointer; 
+    opacity: 0.6; 
+    font-size: 9px; 
+    letter-spacing: 0.3em; 
+    position: absolute; 
+    top: 0; 
+    right: 0; 
+    z-index: 200; 
+}
+
+/* --- HORIZONTAL SCROLL SYSTEM --- */
 .horizontal-scroll {
     display: flex;
     flex-direction: row;
-    align-items: center; /* Centers photos vertically */
-    
+    align-items: center; /* Vertical Center */
     width: 100%;
-    height: 100%; /* Occupies the full height of #portfolio-page */
-    
+    height: 100%; 
     padding: 0 10vw;
     gap: 15vw;
-    
     overflow-x: auto;
     overflow-y: hidden;
-    scrollbar-width: none; /* Firefox */
+    scrollbar-width: none;
 }
 
-
-
-.horizontal-scroll::-webkit-scrollbar {
-    display: none; /* Hides scrollbar for Chrome/Safari */
-}
+.horizontal-scroll::-webkit-scrollbar { display: none; }
 
 .album-photo {
     flex: 0 0 auto;
-    height: 70vh;      /* Limits photo height to 80% of screen */
+    height: 70vh; /* Frames the photo centered in the screen */
     display: flex;
     align-items: center; 
     justify-content: center;
 }
 
 .album-photo img {
-    height: 100%;      /* Ensures image fills the 80vh container */
-    width: auto;       /* Keeps aspect ratio intact */
+    height: 100%;
+    width: auto;
     object-fit: contain;
 }
 
 .asdf-stamp { position: absolute; pointer-events: none; z-index: 110; mix-blend-mode: lighten; filter: url(#asdf-sideways-filter); }
-/* --- HIGH-SPEED COMPACT TICKER --- */
+
+/* --- RTL TICKER (Right to Left) --- */
 .ticker-wrap {
     width: 100%;
     overflow: hidden;
     background: transparent;
     border-top: 1px solid rgba(255,255,255,0.05);
     border-bottom: 1px solid rgba(255,255,255,0.05);
-    padding: 1rem 0; /* Reduced vertical height */
+    padding: 1rem 0;
     margin: 1.5rem 0;
 }
 
-  .ticker {
+.ticker {
     display: flex;
     width: fit-content;
     flex-wrap: nowrap;
-    /* 15s is significantly faster; use 10s if you want it even faster */
-    animation: marquee-ltr 10s linear infinite; 
+    animation: marquee-rtl 10s linear infinite; /* Set to RTL */
 }  
 
 .ticker__item {
     flex-shrink: 0;
-    padding: 0 2rem; /* Reduced space between brands */
-    font-size: 16px; /* Smaller, sharper text */
-    letter-spacing: 0.2em; /* Tighter letter spacing */
+    padding: 0 2rem;
+    font-size: 16px;
+    letter-spacing: 0.2em;
     color: rgba(255,255,255,0.3);
     font-family: 'Space Mono', monospace;
     text-transform: uppercase;
 }
 
-@keyframes marquee-ltr {
-    0% { transform: translateX(-50%); }
-    100% { transform: translateX(0); }
+@keyframes marquee-rtl {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
 }
 
-.ticker:hover {
-    animation-play-state: paused;
-}
-
-footer .section-label {
-    margin-bottom: 0;      /* Removes the bottom margin usually on labels */
-    padding-bottom: 5px;   /* Fine-tune this to align with the baseline of the email text */
-    white-space: nowrap;   /* Prevents it from breaking into two lines */
-    text-align: right;
-}
-
+/* --- SCROLL HINT --- */
 .scroll-hint {
     position: absolute;
     bottom: 40px;
@@ -150,11 +161,7 @@ footer .section-label {
     z-index: 40;
 }
 
-.scroll-hint .section-label {
-    margin-bottom: 0;
-    font-size: 8px;
-    letter-spacing: 0.4em;
-}
+.scroll-hint .section-label { margin-bottom: 0; font-size: 8px; letter-spacing: 0.4em; }
 
 .scroll-line {
     width: 1px;
@@ -180,12 +187,15 @@ footer .section-label {
     100% { top: 60px; }
 }
 
-/* Hide the hint once the user starts scrolling */
-.scrolled .scroll-hint {
-    opacity: 0;
-    pointer-events: none;
-}
+.scrolled .scroll-hint { opacity: 0; pointer-events: none; }
 
+/* --- FOOTER ALIGNMENT --- */
+footer .section-label {
+    margin-bottom: 0;
+    padding-bottom: 5px;
+    white-space: nowrap;
+    text-align: right;
+}
 
 
 
