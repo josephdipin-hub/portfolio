@@ -73,7 +73,7 @@ section.min-h-screen {
     text-align: right; 
     cursor: pointer; 
     opacity: 0.6; 
-    font-size: 9px; 
+    font-size: 5px; 
     letter-spacing: 0.3em; 
     position: absolute; 
     top: 0; 
@@ -196,6 +196,7 @@ footer .section-label {
     white-space: nowrap;
     text-align: right;
 }
+
 
 
 
