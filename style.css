@@ -32,8 +32,16 @@ body {
 }
 
 /* --- HERO SECTION --- */
+/* --- 1. THE HERO FIX (REPLACE OLD SECTION CSS) --- */
 section.min-h-screen {
-    position: relative; /* Essential for the scroll hint to anchor correctly */
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* This pulls your name back to the center */
+    align-items: flex-start;
+    height: 100vh;           /* Ensures section is exactly the screen height */
+    overflow: hidden;
+    padding: 0;              /* Removes extra padding that might push hero down */
 }
 
 .hero-text { 
@@ -61,32 +69,23 @@ section.min-h-screen {
 
 /* --- THE HOMEPAGE SCROLL HINT (The Vertical Arrowmark) --- */
 .scroll-proceed {
-    position: absolute;
-    bottom: 40px; /* Distance from bottom of screen */
+.scroll-proceed {
+    position: fixed;         /* Locked to the screen, not the page content */
+    bottom: 30px;            /* Pins it safely above the bottom edge */
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 15px;
-    z-index: 40;
+    gap: 10px;
+    z-index: 200;            /* Stays on top of all layers */
     pointer-events: none;
-    transition: opacity 0.8s ease;
-}
-
-.scroll-proceed p {
-    font-size: 7px;
-    letter-spacing: 0.3em;
-    opacity: 0.5;
-    color: #fff;
-    font-family: 'Space Mono', monospace;
-    margin: 0;
-    text-transform: uppercase;
+    transition: opacity 0.6s ease;
 }
 
 .scroll-line-vertical {
     width: 1px;
-    height: 60px;
+    height: 40px;            /* Shorter line to prevent it sitting too low */
     background: rgba(255, 255, 255, 0.1);
     position: relative;
     overflow: hidden;
@@ -95,24 +94,24 @@ section.min-h-screen {
 .scroll-line-vertical::after {
     content: '';
     position: absolute;
-    top: -60px;
+    top: -40px;
     left: 0;
     width: 100%;
     height: 100%;
-    background: #fff;
-    animation: scroll-draw-v 2.5s infinite cubic-bezier(0.19, 1, 0.22, 1);
+    background: #fff;        /* The bright 'arrowmark' line */
+    animation: scroll-draw-v 2s infinite cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 @keyframes scroll-draw-v {
-    0% { top: -60px; }
-    100% { top: 60px; }
+    0% { top: -40px; }
+    100% { top: 40px; }
 }
 
 /* State when user scrolls down */
 body.scrolled .scroll-proceed {
     opacity: 0;
+    visibility: hidden;
 }
-
 /* --- PORTFOLIO TRIGGER SECTION --- */
 .portfolio-bg-container {
     position: relative; width: 100%; height: 30vw; overflow: hidden;
@@ -253,3 +252,4 @@ footer .section-label {
     white-space: nowrap;
     text-align: right;
 }
+
