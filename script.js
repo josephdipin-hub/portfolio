@@ -29,16 +29,28 @@ function createMoshStamp(yPos) {
 function togglePortfolio(open) {
     isAlbumOpen = open;
     portfolioPage.classList.toggle('active', open);
+    // Control whether the background scrolls when gallery is open
     document.body.style.overflow = open ? 'hidden' : 'auto';
+    
+    // Smooth transition handling
+    if (open) {
+        portfolioPage.style.display = 'flex';
+        setTimeout(() => portfolioPage.style.opacity = '1', 10);
+    } else {
+        portfolioPage.style.opacity = '0';
+        setTimeout(() => portfolioPage.style.display = 'none', 500);
+    }
 }
 
-// --- ASDF GLITCH TRAILS ---
+// --- ASDF GLITCH TRAILS (Gallery) ---
 function triggerAsdf() {
     if (!isAlbumOpen) return;
     const photos = document.querySelectorAll('.album-photo');
     photos.forEach((photo, i) => {
         const img = photo.querySelector('img');
         const rect = img.getBoundingClientRect();
+        
+        // Only trigger for images visible on screen
         if (rect.right > 0 && rect.left < window.innerWidth) {
             const stamp = document.createElement('div');
             stamp.className = 'asdf-stamp';
@@ -47,57 +59,49 @@ function triggerAsdf() {
             stamp.style.left = rect.left + 'px';
             stamp.style.top = rect.top + 'px';
 
-            let lClip = (i === 0) ? "0px" : "-1000px";
-            let rClip = (i === photos.length - 1) ? "0px" : "-1000px";
-            stamp.style.clipPath = `inset(0px ${rClip} 0px ${lClip})`;
-
             const clone = img.cloneNode();
             stamp.appendChild(clone);
             transitionLayer.appendChild(stamp);
 
             stamp.animate([
                 { opacity: 1, transform: 'scaleX(1) translateX(0px)' },
-                { opacity: 0, transform: 'scaleX(2.8) translateX(180px)' }
-            ], { duration: 500, easing: 'cubic-bezier(0.33, 1, 0.68, 1)', fill: 'forwards' }).onfinish = () => stamp.remove();
+                { opacity: 0, transform: 'scaleX(2.5) translateX(150px)' }
+            ], { duration: 600, easing: 'cubic-bezier(0.33, 1, 0.68, 1)' }).onfinish = () => stamp.remove();
         }
     });
 }
 
-// --- SCROLL LISTENERS ---
-
-// Hero Scroll
+// --- GLOBAL SCROLL LISTENER (Homepage) ---
 window.addEventListener('scroll', () => {
     const currentPos = window.pageYOffset;
-    if (Math.abs(currentPos - lastPos) > 12) {
+    
+    // 1. Trigger Mosh Stamp
+    if (Math.abs(currentPos - lastPos) > 15) {
         createMoshStamp(currentPos);
         lastPos = currentPos;
     }
     
-    // Header state
-    if (window.scrollY > 50) {
+    // 2. Toggle 'scrolled' class for the Scroll Hint
+    if (window.scrollY > 80) {
         document.body.classList.add('scrolled');
     } else {
         document.body.classList.remove('scrolled');
     }
 }, { passive: true });
 
-// Portfolio Scroll (The Glitch + The Hint)
+// --- PORTFOLIO HORIZONTAL SCROLL ---
 albumScroll.addEventListener('scroll', () => {
     const currentLeft = albumScroll.scrollLeft;
-    
-    // 1. Trigger the Glitch
-    if (Math.abs(currentLeft - lastLeft) > 15) {
+    if (Math.abs(currentLeft - lastLeft) > 20) {
         triggerAsdf();
         lastLeft = currentLeft;
     }
-    
-    // 2. Hide the Horizontal Hint (Visual Patch)
-    
 }, { passive: true });
 
-// Mousewheel support
+// --- MOUSE WHEEL TO HORIZONTAL ---
 albumScroll.addEventListener('wheel', (e) => { 
-    e.preventDefault(); 
-    albumScroll.scrollLeft += e.deltaY; 
+    if (isAlbumOpen) {
+        e.preventDefault(); 
+        albumScroll.scrollLeft += e.deltaY; 
+    }
 }, { passive: false });
-
