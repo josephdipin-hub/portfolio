@@ -1,208 +1,82 @@
-/* --- CORE STYLES --- */
-body { 
-    background: #000; 
-    color: #fff; 
-    font-family: 'Space Mono', monospace; 
-    overflow-x: hidden; 
-    margin: 0; 
+const container = document.getElementById('brush-container');
+const master = document.getElementById('master-site');
+let lastPos = window.pageYOffset;
+let isAlbumOpen = false;
+
+function createMoshStamp(yPos) {
+if (isAlbumOpen) return;
+const stamp = document.createElement('div');
+stamp.className = 'brush-stamp';
+stamp.appendChild(master.cloneNode(true));
+stamp.style.top = `-${yPos}px`;
+container.appendChild(stamp);
+const animation = stamp.animate([
+{ opacity: 0.7, transform: 'translateY(0px) scale(1)' },
+{ opacity: 0, transform: 'translateY(25px) scale(1.01)' }
+], { duration: 1000, easing: 'cubic-bezier(0.25, 1, 0.5, 1)' });
+animation.onfinish = () => stamp.remove();
 }
 
-/* Commented out as requested */
-/*.grain-overlay { position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: 0.06; background: url('https://media.giphy.com/media/oEI9uWUqnW6re/giphy.gif'); }*/
+window.addEventListener('scroll', () => {
+const currentPos = window.pageYOffset;
+if (Math.abs(currentPos - lastPos) > 12) {
+createMoshStamp(currentPos);
+lastPos = currentPos;
+}
+});
 
-.main-content { position: relative; z-index: 20; mix-blend-mode: screen; }
-
-/* --- HERO SECTION --- */
-section.min-h-screen {
-    position: relative; /* Anchor for Scroll Hint */
-    height: 100vh;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    overflow: hidden;
+function togglePortfolio(open) {
+isAlbumOpen = open;
+document.getElementById('portfolio-page').classList.toggle('active', open);
+document.body.style.overflow = open ? 'hidden' : 'auto';
 }
 
-#brush-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
-.brush-stamp { position: absolute; width: 100%; filter: url(#datamosh-filter); opacity: 0.6; pointer-events: none; }
-.hero-text { font-family: 'Inter', sans-serif; font-size: 14vw; line-height: 0.8; letter-spacing: -0.06em; text-transform: uppercase; }
-.section-label { font-size: 12px; opacity: 0.3; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 2rem; display: block; }
-.golden-container { display: grid; grid-template-columns: 1.618fr 1fr; gap: 4rem; }
+const albumScroll = document.getElementById('album-scroll');
+const transitionLayer = document.getElementById('asdf-transition-layer');
+let lastLeft = 0;
 
-/* --- PORTFOLIO TRIGGER --- */
-.portfolio-bg-container {
-    position: relative; width: 100%; height: 30vw; overflow: hidden;
-    display: flex; align-items: center; justify-content: center;
-    border-top: 1px solid rgba(255,255,255,0.1); border-bottom: 1px solid rgba(255,255,255,0.1);
-    cursor: pointer;
-}
-.portfolio-bg-container img {
-    position: absolute; width: 100%; height: 100%; object-fit: cover;
-    filter: grayscale(1) brightness(0.3);
-    transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
-}
-.portfolio-bg-container:hover img { filter: grayscale(0.2) brightness(0.5); transform: scale(1.02); }
-.portfolio-trigger {
-    position: relative; font-family: 'Inter', sans-serif; font-size: 10vw; font-weight: 900;
-    line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30; pointer-events: none;
-}
+function triggerAsdf() {
+if (!isAlbumOpen) return;
+const photos = document.querySelectorAll('.album-photo');
+photos.forEach((photo, i) => {
+const img = photo.querySelector('img');
+const rect = img.getBoundingClientRect();
+if (rect.right > 0 && rect.left < window.innerWidth) {
+const stamp = document.createElement('div');
+stamp.className = 'asdf-stamp';
+stamp.style.width = rect.width + 'px';
+stamp.style.height = rect.height + 'px';
+stamp.style.left = rect.left + 'px';
+stamp.style.top = rect.top + 'px';
 
-/* --- FULLSCREEN PORTFOLIO OVERLAY --- */
-#portfolio-page {
-    position: fixed;
-    inset: 0;
-    width: 100vw;
-    height: 100vh;
-    background: #000;
-    z-index: 1000;
-    display: none; /* Becomes flex via JS .active class */
-    align-items: center; 
-    justify-content: center;
-    opacity: 0;
-    transition: opacity 0.5s ease;
-    overflow: hidden;
+let lClip = (i === 0) ? "0px" : "-1000px";
+let rClip = (i === photos.length - 1) ? "0px" : "-1000px";
+stamp.style.clipPath = `inset(0px ${rClip} 0px ${lClip})`;
+
+const clone = img.cloneNode();
+stamp.appendChild(clone);
+transitionLayer.appendChild(stamp);
+
+stamp.animate([
+{ opacity: 1, transform: 'scaleX(1) translateX(0px)' },
+{ opacity: 0, transform: 'scaleX(2.8) translateX(180px)' }
+], { duration: 500, easing: 'cubic-bezier(0.33, 1, 0.68, 1)', fill: 'forwards' }).onfinish = () => stamp.remove();
+}
+});
 }
 
-#portfolio-page.active {
-    display: flex;
-    opacity: 1;
+albumScroll.addEventListener('scroll', () => {
+if (Math.abs(albumScroll.scrollLeft - lastLeft) > 15) {
+triggerAsdf();
+lastLeft = albumScroll.scrollLeft;
 }
+});
 
-.exit-btn { 
-    padding: 2.5rem; 
-    text-align: right; 
-    cursor: pointer; 
-    opacity: 0.6; 
-    font-size: 9px; 
-    letter-spacing: 0.3em; 
-    position: absolute; 
-    top: 0; 
-    right: 0; 
-    z-index: 200; 
-}
-
-/* --- HORIZONTAL SCROLL SYSTEM --- */
-.horizontal-scroll {
-    display: flex;
-    flex-direction: row;
-    align-items: center; /* Vertical Center */
-    width: 100%;
-    height: 100%; 
-    padding: 0 10vw;
-    gap: 15vw;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: none;
-}
-
-.horizontal-scroll::-webkit-scrollbar { display: none; }
-
-.album-photo {
-    flex: 0 0 auto;
-    height: 70vh; /* Frames the photo centered in the screen */
-    display: flex;
-    align-items: center; 
-    justify-content: center;
-}
-
-.album-photo img {
-    height: 100%;
-    width: auto;
-    object-fit: contain;
-}
-
-.asdf-stamp { position: absolute; pointer-events: none; z-index: 110; mix-blend-mode: lighten; filter: url(#asdf-sideways-filter); }
-
-/* --- RTL TICKER (Right to Left) --- */
-.ticker-wrap {
-    width: 100%;
-    overflow: hidden;
-    background: transparent;
-    border-top: 1px solid rgba(255,255,255,0.05);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-    padding: 1rem 0;
-    margin: 1.5rem 0;
-}
-
-.ticker {
-    display: flex;
-    width: fit-content;
-    flex-wrap: nowrap;
-    animation: marquee-rtl 10s linear infinite; /* Set to RTL */
-}  
-
-.ticker__item {
-    flex-shrink: 0;
-    padding: 0 2rem;
-    font-size: 16px;
-    letter-spacing: 0.2em;
-    color: rgba(255,255,255,0.3);
-    font-family: 'Space Mono', monospace;
-    text-transform: uppercase;
-}
-
-@keyframes marquee-rtl {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
-}
-
-/* --- SCROLL HINT --- */
-.scroll-hint {
-    position: absolute;
-    bottom: 40px;
-    left: 50%;
-    transform: translateX(-50%);
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    opacity: 0.6;
-    transition: opacity 0.3s ease;
-    z-index: 40;
-}
-
-.scroll-hint .section-label { margin-bottom: 0; font-size: 8px; letter-spacing: 0.4em; }
-
-.scroll-line {
-    width: 1px;
-    height: 60px;
-    background: linear-gradient(to bottom, rgba(255,255,255,1), rgba(255,255,255,0));
-    position: relative;
-    overflow: hidden;
-}
-
-.scroll-line::after {
-    content: '';
-    position: absolute;
-    top: -60px;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: #fff;
-    animation: scroll-draw 2s infinite cubic-bezier(0.19, 1, 0.22, 1);
-}
-
-@keyframes scroll-draw {
-    0% { top: -60px; }
-    100% { top: 60px; }
-}
-
-.scrolled .scroll-hint { opacity: 0; pointer-events: none; }
-
-/* --- FOOTER ALIGNMENT --- */
-footer .section-label {
-    margin-bottom: 0;
-    padding-bottom: 5px;
-    white-space: nowrap;
-    text-align: right;
-}
-
-
-
-
-
-
-
-
-
-
+albumScroll.addEventListener('wheel', (e) => { e.preventDefault(); albumScroll.scrollLeft += e.deltaY; });
+window.addEventListener('scroll', () => {
+    if (window.scrollY > 50) {
+        document.body.classList.add('scrolled');
+    } else {
+        document.body.classList.remove('scrolled');
+    }
+});
