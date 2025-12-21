@@ -73,7 +73,7 @@ section.min-h-screen {
     text-align: right; 
     cursor: pointer; 
     opacity: 0.6; 
-    font-size: 5px; 
+    font-size: 9px; 
     letter-spacing: 0.3em; 
     position: absolute; 
     top: 0; 
@@ -81,9 +81,19 @@ section.min-h-screen {
     z-index: 200; 
 }
 
-
 /* --- HORIZONTAL SCROLL SYSTEM --- */
-
+.horizontal-scroll {
+    display: flex;
+    flex-direction: row;
+    align-items: center; /* Vertical Center */
+    width: 100%;
+    height: 100%; 
+    padding: 0 10vw;
+    gap: 15vw;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+}
 
 .horizontal-scroll::-webkit-scrollbar { display: none; }
 
@@ -186,10 +196,6 @@ footer .section-label {
     white-space: nowrap;
     text-align: right;
 }
-
-
-
-
 
 
 
