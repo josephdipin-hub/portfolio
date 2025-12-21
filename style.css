@@ -10,7 +10,7 @@ body {
 .main-content { 
     position: relative; 
     z-index: 20; 
-    mix-blend-mode: screen; 
+    /* Removing mix-blend-mode: screen here fixes the 'stacking' visibility issues */
 }
 
 #brush-container { 
@@ -32,16 +32,16 @@ body {
 }
 
 /* --- HERO SECTION --- */
-/* --- 1. THE HERO FIX (REPLACE OLD SECTION CSS) --- */
 section.min-h-screen {
     position: relative;
     display: flex;
     flex-direction: column;
-    justify-content: center; /* This pulls your name back to the center */
+    justify-content: center;
     align-items: flex-start;
-    height: 100vh;           /* Ensures section is exactly the screen height */
-    overflow: hidden;
-    padding: 0;              /* Removes extra padding that might push hero down */
+    /* Use min-height so it doesn't trap content, and allow overflow */
+    min-height: 100vh;
+    overflow: visible; 
+    padding: 0;
 }
 
 .hero-text { 
@@ -50,6 +50,7 @@ section.min-h-screen {
     line-height: 0.8; 
     letter-spacing: -0.06em; 
     text-transform: uppercase; 
+    padding: 0 10vw; /* Adds horizontal breathing room */
 }
 
 .section-label { 
@@ -65,27 +66,27 @@ section.min-h-screen {
     display: grid; 
     grid-template-columns: 1.618fr 1fr; 
     gap: 4rem; 
+    padding: 0 10vw;
 }
 
-/* --- THE HOMEPAGE SCROLL HINT (The Vertical Arrowmark) --- */
+/* --- THE HOMEPAGE SCROLL HINT (Vertical Arrowmark) --- */
 .scroll-proceed {
-.scroll-proceed {
-    position: fixed;         /* Locked to the screen, not the page content */
-    bottom: 30px;            /* Pins it safely above the bottom edge */
+    position: absolute;      /* Changed back to absolute relative to Hero */
+    bottom: 40px;            
     left: 50%;
     transform: translateX(-50%);
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 10px;
-    z-index: 200;            /* Stays on top of all layers */
+    z-index: 200;            
     pointer-events: none;
     transition: opacity 0.6s ease;
 }
 
 .scroll-line-vertical {
     width: 1px;
-    height: 40px;            /* Shorter line to prevent it sitting too low */
+    height: 60px;            
     background: rgba(255, 255, 255, 0.1);
     position: relative;
     overflow: hidden;
@@ -94,17 +95,25 @@ section.min-h-screen {
 .scroll-line-vertical::after {
     content: '';
     position: absolute;
-    top: -40px;
+    top: -60px;
     left: 0;
     width: 100%;
     height: 100%;
-    background: #fff;        /* The bright 'arrowmark' line */
-    animation: scroll-draw-v 2s infinite cubic-bezier(0.19, 1, 0.22, 1);
+    background: #fff;        
+    animation: scroll-draw-v 2.5s infinite cubic-bezier(0.19, 1, 0.22, 1);
 }
 
 @keyframes scroll-draw-v {
-    0% { top: -40px; }
-    100% { top: 40px; }
+    0% { top: -60px; }
+    100% { top: 60px; }
+}
+
+.scroll-proceed p {
+    font-size: 8px;
+    letter-spacing: 0.4em;
+    opacity: 0.5;
+    margin: 0;
+    text-transform: uppercase;
 }
 
 /* State when user scrolls down */
@@ -112,6 +121,7 @@ body.scrolled .scroll-proceed {
     opacity: 0;
     visibility: hidden;
 }
+
 /* --- PORTFOLIO TRIGGER SECTION --- */
 .portfolio-bg-container {
     position: relative; width: 100%; height: 30vw; overflow: hidden;
@@ -144,7 +154,7 @@ body.scrolled .scroll-proceed {
     height: 100vh;
     background: #000;
     z-index: 1000;
-    display: none; /* Controlled by JS .active */
+    display: none; 
     align-items: center; 
     justify-content: center;
     opacity: 0;
@@ -170,71 +180,26 @@ body.scrolled .scroll-proceed {
     z-index: 200; 
 }
 
-#asdf-transition-layer { 
-    position: absolute; 
-    inset: 0; 
-    pointer-events: none; 
-}
-
-.horizontal-scroll {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    width: 100%;
-    height: 100%;
-    padding: 0 10vw;
-    gap: 15vw;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scrollbar-width: none;
-}
-
-.horizontal-scroll::-webkit-scrollbar {
-    display: none;
-}
-
-.album-photo {
-    flex: 0 0 auto;
-    height: 70vh;
-    display: flex;
-    align-items: center; 
-    justify-content: center;
-}
-
-.album-photo img {
-    height: 100%;
-    width: auto;
-    object-fit: contain;
-}
-
-.asdf-stamp { 
-    position: absolute; 
-    pointer-events: none; 
-    z-index: 110; 
-    mix-blend-mode: lighten; 
-    filter: url(#asdf-sideways-filter); 
-}
-
 /* --- TICKER --- */
 .ticker-wrap {
     width: 100%;
     overflow: hidden;
     border-top: 1px solid rgba(255,255,255,0.05);
     border-bottom: 1px solid rgba(255,255,255,0.05);
-    padding: 1rem 0;
-    margin: 1.5rem 0;
+    padding: 2rem 0;
+    margin: 4rem 0;
 }
 
 .ticker {
     display: flex;
     width: fit-content;
-    animation: marquee-ltr 10s linear infinite; 
+    animation: marquee-ltr 15s linear infinite; 
 }  
 
 .ticker__item {
     flex-shrink: 0;
-    padding: 0 2rem;
-    font-size: 16px;
+    padding: 0 3rem;
+    font-size: 20px;
     letter-spacing: 0.2em;
     color: rgba(255,255,255,0.3);
     text-transform: uppercase;
