@@ -81,19 +81,19 @@ window.addEventListener('scroll', () => {
     }
 });
 
-let lastScrollTop = 0;
-const displacementMap = document.querySelector('#asdf-sideways-filter feDisplacementMap');
+const scrollContainer = document.querySelector('.horizontal-scroll');
+const portfolioDisplacement = document.querySelector('#asdf-sideways-filter feDisplacementMap');
+let lastLeft = 0;
 
-window.addEventListener('scroll', () => {
-    let st = window.pageYOffset || document.documentElement.scrollTop;
-    
-    if (st > lastScrollTop) {
-        // Scrolling Down / RTL Logic
-        displacementMap.setAttribute('scale', '-200');
+scrollContainer.addEventListener('scroll', () => {
+    let currentLeft = scrollContainer.scrollLeft;
+
+    if (currentLeft > lastLeft) {
+        // SCROLLING RIGHT (Images move Left): Scale must be negative to trail right
+        portfolioDisplacement.setAttribute('scale', '-200');
     } else {
-        // Scrolling Up / LTR Logic
-        displacementMap.setAttribute('scale', '200');
+        // SCROLLING LEFT (Images move Right): Scale must be positive to trail left
+        portfolioDisplacement.setAttribute('scale', '200');
     }
-    lastScrollTop = st <= 0 ? 0 : st;
-}, false);
-
+    lastLeft = currentLeft;
+});
