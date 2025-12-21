@@ -48,7 +48,7 @@ line-height: 1; letter-spacing: -0.05em; text-transform: uppercase; z-index: 30;
     opacity: 1;
 }
 
-.exit-btn { padding: 2.5rem; text-align: right; cursor: pointer; opacity: 0.6; font-size: 9px; letter-spacing: 0.3em; position: absolute; top: 0; right: 0; z-index: 200; }
+.exit-btn { padding: 2.5rem; text-align: right; cursor: pointer; opacity: 0.4; font-size: 7px; letter-spacing: 0.2em; position: absolute; top: 0; right: 0; z-index: 200; }
 #asdf-transition-layer { position: absolute; inset: 0; pointer-events: none; }
 /*.horizontal-scroll { display: flex; overflow-x: auto; height: 100vh; padding: 0 10vw; gap: 20vw; align-items: center; scrollbar-width: none; }
 .horizontal-scroll::-webkit-scrollbar { display: none; }
@@ -193,11 +193,11 @@ footer .section-label {
     top: 40px;
     left: 40px;
     width: 280px;
-    font-size: 7px;
+    font-size: 8px;
     line-height: 1.8;
     letter-spacing: 0.25em;
     text-transform: uppercase;
-    opacity: 0.4;
+    opacity: 0.5;
     color: #fff;
     font-family: 'Space Mono', monospace;
     z-index: 1010;
@@ -242,6 +242,7 @@ footer .section-label {
 .portfolio-scrolled .portfolio-scroll-hint {
     opacity: 0;
 }
+
 
 
 
