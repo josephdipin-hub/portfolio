@@ -80,3 +80,22 @@ window.addEventListener('scroll', () => {
         document.body.classList.remove('scrolled');
     }
 });
+const scrollContainer = document.querySelector('.horizontal-scroll');
+const displacementMap = document.querySelector('#asdf-sideways-filter feDisplacementMap');
+let lastScrollLeft = 0;
+
+if (scrollContainer && displacementMap) {
+    scrollContainer.addEventListener('scroll', () => {
+        const currentScrollLeft = scrollContainer.scrollLeft;
+
+        if (currentScrollLeft > lastScrollLeft) {
+            // SCROLLING RIGHT: Trail should stretch Right (Negative Scale)
+            displacementMap.setAttribute('scale', '-200');
+        } else {
+            // SCROLLING LEFT: Trail should stretch Left (Positive Scale)
+            displacementMap.setAttribute('scale', '200');
+        }
+        lastScrollLeft = currentScrollLeft;
+    });
+}
+
