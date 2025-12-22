@@ -156,12 +156,12 @@ section.min-h-screen {
     flex-direction: column;
     align-items: center;
     gap: 15px;
-    opacity: 0.8;
+    opacity: 0.6;
     transition: opacity 0.3s ease;
     z-index: 40;
 }
 
-.scroll-hint .section-label { margin-bottom: 0; font-size: 8px; letter-spacing: 0.4em; }
+.scroll-hint .section-label { margin-bottom: 0; font-size: 8px; opacity: 0.6; letter-spacing: 0.4em; }
 
 .scroll-line {
     width: 1px;
@@ -196,6 +196,7 @@ footer .section-label {
     white-space: nowrap;
     text-align: right;
 }
+
 
 
 
