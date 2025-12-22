@@ -72,7 +72,7 @@ section.min-h-screen {
     padding: 2.5rem; 
     text-align: right; 
     cursor: pointer; 
-    opacity: 0.5; 
+    opacity: 0.4; 
     font-size: 7px; 
     letter-spacing: 0.3em; 
     position: absolute; 
@@ -161,7 +161,7 @@ section.min-h-screen {
     z-index: 40;
 }
 
-.scroll-hint .section-label { margin-bottom: 0; font-size: 8px; opacity: 0.6; letter-spacing: 0.4em; }
+.scroll-hint .section-label { margin-bottom: 0; font-size: 8px; opacity: 0.4; letter-spacing: 0.4em; }
 
 .scroll-line {
     width: 1px;
@@ -196,6 +196,7 @@ footer .section-label {
     white-space: nowrap;
     text-align: right;
 }
+
 
 
 
