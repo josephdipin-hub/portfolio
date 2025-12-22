@@ -73,28 +73,10 @@ lastLeft = albumScroll.scrollLeft;
 });
 
 albumScroll.addEventListener('wheel', (e) => { e.preventDefault(); albumScroll.scrollLeft += e.deltaY; });
-/*window.addEventListener('scroll', () => {
+window.addEventListener('scroll', () => {
     if (window.scrollY > 50) {
         document.body.classList.add('scrolled');
     } else {
         document.body.classList.remove('scrolled');
     }
-});*/
-window.addEventListener('scroll', () => {
-    const currentPos = window.pageYOffset;
-
-    // 1. Trigger Mosh Stamp
-    if (Math.abs(currentPos - lastPos) > 12) {
-        createMoshStamp(currentPos);
-        lastPos = currentPos;
-    }
-
-    // 2. Hide Hint logic (disappears when moving away from top)
-    if (window.scrollY > 10) {
-        document.body.classList.add('scrolled');
-    } else {
-        document.body.classList.remove('scrolled');
-    }
-}, { passive: true });
-
-
+});
