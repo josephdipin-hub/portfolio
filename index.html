@@ -73,23 +73,20 @@
 <div>
 <span class="section-label">VISUAL_SYNTH // 2015-2026</span>
 <!-- <h1 class="hero-text">DYPIN<br>JOSEPH</h1> -->
-    <!-- Photo Text Overlay Effect -->
+  <!-- Single Clipping Mask for DYPIN JOSEPH -->
 <style>
-  .photo-text {
+  .hero-clip-wrapper {
     position: relative;
     display: inline-block;
-    font-size: inherit;
-    font-weight: inherit;
-    letter-spacing: inherit;
     line-height: inherit;
   }
 
-  .photo-text .base {
+  .hero-clip-base {
     color: white;
     display: block;
   }
 
-  .photo-text .overlay {
+  .hero-clip-overlay {
     position: absolute;
     top: 0;
     left: 0;
@@ -104,18 +101,14 @@
     display: block;
     opacity: 0;
     transition: opacity 1.2s ease;
+    pointer-events: none;
   }
 </style>
 
 <h1 class="hero-text">
-  <span class="photo-text">
-    <span class="base">DYPIN</span>
-    <span class="overlay" id="text-overlay-1">DYPIN</span>
-  </span>
-  <br>
-  <span class="photo-text">
-    <span class="base">JOSEPH</span>
-    <span class="overlay" id="text-overlay-2">JOSEPH</span>
+  <span class="hero-clip-wrapper">
+    <span class="hero-clip-base">DYPIN<br>JOSEPH</span>
+    <span class="hero-clip-overlay" id="hero-overlay">DYPIN<br>JOSEPH</span>
   </span>
 </h1>
 
@@ -129,51 +122,42 @@
     'images/photo19.jpg'
   ];
 
-  // Each step: [photoIndex or null (=breathing gap), duration in ms]
   const sequence = [
-    [0, 3000],   // show photo3
-    [null, 1500], // breathe — white
-    [1, 2800],   // show photo6
-    [null, 2000], // breathe — white
-    [2, 3200],   // show photo10
-    [null, 1200], // breathe — white
-    [3, 2500],   // show photo14
-    [null, 2500], // breathe — white
-    [4, 3000],   // show photo17
-    [null, 1800], // breathe — white
-    [5, 2800],   // show photo19
-    [null, 2000], // breathe — white
+    [0, 3000],
+    [null, 1500],
+    [1, 2800],
+    [null, 2000],
+    [2, 3200],
+    [null, 1200],
+    [3, 2500],
+    [null, 2500],
+    [4, 3000],
+    [null, 1800],
+    [5, 2800],
+    [null, 2000],
   ];
 
-  const overlays = [
-    document.getElementById('text-overlay-1'),
-    document.getElementById('text-overlay-2')
-  ];
-
+  const overlay = document.getElementById('hero-overlay');
   let step = 0;
 
   function runSequence() {
     const [photoIndex, duration] = sequence[step];
 
     if (photoIndex === null) {
-      // breathing gap — fade out to white
-      overlays.forEach(o => { o.style.opacity = '0'; });
+      overlay.style.opacity = '0';
     } else {
-      // show photo inside text
-      const url = `url('${photos[photoIndex]}')`;
-      overlays.forEach(o => {
-        o.style.backgroundImage = url;
-        o.style.opacity = '1';
-      });
+      overlay.style.backgroundImage = `url('${photos[photoIndex]}')`;
+      overlay.style.opacity = '1';
     }
 
     step = (step + 1) % sequence.length;
     setTimeout(runSequence, duration);
   }
 
-  // Start after a short delay so page loads first
   setTimeout(runSequence, 800);
-</script>
+</script>  
+
+  
 </div>
 </div>
     <div class="scroll-hint">
