@@ -20,6 +20,12 @@
     right: 28px;
     z-index: 9999;
     text-decoration: none;
+    opacity: 0.5;
+    transition: opacity 0.3s ease, transform 0.2s ease;
+  }
+  .wa-float:hover {
+    opacity: 1;
+    transform: scale(1.08);
   }
   .wa-btn {
     width: 56px;
@@ -30,10 +36,6 @@
     align-items: center;
     justify-content: center;
     box-shadow: 0 4px 16px rgba(37,211,102,0.4);
-    transition: transform 0.2s ease;
-  }
-  .wa-float:hover .wa-btn {
-    transform: scale(1.08);
   }
   .wa-btn svg {
     width: 28px;
