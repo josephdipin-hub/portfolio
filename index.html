@@ -145,49 +145,7 @@
 
   setTimeout(runSequence, 800);
 </script>
-  const photos = [
-    'images/photo4.jpg',
-    'images/photo12.jpg',
-    'images/photo14.jpg',
-    'images/photo15.jpg',
-    'images/photo17.jpg',
-    'images/photo19.jpg'
-  ];
-
-  const sequence = [
-    [0, 3000],
-    [null, 1500],
-    [1, 2800],
-    [null, 2000],
-    [2, 3200],
-    [null, 1200],
-    [3, 2500],
-    [null, 2500],
-    [4, 3000],
-    [null, 1800],
-    [5, 2800],
-    [null, 2000],
-  ];
-
-  const overlay = document.getElementById('hero-overlay');
-  let step = 0;
-
-  function runSequence() {
-    const [photoIndex, duration] = sequence[step];
-
-    if (photoIndex === null) {
-      overlay.style.opacity = '0';
-    } else {
-      overlay.style.backgroundImage = `url('${photos[photoIndex]}')`;
-      overlay.style.opacity = '1';
-    }
-
-    step = (step + 1) % sequence.length;
-    setTimeout(runSequence, duration);
-  }
-
-  setTimeout(runSequence, 800);
-</script>  
+    
 
   
 </div>
