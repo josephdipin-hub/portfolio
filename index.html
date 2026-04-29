@@ -10,21 +10,17 @@
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono&family=Inter:wght@900&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 <link rel="preload" as="image" href="images/photo1.jpg">
-
 </head>
     
 <body>
-    
 
 <div class="grain-overlay"></div>
 <div id="brush-container"></div>
-
 
 <div id="portfolio-page">
 <div class="exit-btn" onclick="togglePortfolio(false)">DISTORTIONS_ARE_INTENTIONAL //<br>TAP_TO_CLOSE</div>
 <div id="asdf-transition-layer"></div>
 <div class="horizontal-scroll" id="album-scroll">
-<!--<div class="album-photo"><img crossorigin="anonymous" src="images/photo1.jpg"></div>-->
 <div class="album-photo"><img crossorigin="anonymous" src="images/photo2.jpg" alt="Fashion photographer in Whitefield Bangalore — studio editorial shoot"></div>
 <div class="album-photo"><img crossorigin="anonymous" src="images/photo3.jpg" alt="Affordable newborn baby photoshoot near Whitefield Bangalore"></div>
 <div class="album-photo"><img crossorigin="anonymous" src="images/photo4.jpg" alt="Product photography Marathahalli Bangalore — brand studio shoot"></div>
@@ -60,11 +56,9 @@
 <feComponentTransfer in="luma" result="mask">
     <feFuncA type="table" tableValues="0 0 1 1 1 0 0" />
 </feComponentTransfer>
-
 <feComposite in="glitchLayer" in2="mask" operator="in" />
 <feComponentTransfer><feFuncA type="linear" slope="0.8" /></feComponentTransfer>
 </filter>
-
 </svg>
 
 <main class="main-content" id="master-site">
@@ -72,51 +66,47 @@
 <div class="golden-container">
 <div>
 <span class="section-label">VISUAL_SYNTH // 2015-2026</span>
-<!-- <h1 class="hero-text">DYPIN<br>JOSEPH</h1> -->
 
-<!-- SVG ClipPath Hero Text -->
+<!-- Single Clipping Mask for DYPIN JOSEPH -->
 <style>
-  .hero-svg {
+  .hero-clip-wrapper {
+    position: relative;
+    display: inline-block;
+    line-height: inherit;
     width: 100%;
-    height: auto;
-    overflow: visible;
+  }
+
+  .hero-clip-base {
+    color: white;
     display: block;
   }
-  .hero-svg-text {
-    font-family: 'Inter', sans-serif;
-    font-size: 11;
-    font-weight: 900;
-    letter-spacing: -0.06em;
-    text-transform: uppercase;
-    fill: white;
-  }
-  .hero-svg-photo {
+
+  .hero-clip-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: 140%;
+    background-position: center 20%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    display: block;
     opacity: 0;
     transition: opacity 1.5s ease;
+    pointer-events: none;
+    letter-spacing: -0.06em;
   }
 </style>
 
-<svg class="hero-svg" viewBox="0 0 100 30" preserveAspectRatio="xMinYMid meet">
-  <defs>
-    <clipPath id="text-clip">
-      <text x="0" y="14" class="hero-svg-text">DYPIN</text>
-      <text x="0" y="28" class="hero-svg-text">JOSEPH</text>
-    </clipPath>
-  </defs>
-
-  <text x="0" y="14" class="hero-svg-text">DYPIN</text>
-  <text x="0" y="28" class="hero-svg-text">JOSEPH</text>
-
-  <image
-    id="hero-photo"
-    class="hero-svg-photo"
-    href=""
-    x="0" y="0"
-    width="100" height="30"
-    preserveAspectRatio="xMidYMid slice"
-    clip-path="url(#text-clip)"
-  />
-</svg>
+<h1 class="hero-text">
+  <span class="hero-clip-wrapper">
+    <span class="hero-clip-base">DYPIN<br>JOSEPH</span>
+    <span class="hero-clip-overlay" id="hero-overlay" aria-hidden="true">DYPIN<br>JOSEPH</span>
+  </span>
+</h1>
 
 <script>
   const photos = [
@@ -143,17 +133,17 @@
     [null, 2000],
   ];
 
-  const photoEl = document.getElementById('hero-photo');
+  const overlay = document.getElementById('hero-overlay');
   let step = 0;
 
   function runSequence() {
     const [photoIndex, duration] = sequence[step];
 
     if (photoIndex === null) {
-      photoEl.style.opacity = '0';
+      overlay.style.opacity = '0';
     } else {
-      photoEl.setAttribute('href', photos[photoIndex]);
-      photoEl.style.opacity = '1';
+      overlay.style.backgroundImage = `url('${photos[photoIndex]}')`;
+      overlay.style.opacity = '1';
     }
 
     step = (step + 1) % sequence.length;
@@ -163,14 +153,13 @@
   setTimeout(runSequence, 800);
 </script>
 
-
-  
 </div>
 </div>
     <div class="scroll-hint">
     <span class="section-label">SCROLL_TO_PROCEED</span>
      <div class="scroll-line"></div> 
 </section>
+
 <section class="px-10 md:px-24 py-20">
     <div class="golden-container">
         <div>
@@ -188,9 +177,6 @@ joseph.dipin@gmail.com
             </p>
         </div>
     </div>
-    
-</div>
-
 </section>
 
 <section class="ticker-wrap">
@@ -203,7 +189,8 @@ joseph.dipin@gmail.com
         <div class="ticker__item">PETER ENGLAND</div>
         <div class="ticker__item">FOREVER 21 India</div>
         <div class="ticker__item">SIMON CARTER</div>
-        <div class="ticker__item">SKULT</div><div class="ticker__item">LOUIS PHILIPPE</div>
+        <div class="ticker__item">SKULT</div>
+        <div class="ticker__item">LOUIS PHILIPPE</div>
         <div class="ticker__item">ALLEN SOLLY</div>
         <div class="ticker__item">VAN HEUSEN</div>
         <div class="ticker__item">REEBOK INDIA</div>
@@ -221,54 +208,40 @@ joseph.dipin@gmail.com
 <div class="portfolio-trigger">SYNTH_GALLERY</div>
 </div>
 </section>
-    <!-- Services Section -->
+
+<!-- Services Section -->
 <section id="services" style="background:#000; color:#fff; padding: 80px 40px; font-family: monospace;">
-
   <p style="font-size: 11px; letter-spacing: 0.2em; color: #888; margin: 0 0 60px;">// SERVICES_DATA</p>
-
   <div style="max-width: 720px; margin: 0 auto;">
-
     <div style="border-top: 1px solid #222; padding: 32px 0;">
       <p style="font-size: 11px; letter-spacing: 0.2em; color: #555; margin: 0 0 10px;">01</p>
       <h2 style="font-size: 22px; letter-spacing: 0.15em; margin: 0 0 12px; font-weight: 400;">FASHION PHOTOGRAPHY</h2>
       <p style="font-size: 13px; color: #888; line-height: 1.8; margin: 0;">Editorial and commercial fashion photography in Bangalore. High-fashion lookbooks, catalogue shoots, and brand campaigns — crafted with precision and style. Available across Whitefield, Marathahalli, and all of Bangalore.</p>
     </div>
-
     <div style="border-top: 1px solid #222; padding: 32px 0;">
       <p style="font-size: 11px; letter-spacing: 0.2em; color: #555; margin: 0 0 10px;">02</p>
       <h2 style="font-size: 22px; letter-spacing: 0.15em; margin: 0 0 12px; font-weight: 400;">PRODUCT PHOTOGRAPHY</h2>
       <p style="font-size: 13px; color: #888; line-height: 1.8; margin: 0;">Professional product and e-commerce photography in Bangalore. Studio packshots, lifestyle product shoots, and brand imagery for businesses across Whitefield, Bellandur, and Sarjapur Road.</p>
     </div>
-
     <div style="border-top: 1px solid #222; padding: 32px 0;">
       <p style="font-size: 11px; letter-spacing: 0.2em; color: #555; margin: 0 0 10px;">03</p>
       <h2 style="font-size: 22px; letter-spacing: 0.15em; margin: 0 0 12px; font-weight: 400;">NEWBORN PHOTOGRAPHY</h2>
       <p style="font-size: 13px; color: #888; line-height: 1.8; margin: 0;">Affordable newborn and baby photography in Bangalore. Gentle, safe, and beautifully crafted sessions to capture your baby's earliest moments. Serving families across Whitefield, Brookefield, KR Puram, and nearby areas.</p>
     </div>
-
     <div style="border-top: 1px solid #222; padding: 32px 0;">
       <p style="font-size: 11px; letter-spacing: 0.2em; color: #555; margin: 0 0 10px;">04</p>
       <h2 style="font-size: 22px; letter-spacing: 0.15em; margin: 0 0 12px; font-weight: 400;">MATERNITY PHOTOGRAPHY</h2>
       <p style="font-size: 13px; color: #888; line-height: 1.8; margin: 0;">Maternity and pregnancy photoshoots in Bangalore. Elegant, emotive portraits that celebrate every stage of your journey. Available for sessions across Whitefield, Hoodi, Doddanekkundi, and all of Bangalore.</p>
     </div>
-
     <div style="border-top: 1px solid #222; border-bottom: 1px solid #222; padding: 32px 0;">
       <p style="font-size: 11px; letter-spacing: 0.2em; color: #555; margin: 0 0 10px;">05</p>
       <h2 style="font-size: 22px; letter-spacing: 0.15em; margin: 0 0 12px; font-weight: 400;">CINEMATOGRAPHY</h2>
       <p style="font-size: 13px; color: #888; line-height: 1.8; margin: 0;">Professional cinematography and videography in Bangalore. Brand films, commercial videos, and visual narratives — shot with cinematic precision. Serving clients across Whitefield, Marathahalli, and Bangalore.</p>
     </div>
-
   </div>
-
 </section>
 
-<!--<footer class="px-10 md:px-24 pt-40 pb-20 border-t border-white/5">
-<div class="golden-container">
-<a href="mailto:joseph.dipin@gmail.com" class="text-4xl md:text-7xl font-bold">CONTACT@SYNC</a>
-<span class="section-label text-right self-end">EST_2015</span>
-</div>
-</footer>-->
-    <footer class="px-6 md:px-24 pt-20 pb-10 border-t border-white/5">
+<footer class="px-6 md:px-24 pt-20 pb-10 border-t border-white/5">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <a href="mailto:joseph.dipin@gmail.com" class="text-3xl md:text-7xl font-bold tracking-tighter">
             CONTACT@SYNC
@@ -280,8 +253,10 @@ joseph.dipin@gmail.com
 </footer>
 
 </main>
+
 <script src="script.js"></script>
-    <!-- WhatsApp Floating Button -->
+
+<!-- WhatsApp Floating Button -->
 <style>
   .wa-float {
     position: fixed;
@@ -320,25 +295,6 @@ joseph.dipin@gmail.com
     </svg>
   </div>
 </a>
+
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
