@@ -1,33 +1,156 @@
 /* --- CORE STYLES --- */
-body { 
-    background: #000; 
-    color: #fff; 
-    font-family: 'Space Mono', monospace; 
-    overflow-x: hidden; 
-    margin: 0; 
+body {
+    background: #000;
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+    overflow-x: hidden;
+    margin: 0;
 }
-
-/* Commented out as requested */
-/*.grain-overlay { position: fixed; inset: 0; z-index: 50; pointer-events: none; opacity: 0.06; background: url('https://media.giphy.com/media/oEI9uWUqnW6re/giphy.gif'); }*/
 
 .main-content { position: relative; z-index: 20; mix-blend-mode: screen; }
 
-/* --- HERO SECTION --- */
-section.min-h-screen {
-    position: relative; /* Anchor for Scroll Hint */
+/* --- TAILWIND REPLACEMENTS --- */
+/* hero section */
+.hero-section {
+    position: relative;
     height: 100vh;
     width: 100%;
     display: flex;
     flex-direction: column;
     justify-content: center;
     overflow: hidden;
+    padding: 0 2.5rem;
+}
+@media (min-width: 768px) { .hero-section { padding: 0 6rem; } }
+
+/* profile section */
+.profile-section {
+    padding: 5rem 2.5rem;
+}
+@media (min-width: 768px) { .profile-section { padding: 5rem 6rem; } }
+
+.profile-text {
+    max-width: 36rem;
+    font-size: 1.125rem;
+    line-height: 1.625;
+    opacity: 0.6;
+    text-transform: uppercase;
+    white-space: pre-line;
+}
+@media (min-width: 768px) { .profile-text { font-size: 1.5rem; } }
+
+/* portfolio section wrapper */
+.portfolio-section { position: relative; }
+
+/* footer */
+.site-footer {
+    padding: 5rem 1.5rem 2.5rem;
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
+@media (min-width: 768px) { .site-footer { padding: 5rem 6rem 2.5rem; } }
+
+.footer-inner {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+}
+@media (min-width: 768px) {
+    .footer-inner {
+        flex-direction: row;
+        align-items: flex-end;
+    }
 }
 
+.footer-cta {
+    font-size: 1.875rem;
+    font-weight: 700;
+    letter-spacing: -0.05em;
+    color: #fff;
+    text-decoration: none;
+}
+@media (min-width: 768px) { .footer-cta { font-size: 4.5rem; } }
+
+.footer-est {
+    opacity: 0.3;
+    font-size: 0.75rem;
+    align-self: flex-end;
+}
+@media (min-width: 768px) { .footer-est { align-self: auto; } }
+
+/* services + faq shared */
+.services-section,
+.faq-section {
+    background: #000;
+    color: #fff;
+    padding: 80px 40px;
+    font-family: 'Space Mono', monospace;
+}
+
+.services-inner {
+    max-width: 720px;
+    margin: 0 auto;
+}
+
+.service-item {
+    border-top: 1px solid #222;
+    padding: 32px 0;
+}
+
+.service-item--last {
+    border-bottom: 1px solid #222;
+}
+
+.service-num {
+    font-size: 11px;
+    letter-spacing: 0.2em;
+    color: #555;
+    margin: 0 0 10px;
+}
+
+.service-title {
+    font-size: 22px;
+    letter-spacing: 0.15em;
+    margin: 0 0 12px;
+    font-weight: 400;
+    font-family: 'Space Mono', monospace;
+}
+
+.service-desc {
+    font-size: 13px;
+    color: #888;
+    line-height: 1.8;
+    margin: 0;
+}
+
+.faq-q {
+    font-size: 15px;
+    letter-spacing: 0.1em;
+    margin: 0 0 12px;
+    font-weight: 400;
+    color: #fff;
+    font-family: 'Space Mono', monospace;
+}
+
+/* --- HERO SECTION --- */
 #brush-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 10; }
 .brush-stamp { position: absolute; width: 100%; filter: url(#datamosh-filter); opacity: 0.6; pointer-events: none; }
 .hero-text { font-family: 'Inter', sans-serif; font-size: 14vw; line-height: 0.8; letter-spacing: -0.06em; text-transform: uppercase; }
 .section-label { font-size: 12px; opacity: 0.3; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 2rem; display: block; }
 .golden-container { display: grid; grid-template-columns: 1.618fr 1fr; gap: 4rem; }
+
+/* hero clip effect */
+.hero-clip-wrapper { position: relative; display: inline-block; line-height: inherit; width: 100%; }
+.hero-clip-base { color: white; display: block; }
+.hero-clip-overlay {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background-size: 140%; background-position: center 3%;
+    -webkit-background-clip: text; background-clip: text;
+    -webkit-text-fill-color: transparent; color: transparent;
+    display: block; opacity: 0; transition: opacity 1.2s ease;
+    pointer-events: none; letter-spacing: -0.06em;
+}
 
 /* --- PORTFOLIO TRIGGER --- */
 .portfolio-bg-container {
@@ -39,7 +162,9 @@ section.min-h-screen {
 .portfolio-bg-container img {
     position: absolute; width: 100%; height: 100%; object-fit: cover;
     filter: grayscale(1) brightness(0.3);
-    transition: all 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+    /* use transform only — avoids non-composited animation warning */
+    transition: filter 0.8s cubic-bezier(0.19, 1, 0.22, 1), transform 0.8s cubic-bezier(0.19, 1, 0.22, 1);
+    will-change: transform;
 }
 .portfolio-bg-container:hover img { filter: grayscale(0.2) brightness(0.5); transform: scale(1.02); }
 .portfolio-trigger {
@@ -55,65 +180,59 @@ section.min-h-screen {
     height: 100vh;
     background: #000;
     z-index: 1000;
-    display: none; /* Becomes flex via JS .active class */
-    align-items: center; 
+    display: none;
+    align-items: center;
     justify-content: center;
     opacity: 0;
     transition: opacity 0.5s ease;
     overflow: hidden;
 }
-
 #portfolio-page.active {
     display: flex;
     opacity: 1;
 }
-
-.exit-btn { 
-    padding: 2.5rem; 
-    text-align: right; 
-    cursor: pointer; 
-    opacity: 0.4; 
-    font-size: 7px; 
-    letter-spacing: 0.3em; 
-    position: absolute; 
-    top: 0; 
-    right: 0; 
-    z-index: 200; 
+.exit-btn {
+    padding: 2.5rem;
+    text-align: right;
+    cursor: pointer;
+    opacity: 0.4;
+    font-size: 7px;
+    letter-spacing: 0.3em;
+    position: absolute;
+    top: 0;
+    right: 0;
+    z-index: 200;
 }
 
 /* --- HORIZONTAL SCROLL SYSTEM --- */
 .horizontal-scroll {
     display: flex;
     flex-direction: row;
-    align-items: center; /* Vertical Center */
+    align-items: center;
     width: 100%;
-    height: 100%; 
+    height: 100%;
     padding: 0 10vw;
     gap: 15vw;
     overflow-x: auto;
     overflow-y: hidden;
     scrollbar-width: none;
 }
-
 .horizontal-scroll::-webkit-scrollbar { display: none; }
-
 .album-photo {
     flex: 0 0 auto;
-    height: 70vh; /* Frames the photo centered in the screen */
+    height: 70vh;
     display: flex;
-    align-items: center; 
+    align-items: center;
     justify-content: center;
 }
-
 .album-photo img {
     height: 100%;
     width: auto;
     object-fit: contain;
 }
-
 .asdf-stamp { position: absolute; pointer-events: none; z-index: 110; mix-blend-mode: lighten; filter: url(#asdf-sideways-filter); }
 
-/* --- RTL TICKER (Right to Left) --- */
+/* --- RTL TICKER --- */
 .ticker-wrap {
     width: 100%;
     overflow: hidden;
@@ -123,14 +242,12 @@ section.min-h-screen {
     padding: 1rem 0;
     margin: 1.5rem 0;
 }
-
 .ticker {
     display: flex;
     width: fit-content;
     flex-wrap: nowrap;
-    animation: marquee-rtl 10s linear infinite; /* Set to RTL */
-}  
-
+    animation: marquee-rtl 10s linear infinite;
+}
 .ticker__item {
     flex-shrink: 0;
     padding: 0 2rem;
@@ -140,9 +257,8 @@ section.min-h-screen {
     font-family: 'Space Mono', monospace;
     text-transform: uppercase;
 }
-
 @keyframes marquee-rtl {
-    0% { transform: translateX(0); }
+    0%   { transform: translateX(0); }
     100% { transform: translateX(-50%); }
 }
 
@@ -160,9 +276,7 @@ section.min-h-screen {
     transition: opacity 0.3s ease;
     z-index: 40;
 }
-
 .scroll-hint .section-label { margin-bottom: 0; font-size: 8px; opacity: 0.4; letter-spacing: 0.4em; }
-
 .scroll-line {
     width: 1px;
     height: 60px;
@@ -170,48 +284,27 @@ section.min-h-screen {
     position: relative;
     overflow: hidden;
 }
-
 .scroll-line::after {
     content: '';
     position: absolute;
-    top: -60px;
     left: 0;
     width: 100%;
     height: 100%;
     background: #fff;
+    /* translate instead of top — composited, no reflow */
+    transform: translateY(-60px);
     animation: scroll-draw 2s infinite cubic-bezier(0.19, 1, 0.22, 1);
 }
-
 @keyframes scroll-draw {
-    0% { top: -60px; }
-    100% { top: 60px; }
+    0%   { transform: translateY(-60px); }
+    100% { transform: translateY(60px); }
 }
-
-
 .scrolled .scroll-hint { opacity: 0; pointer-events: none; }
 
-/* --- FOOTER ALIGNMENT --- */
+/* --- FOOTER --- */
 footer .section-label {
     margin-bottom: 0;
     padding-bottom: 5px;
     white-space: nowrap;
     text-align: right;
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    }
