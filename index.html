@@ -73,7 +73,7 @@
 <div>
 <span class="section-label">VISUAL_SYNTH // 2015-2026</span>
 <!-- <h1 class="hero-text">DYPIN<br>JOSEPH</h1> -->
-  <!-- Single Clipping Mask for DYPIN JOSEPH -->
+<!-- Single Clipping Mask for DYPIN JOSEPH -->
 <style>
   .hero-clip-wrapper {
     position: relative;
@@ -82,22 +82,34 @@
     width: 100%;
   }
 
+  .hero-clip-base {
+    display: block;
+    color: white;
+  }
+
   .hero-clip-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     display: block;
     background-size: cover;
     background-position: center 20%;
     -webkit-background-clip: text;
     background-clip: text;
-    -webkit-text-fill-color: white;
-    color: white;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    opacity: 0;
+    transition: opacity 1.5s ease;
     pointer-events: none;
-      transition: opacity 1.2s ease;
   }
 </style>
 
 <h1 class="hero-text">
   <span class="hero-clip-wrapper">
-    <span class="hero-clip-overlay" id="hero-overlay">DYPIN<br>JOSEPH</span>
+    <span class="hero-clip-base">DYPIN<br>JOSEPH</span>
+    <span class="hero-clip-overlay" id="hero-overlay" aria-hidden="true">DYPIN<br>JOSEPH</span>
   </span>
 </h1>
 
@@ -134,14 +146,8 @@
 
     if (photoIndex === null) {
       overlay.style.opacity = '0';
-      setTimeout(() => {
-        overlay.style.backgroundImage = '';
-        overlay.style.webkitTextFillColor = 'white';
-        overlay.style.opacity = '1';
-      }, 1200);
     } else {
       overlay.style.backgroundImage = `url('${photos[photoIndex]}')`;
-      overlay.style.webkitTextFillColor = 'transparent';
       overlay.style.opacity = '1';
     }
 
