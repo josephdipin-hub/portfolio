@@ -91,6 +91,7 @@
     -webkit-text-fill-color: white;
     color: white;
     pointer-events: none;
+      transition: opacity 1.2s ease;
   }
 </style>
 
@@ -132,15 +133,21 @@
     const [photoIndex, duration] = sequence[step];
 
     if (photoIndex === null) {
-      overlay.style.backgroundImage = '';
-      overlay.style.webkitTextFillColor = 'white';
+      overlay.style.opacity = '0';
+      setTimeout(() => {
+        overlay.style.backgroundImage = '';
+        overlay.style.webkitTextFillColor = 'white';
+        overlay.style.opacity = '1';
+      }, 1200);
     } else {
       overlay.style.backgroundImage = `url('${photos[photoIndex]}')`;
       overlay.style.webkitTextFillColor = 'transparent';
+      overlay.style.opacity = '1';
     }
 
     step = (step + 1) % sequence.length;
     setTimeout(runSequence, duration);
+  }
   }
 
   setTimeout(runSequence, 800);
