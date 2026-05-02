@@ -312,12 +312,38 @@ joseph.dipin@gmail.com
   </div>
 </section>
 <div style="display:flex; justify-content:center; margin:40px 0;">
-  <iframe width="315" height="560"
-  src="https://www.youtube.com/embed/QCJysAf_uZY"
-  title="Cinematic Fashion Shoot in Bangalore"
-  frameborder="0"
-  allowfullscreen>
-  </iframe>
+<div id="yt-facade" onclick="loadYT(this)" data-id="QCJysAf_uZY"
+  style="cursor:pointer; position:relative; width:100%; max-width:315px; margin:0 auto; aspect-ratio:9/16; background:#000; overflow:hidden;">
+  <img 
+    src="https://i.ytimg.com/vi/QCJysAf_uZY/hqdefault.jpg" 
+    loading="lazy" 
+    alt="Dypin Joseph - Fashion & Product Photographer Bangalore"
+    style="width:100%; height:100%; object-fit:cover; opacity:0.8;">
+  <!-- play button -->
+  <div style="position:absolute; inset:0; display:flex; align-items:center; justify-content:center; pointer-events:none;">
+    <svg width="60" height="60" viewBox="0 0 60 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <circle cx="30" cy="30" r="30" fill="rgba(255,255,255,0.15)"/>
+      <polygon points="24,18 24,42 44,30" fill="white"/>
+    </svg>
+  </div>
+</div>
+
+<script>
+function loadYT(el) {
+  const iframe = document.createElement('iframe');
+  iframe.src = `https://www.youtube.com/embed/QCJysAf_uZY?autoplay=1`;
+  iframe.allow = 'autoplay; encrypted-media';
+  iframe.allowFullscreen = true;
+  Object.assign(iframe.style, {
+    width: '100%',
+    height: '100%',
+    border: 'none',
+    position: 'absolute',
+    inset: '0'
+  });
+  el.replaceWith(iframe);
+}
+</script>
 </div>
 <!-- FAQ Section -->
 <section id="faq" style="background:#000; color:#fff; padding: 80px 40px; font-family: monospace;">
