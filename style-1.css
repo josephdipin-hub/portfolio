@@ -1,0 +1,387 @@
+/* ═══════════════════════════════════════════════════════
+   DARKROOM GALLERY — David Langarica Style
+   Full-screen cards, bold typography, minimal text
+════════════════════════════════════════════════════════ */
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  background: #000;
+  color: #fff;
+  overflow-x: hidden;
+}
+
+/* ─ Main Container ─ */
+#product-page {
+  width: 100%;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #020100 0%, #0a0402 100%);
+  position: relative;
+}
+
+/* ─ Full-Screen Card Sections ─ */
+.zone-card {
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 40px;
+  position: relative;
+  overflow: hidden;
+  scroll-snap-align: start;
+}
+
+/* ─ Zone Content Layout ─ */
+.zone-content {
+  max-width: 1200px;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: center;
+}
+
+.zone-text {
+  display: flex;
+  flex-direction: column;
+  gap: 30px;
+}
+
+.zone-text h2 {
+  font-size: clamp(32px, 8vw, 72px);
+  font-weight: 300;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
+  color: #fff;
+}
+
+.zone-text .category-label {
+  font-size: 12px;
+  letter-spacing: 0.15em;
+  color: #ff6644;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.zone-visual {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#darkroom-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+}
+
+.zone-visual.has-3d #darkroom-canvas {
+  display: block;
+}
+
+.photos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 12px;
+  width: 100%;
+  height: 100%;
+}
+
+.photo-item {
+  aspect-ratio: 3/4;
+  background: #0a0402;
+  border: 1px solid #1a0a06;
+  border-radius: 2px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.photo-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0;
+  animation: photo-fade 1.2s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes photo-fade {
+  0% { opacity: 0; filter: blur(8px); }
+  100% { opacity: 0.88; filter: blur(0); }
+}
+
+.photo-item:hover {
+  transform: scale(1.05);
+  border-color: #ff6644;
+  box-shadow: 0 0 20px rgba(255, 102, 68, 0.2);
+}
+
+.photo-item::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(245, 232, 216, 0.08) 0%, rgba(10, 36, 41, 0.15) 100%);
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+/* ─ Neon Accent Lines ─ */
+.zone-card::before,
+.zone-card::after {
+  content: '';
+  position: absolute;
+  background: linear-gradient(90deg, transparent, #ff6644, transparent);
+  height: 2px;
+}
+
+.zone-card::before {
+  top: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  opacity: 0.3;
+}
+
+.zone-card::after {
+  bottom: 0;
+  left: 0;
+  right: 0;
+  width: 100%;
+  opacity: 0.2;
+}
+
+/* ─ Sidebar Branding ─ */
+.sidebar-brand {
+  position: fixed;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  color: #ff6644;
+  text-transform: uppercase;
+  z-index: 10;
+  opacity: 0.4;
+  transition: opacity 0.3s ease;
+}
+
+.sidebar-brand:hover {
+  opacity: 0.8;
+}
+
+/* ─ Loading Screen ─ */
+#dr-loading {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #030100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  opacity: 1;
+  transition: opacity 0.8s ease 0.3s;
+}
+
+#dr-loading.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+#dr-loading-text {
+  font-size: 14px;
+  letter-spacing: 0.15em;
+  color: #ff6644;
+  margin-bottom: 40px;
+  text-transform: uppercase;
+}
+
+#dr-loading-bar {
+  width: 180px;
+  height: 2px;
+  background: #222;
+  margin-bottom: 30px;
+}
+
+#dr-loading-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff6644, #ff4400);
+  width: 0%;
+  transition: width 0.3s ease;
+}
+
+/* ─ Fullscreen Viewer ─ */
+#darkroom-viewer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(2, 1, 0, 0.98);
+  z-index: 1000;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px;
+}
+
+#darkroom-viewer.active {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+#darkroom-viewer-inner {
+  position: relative;
+  width: 100%;
+  max-width: 500px;
+  max-height: 70vh;
+}
+
+#darkroom-viewer-img {
+  width: 100%;
+  height: auto;
+  max-height: 60vh;
+  object-fit: contain;
+  border: 1px solid #1a0a06;
+  border-radius: 1px;
+}
+
+#darkroom-viewer-img[style*="animation"] {
+  animation: viewer-open 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards !important;
+}
+
+@keyframes viewer-open {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+    filter: blur(8px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: blur(0);
+  }
+}
+
+#darkroom-viewer-meta {
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: #ff6644;
+  margin-top: 20px;
+  text-transform: uppercase;
+  text-align: center;
+}
+
+#darkroom-viewer-prev,
+#darkroom-viewer-next,
+#darkroom-viewer-close {
+  position: absolute;
+  background: transparent;
+  border: none;
+  color: #ff6644;
+  font-size: 20px;
+  cursor: pointer;
+  padding: 12px;
+  z-index: 10;
+  transition: opacity 0.3s ease;
+  opacity: 0.4;
+}
+
+#darkroom-viewer-prev:hover,
+#darkroom-viewer-next:hover,
+#darkroom-viewer-close:hover {
+  opacity: 1;
+}
+
+#darkroom-viewer-prev { bottom: -60px; left: 0; }
+#darkroom-viewer-next { bottom: -60px; right: 0; }
+#darkroom-viewer-close { top: -60px; right: 0; }
+
+/* ─ Exit Button ─ */
+.exit-btn {
+  position: fixed;
+  top: 20px;
+  left: 20px;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: #ff6644;
+  cursor: pointer;
+  z-index: 999;
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
+  line-height: 1.4;
+  text-transform: uppercase;
+  display: none;
+}
+
+#product-page.active .exit-btn {
+  display: block;
+  opacity: 0.4;
+}
+
+.exit-btn:hover {
+  opacity: 0.8;
+}
+
+/* ─ Responsive ─ */
+@media (max-width: 900px) {
+  .zone-content {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .zone-text h2 {
+    font-size: clamp(28px, 10vw, 48px);
+  }
+
+  .sidebar-brand {
+    left: 10px;
+    font-size: 10px;
+  }
+
+  .zone-card {
+    padding: 40px 20px;
+  }
+
+  .photos-grid {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+}
+
+/* ─ Utility ─ */
+#portfolio-page,
+#brush-container,
+#album-scroll,
+#asdf-transition-layer {
+  display: none;
+}
+
+.section-label,
+.scroll-hint,
+.scroll-line,
+.golden-container,
+.main-content,
+.ticker-wrap,
+.portfolio-bg-container,
+.portfolio-trigger {
+  display: none;
+}
