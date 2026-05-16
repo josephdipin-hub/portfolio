@@ -298,7 +298,7 @@ function initEnlargerBg() {
   /* Camera pulled well back — full model visible */
   pgCamera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 200);
   pgCamera.position.set(0, -6.0, 6.0);
-  pgCamera.lookAt(0, 2.0, 0);
+  pgCamera.lookAt(0, 3.0, 0);
 
   /* ── Fullscreen datamosh noise — separate orthographic scene ── */
   pgNoiseUniforms = {
@@ -368,7 +368,7 @@ function initEnlargerBg() {
     pgEnlargerModel.scale.setScalar(sc);
     /* Pivot = top of model so the head stays centered during rotation */
     var topY = box.max.y;
-    pgEnlargerModel.position.set(-ctr.x * sc-0.1, -ctr.y * sc, -ctr.z * sc-3.5);
+    pgEnlargerModel.position.set(-ctr.x * sc+0.5, -ctr.y * sc, -ctr.z * sc-3.5);
 
     pgScene.add(pgEnlargerModel);
 
