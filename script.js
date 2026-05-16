@@ -365,9 +365,9 @@ function initEnlargerBg() {
     var box = new THREE.Box3().setFromObject(pgEnlargerModel);
     var sz  = new THREE.Vector3(); box.getSize(sz);
     var ctr = new THREE.Vector3(); box.getCenter(ctr);
-    var sc  = 4 / Math.max(sz.x, sz.y, sz.z);
+    var sc  = 3.5 / Math.max(sz.x, sz.y, sz.z);
     pgEnlargerModel.scale.setScalar(sc);
-    pgEnlargerModel.position.set(-ctr.x * sc, -ctr.y * sc +12, -ctr.z * sc);
+    pgEnlargerModel.position.set(-ctr.x * sc, -ctr.y * sc +7, -ctr.z * sc);
 
     pgScene.add(pgEnlargerModel);
 
