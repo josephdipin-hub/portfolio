@@ -452,7 +452,7 @@ var FOG_FRAG = `
 
     /* Radial fade — fog thins at edges */
     vec2  ctr  = vUv - 0.5;
-    float radial = 1.0 - smoothstep(0.0, 0.5, length(ctr) * 1.6);
+    float radial = 1.0 - smoothstep(0.0, 0.5, length(ctr) * 0.9);
 
     /* Bottom fade — fog is denser at bottom, thins upward */
     float bottomFade = smoothstep(1.0, 0.1, vUv.y);
@@ -476,7 +476,7 @@ var FOG_FRAG = `
 function buildFogSystem(modelScale) {
   /* Bottom of model: center is 0, height ~2.415, so base ~ -1.2 */
   var fogY     = -1.15;
-  var numLayers = 6;
+  var numLayers = 12;
 
   for (var i = 0; i < numLayers; i++) {
     var uniforms = {
@@ -498,7 +498,7 @@ function buildFogSystem(modelScale) {
 
     /* Each layer: different size, slight y offset so they stack */
     var size  = 2.8 + i * 0.35;
-    var geo   = new THREE.PlaneGeometry(size, size * 0.28, 1, 1);
+    var geo = new THREE.PlaneGeometry(size, size, 1, 1);
     var mesh  = new THREE.Mesh(geo, mat);
 
     mesh.rotation.x  = -Math.PI / 2;  /* lie flat on ground plane */
