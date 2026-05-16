@@ -332,11 +332,11 @@ function initEnlargerBg() {
 
   
   var fill = new THREE.PointLight(0x4400aa, 8, 25, 1.6);
-  fill.position.set(-4, 6, 2);
+  fill.position.set(5, 16, 12);
   pgScene.add(fill);
 
   var rim = new THREE.PointLight(0x880033, 6, 20, 1.8);
-  rim.position.set(0, 5, -5);
+  rim.position.set(9, 15, -5);
   pgScene.add(rim);
 
   /* Load model */
