@@ -447,7 +447,7 @@ function buildFogSystem(modelScale) {
     sprite.material.opacity = sprite.userData.opacity;
 
     pgFogParticles.push(sprite);
-    pgScene.add(sprite);
+   // pgScene.add(sprite);
   }
 }
 
