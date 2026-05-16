@@ -182,7 +182,7 @@ if (productScroll) {
 }
 productScroll.addEventListener('scroll', function() {
   var fraction = productScroll.scrollLeft / 
-    (productScroll.scrollWidth - productScroll.clientWidth);
+  (productScroll.scrollWidth - productScroll.clientWidth);
   pgScrollRot = fraction * Math.PI * 2; // 10 images ≈ 1 rotation
 });
 
@@ -297,8 +297,8 @@ function initEnlargerBg() {
 
   /* Camera pulled well back — full model visible */
   pgCamera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 200);
-  pgCamera.position.set(0, 0.5, 7.0);
-  pgCamera.lookAt(0, 0, 0);
+  pgCamera.position.set(0, -2.5, 5.5);
+  pgCamera.lookAt(0, 1.5, 0);
 
   /* ── Fullscreen datamosh noise — separate orthographic scene ── */
   pgNoiseUniforms = {
