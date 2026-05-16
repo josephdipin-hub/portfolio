@@ -340,12 +340,17 @@ fill.position.set(6, 56, 5);
     /* ── CHROME FINISH — pure mirror chrome ── */
     pgEnlargerModel.traverse(function(n) {
       if (!n.isMesh) return;
-      n.material = new THREE.MeshStandardMaterial({
-        color:           new THREE.Color(0xd0c8d8), /* cool silver-white */
-        metalness:       1.0,
-        roughness:       0.4,  /* near-mirror */
-        envMapIntensity: 2.0,
-      });
+      n.material = new THREE.MeshPhysicalMaterial({
+      color:            new THREE.Color(0xffffff),
+      metalness:        0.0,
+      roughness:        0.0,
+      transmission:     1.0,  /* fully transparent glass */
+      thickness:        1.5,  /* light bending amount */
+      ior:              1.5,  /* glass refraction index */
+      transparent:      true,
+      opacity:          1.0,
+      envMapIntensity:  2.5,
+    });
       n.castShadow    = false;
       n.receiveShadow = false;
     });
