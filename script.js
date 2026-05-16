@@ -331,14 +331,13 @@ function initEnlargerBg() {
   pgScene.add(new THREE.HemisphereLight(0x2a0010, 0x080015, 2.0));
 
   
-  var fill = new THREE.PointLight(0x4400aa, 8, 25, 1.6);
-  fill.position.set(5, 16, 12);
-  pgScene.add(fill);
+ /* var fill = new THREE.PointLight(0xff1144, 5, 60, 1.0);
+fill.position.set(6, 16, 5);
 
   var rim = new THREE.PointLight(0x880033, 6, 20, 1.8);
   rim.position.set(9, 15, -5);
   pgScene.add(rim);
-
+*/
   /* Load model */
   var loader = new THREE.GLTFLoader();
   loader.load('models/durst_enlarger_darkroom_asset.glb', function(gltf) {
