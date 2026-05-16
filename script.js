@@ -180,6 +180,11 @@ if (productScroll) {
     productScroll.scrollLeft += e.deltaY;
   }, { passive: false });
 }
+productScroll.addEventListener('scroll', function() {
+  var fraction = productScroll.scrollLeft / 
+    (productScroll.scrollWidth - productScroll.clientWidth);
+  pgScrollRot = fraction * Math.PI * 2; // 10 images ≈ 1 rotation
+});
 
 /* ── Toggle ── */
 function toggleProductGallery(open) {
@@ -511,7 +516,12 @@ function stopEnlargerBg() {
   var canvas = document.getElementById('pg-bg-canvas');
   if (canvas) canvas.classList.remove('visible');
 }
-
+var pgScrollRot = 0;
+window.addEventListener('scroll', function() {
+  // 10:1 ratio — full page scroll height = 1 rotation
+  var scrollFraction = window.scrollY / (document.body.scrollHeight - window.innerHeight);
+  pgScrollRot = scrollFraction * Math.PI * 2;
+});
 function enlargerLoop() {
   pgAnimFrame = requestAnimationFrame(enlargerLoop);
   pgTime += 0.008;
@@ -524,9 +534,14 @@ function enlargerLoop() {
 
   /* Model: slow Y rotation + subtle breathe */
   if (pgEnlargerModel) {
-    pgEnlargerModel.rotation.y = Math.sin(pgTime * 0.12) * 0.20;
+    // scroll-driven rotation + idle sway on top
+    pgEnlargerModel.rotation.y = pgScrollRot + Math.sin(pgTime * 0.12) * 0.04;
     pgEnlargerModel.rotation.x = Math.sin(pgTime * 0.07) * 0.03;
   }
+  // fog layers follow the same rotation
+  pgFogMeshes.forEach(function(m) {
+    m.rotation.z = pgScrollRot;
+  });
 
   /* Camera: gentle drift */
   if (pgCamera) {
