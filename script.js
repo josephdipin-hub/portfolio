@@ -323,13 +323,13 @@ function initEnlargerBg() {
   pgNoiseScene.add(pgNoiseMesh);
 
   /* ── Lighting — reddish-purple davidlangarica mood ── */
-  pgScene.add(new THREE.HemisphereLight(0x2a0010, 0x080015, 0.5));
+  pgScene.add(new THREE.HemisphereLight(0x2a0010, 0x080015, 0.2));
    
-  var backLight = new THREE.PointLight(0xff2255, 28, 15, 1.2);
+  var backLight = new THREE.PointLight(0xff2255, 28, 15, 0.2);
   backLight.position.set(-4, 2, -3);
   pgScene.add(backLight);
   
-  var fill = new THREE.PointLight(0xff1144, 5, 60, 1.0);
+  var fill = new THREE.PointLight(0xff1144, 5, 60, 0.5);
   fill.position.set(6, 6, 5);
   pgScene.add(fill);
 
@@ -368,7 +368,7 @@ function initEnlargerBg() {
     pgEnlargerModel.scale.setScalar(sc);
     /* Pivot = top of model so the head stays centered during rotation */
     var topY = box.max.y;
-    pgEnlargerModel.position.set(0, -1.5, -0.5);
+    pgEnlargerModel.position.set(-ctr.x * sc, -ctr.y * sc, -ctr.z * sc);
 
     pgScene.add(pgEnlargerModel);
 
