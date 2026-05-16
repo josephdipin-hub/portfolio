@@ -327,29 +327,20 @@ function initEnlargerBg() {
   pgNoiseScene.add(pgNoiseMesh);
 
   /* ── Lighting — reddish-purple davidlangarica mood ── */
+// Sky: deep red, Ground: dark purple
+pgScene.add(new THREE.HemisphereLight(0x3a0a00, 0x0a0020, 1.8));
 
-  /* Ambient: deep reddish-purple */
-  pgScene.add(new THREE.AmbientLight(0x3a0025, 6.0));
+// Spot from above — aimed at center
+var spot = new THREE.SpotLight(0xff2244, 25, 30, Math.PI * 0.18, 0.4, 1.5);
+spot.position.set(0, 9, 3);
+spot.target.position.set(0, 0, 0);
+pgScene.add(spot);
+pgScene.add(spot.target);
 
-  /* Key: vivid magenta-red from upper right */
-  var key = new THREE.PointLight(0xff0055, 35, 40, 1.6);
-  key.position.set(4, 6, 5);
-  pgScene.add(key);
-
-  /* Fill: cool deep violet from left */
-  var fill = new THREE.PointLight(0x5500aa, 18, 30, 1.8);
-  fill.position.set(-5, 2, 3);
-  pgScene.add(fill);
-
-  /* Rim: hot pink from behind */
-  var rim = new THREE.PointLight(0xff0088, 20, 25, 2.0);
-  rim.position.set(0, -2, -4);
-  pgScene.add(rim);
-
-  /* Top: crimson direct */
-  var top = new THREE.DirectionalLight(0xcc0044, 2.0);
-  top.position.set(1, 8, 4);
-  pgScene.add(top);
+// Rim from behind
+var rim = new THREE.PointLight(0x6600aa, 8, 20, 1.8);
+rim.position.set(0, 3, -5);
+pgScene.add(rim);
 
   /* Load model */
   var loader = new THREE.GLTFLoader();
@@ -377,7 +368,7 @@ function initEnlargerBg() {
     pgEnlargerModel.scale.setScalar(sc);
     /* Pivot = top of model so the head stays centered during rotation */
     var topY = box.max.y;
-    pgEnlargerModel.position.set(-ctr.x * sc, -topY * sc, -ctr.z * sc);
+    pgEnlargerModel.position.set(-ctr.x * sc, -(ctr.y + sz.y * 0.45) * sc, -ctr.z * sc);
 
     pgScene.add(pgEnlargerModel);
 
