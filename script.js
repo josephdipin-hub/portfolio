@@ -343,7 +343,7 @@ fill.position.set(6, 56, 5);
       n.material = new THREE.MeshStandardMaterial({
         color:           new THREE.Color(0xd0c8d8), /* cool silver-white */
         metalness:       1.0,
-        roughness:       0.04,  /* near-mirror */
+        roughness:       0.4,  /* near-mirror */
         envMapIntensity: 2.0,
       });
       n.castShadow    = false;
