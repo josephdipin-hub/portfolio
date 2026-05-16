@@ -562,7 +562,7 @@ function enlargerLoop() {
   if (pgWatchModel && productScroll) {
     var fraction = productScroll.scrollLeft /
       (productScroll.scrollWidth - productScroll.clientWidth || 1);
-    pgWatchModel.position.y = 3.0 - (fraction * 14.0);
+    pgWatchModel.position.y = 4.5 - (fraction * 14.0);
     pgWatchModel.rotation.y = pgTime * 0.3;
   }
 
