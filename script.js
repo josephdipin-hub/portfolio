@@ -333,7 +333,7 @@ function initEnlargerBg() {
   fill.position.set(6, 6, 5);
   pgScene.add(fill);
 
-  var rim = new THREE.PointLight(0x880033, 6, 20, 1.8);
+  var rim = new THREE.PointLight(0x880033, 6, 20, 2.8);
   rim.position.set(3, 5, -5);
   pgScene.add(rim);
 
@@ -347,16 +347,16 @@ function initEnlargerBg() {
       if (!n.isMesh) return;
       n.material = new THREE.MeshPhysicalMaterial({
       color:            new THREE.Color(0xffffff),
-      metalness:        0.0,
+      metalness:        0.3,
       roughness:        0.0,
       transmission:     1.0,  /* fully transparent glass */
-      thickness:        1.5,  /* light bending amount */
-      ior:              1.5,  /* glass refraction index */
+      thickness:        3.5,  /* light bending amount */
+      ior:              2.5,  /* glass refraction index */
       transparent:      true,
       opacity:          1.0,
       envMapIntensity:  2.5,
     });
-      n.castShadow    = false;
+      n.castShadow    = true;
       n.receiveShadow = false;
     });
 
