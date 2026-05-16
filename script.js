@@ -326,12 +326,12 @@ function initEnlargerBg() {
   pgScene.add(new THREE.HemisphereLight(0x2a0010, 0x080015, 2.0));
 
   
-  var fill = new THREE.PointLight(0xff1144, 5, 60, 1.0);
-fill.position.set(6, 26, 5);
+  /*var fill = new THREE.PointLight(0xff1144, 5, 60, 1.0);
+fill.position.set(6, 56, 5);*/
 
-/*  var rim = new THREE.PointLight(0x880033, 6, 20, 1.8);
-  rim.position.set(9, 15, -5);
-  pgScene.add(rim);*/
+  var rim = new THREE.PointLight(0x880033, 6, 20, 1.8);
+  rim.position.set(9, 55, -5);
+  pgScene.add(rim);
 
   /* Load model */
   var loader = new THREE.GLTFLoader();
