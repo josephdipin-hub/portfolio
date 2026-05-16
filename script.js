@@ -324,6 +324,10 @@ function initEnlargerBg() {
 
   /* ── Lighting — reddish-purple davidlangarica mood ── */
   pgScene.add(new THREE.HemisphereLight(0x2a0010, 0x080015, 2.0));
+   
+  var backLight = new THREE.PointLight(0xff2255, 8, 15, 1.2);
+  backLight.position.set(-4, 2, -3);
+  pgScene.add(backLight);
   
   var fill = new THREE.PointLight(0xff1144, 5, 60, 1.0);
   fill.position.set(6, 6, 5);
