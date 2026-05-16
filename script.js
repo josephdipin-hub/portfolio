@@ -368,7 +368,7 @@ function initEnlargerBg() {
     pgEnlargerModel.scale.setScalar(sc);
     /* Pivot = top of model so the head stays centered during rotation */
     var topY = box.max.y;
-    pgEnlargerModel.position.set(-ctr.x * sc-0.2, -ctr.y * sc, -ctr.z * sc-3);
+    pgEnlargerModel.position.set(-ctr.x * sc-0.5, -ctr.y * sc, -ctr.z * sc-3.5);
 
     pgScene.add(pgEnlargerModel);
 
