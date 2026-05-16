@@ -327,19 +327,21 @@ function initEnlargerBg() {
   pgNoiseScene.add(pgNoiseMesh);
 
   /* ── Lighting — reddish-purple davidlangarica mood ── */
-// Sky: deep red, Ground: dark purple
-pgScene.add(new THREE.HemisphereLight(0x3a0a00, 0x0a0020, 1.8));
+// REPLACE lines 329–352 (entire lighting block):
+pgScene.add(new THREE.HemisphereLight(0x2a0010, 0x080015, 2.0));
 
-// Spot from above — aimed at center
-var spot = new THREE.SpotLight(0xff2244, 25, 30, Math.PI * 0.18, 0.4, 1.5);
-spot.position.set(0, 9, 3);
-spot.target.position.set(0, 0, 0);
-pgScene.add(spot);
-pgScene.add(spot.target);
+var key = new THREE.SpotLight(0xff1144, 20, 30, Math.PI * 0.2, 0.5, 1.4);
+key.position.set(0, 9, 3);
+key.target.position.set(0, 0, 0);
+pgScene.add(key);
+pgScene.add(key.target);
 
-// Rim from behind
-var rim = new THREE.PointLight(0x6600aa, 8, 20, 1.8);
-rim.position.set(0, 3, -5);
+var fill = new THREE.PointLight(0x4400aa, 8, 25, 1.6);
+fill.position.set(-4, 6, 2);
+pgScene.add(fill);
+
+var rim = new THREE.PointLight(0x880033, 6, 20, 1.8);
+rim.position.set(0, 5, -5);
 pgScene.add(rim);
 
   /* Load model */
