@@ -401,114 +401,82 @@ function initEnlargerBg() {
   }, undefined, function() { /* silent fail */ });
 }
 
-/* ── LIQUID NITROGEN FOG SYSTEM ── */
-var pgFogMeshes = [], pgFogUniforms = [];
-
-var FOG_VERT = `
-  varying vec2 vUv;
-  varying float vAlpha;
-  uniform float uTime;
-  uniform float uLayer;
-  void main() {
-    vUv = uv;
-    /* Each layer drifts at slightly different speed */
-    vec3 pos = position;
-    pos.x += sin(uTime * 0.18 + uLayer * 2.1) * 0.22;
-    pos.z += cos(uTime * 0.13 + uLayer * 1.7) * 0.18;
-    vAlpha = 1.0;
-    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
-  }
-`;
-
-var FOG_FRAG = `
-  uniform float uTime;
-  uniform float uLayer;
-  uniform float uOpacity;
-  varying vec2  vUv;
-
-  float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
-  float noise(vec2 p) {
-    vec2 i = floor(p); vec2 f = fract(p);
-    f = f * f * (3.0 - 2.0 * f);
-    return mix(
-      mix(hash(i), hash(i + vec2(1,0)), f.x),
-      mix(hash(i + vec2(0,1)), hash(i + vec2(1,1)), f.x), f.y);
-  }
-  float fbm(vec2 p) {
-    float v = 0.0; float a = 0.5;
-    for (int i = 0; i < 4; i++) { v += a * noise(p); p *= 2.2; a *= 0.5; }
-    return v;
-  }
-
-  void main() {
-    float t   = uTime * 0.08 + uLayer * 1.3;
-    vec2  uv  = vUv;
-
-    /* Billow — multiple octaves of scrolling noise */
-    float n1 = fbm(uv * 2.2 + vec2(t * 0.7,  t * 0.4));
-    float n2 = fbm(uv * 3.8 - vec2(t * 0.5,  t * 0.6) + vec2(uLayer * 0.4));
-    float n3 = fbm(uv * 1.4 + vec2(t * 0.3, -t * 0.5) + vec2(uLayer * 0.7));
-    float n  = n1 * 0.5 + n2 * 0.3 + n3 * 0.2;
-
-    /* Radial fade — fog thins at edges */
-    vec2  ctr  = vUv - 0.5;
-    float radial = 1.0 - smoothstep(0.0, 0.5, length(ctr) * 0.9);
-
-    /* Bottom fade — fog is denser at bottom, thins upward */
-    float bottomFade = smoothstep(1.0, 0.1, vUv.y);
-
-    /* Alpha — wispy, not solid */
-    float alpha = n * radial * bottomFade * uOpacity;
-    alpha = pow(alpha, 1.4); /* sharpen wisps */
-    alpha = clamp(alpha, 0.0, 1.0);
-
-    /* Colour — liquid nitrogen: near-white core, ice-blue edge, purple tinge from scene */
-    vec3 core  = vec3(0.88, 0.92, 1.00);  /* white-blue core    */
-    vec3 edge  = vec3(0.45, 0.55, 0.85);  /* ice blue edge      */
-    vec3 tint  = vec3(0.55, 0.30, 0.75);  /* purple scene tint  */
-    vec3 col   = mix(edge, core, pow(n, 2.0));
-    col        = mix(col, tint, (1.0 - n) * 0.28);
-
-    gl_FragColor = vec4(col, alpha);
-  }
-`;
+/* ── LIQUID NITROGEN FOG — PARTICLE SYSTEM ── */
+var pgFogParticles = [], pgFogGeometry = null, pgFogSystem = null;
+var FOG_PARTICLE_COUNT = 180;
 
 function buildFogSystem(modelScale) {
-  /* Bottom of model: center is 0, height ~2.415, so base ~ -1.2 */
-  var fogY     = -1.15;
-  var numLayers = 12;
+  var fogY = -1.15;
 
-  for (var i = 0; i < numLayers; i++) {
-    var uniforms = {
-      uTime:    { value: 0.0 },
-      uLayer:   { value: i },
-      uOpacity: { value: 0.55 + i * 0.06 },
+  /* Soft circle texture — drawn on a canvas */
+  var size = 128;
+  var fogCanvas = document.createElement('canvas');
+  fogCanvas.width = fogCanvas.height = size;
+  var ctx = fogCanvas.getContext('2d');
+  var grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+  grad.addColorStop(0.0,  'rgba(200, 220, 255, 1.0)');
+  grad.addColorStop(0.35, 'rgba(160, 185, 240, 0.6)');
+  grad.addColorStop(0.7,  'rgba(100, 130, 210, 0.2)');
+  grad.addColorStop(1.0,  'rgba(80,  100, 200, 0.0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  var fogTex = new THREE.CanvasTexture(fogCanvas);
+
+  var mat = new THREE.SpriteMaterial({
+    map:         fogTex,
+    transparent: true,
+    depthWrite:  false,
+    blending:    THREE.AdditiveBlending,
+    opacity:     1.0,
+  });
+
+  for (var i = 0; i < FOG_PARTICLE_COUNT; i++) {
+    var sprite = new THREE.Sprite(mat.clone());
+
+    /* Random position in an elliptical disc around model base */
+    var angle  = Math.random() * Math.PI * 2;
+    var radius = Math.random() * 1.8;
+    sprite.position.set(
+      Math.cos(angle) * radius * 1.4,
+      fogY + Math.random() * 0.5,
+      Math.sin(angle) * radius
+    );
+
+    var s = 0.6 + Math.random() * 1.1;
+    sprite.scale.set(s, s, 1);
+
+    /* Store drift params */
+    sprite.userData = {
+      baseY:    sprite.position.y,
+      speed:    0.003 + Math.random() * 0.005,
+      angle:    angle,
+      radius:   radius,
+      drift:    (Math.random() - 0.5) * 0.008,
+      riseRate: 0.0004 + Math.random() * 0.0006,
+      opacity:  0.06 + Math.random() * 0.10,
+      phase:    Math.random() * Math.PI * 2,
     };
-    pgFogUniforms.push(uniforms);
+    sprite.material.opacity = sprite.userData.opacity;
 
-    var mat = new THREE.ShaderMaterial({
-      uniforms:       uniforms,
-      vertexShader:   FOG_VERT,
-      fragmentShader: FOG_FRAG,
-      transparent:    true,
-      depthWrite:     false,
-      blending:       THREE.NormalBlending,
-      side:           THREE.DoubleSide,
-    });
-
-    /* Each layer: different size, slight y offset so they stack */
-    var size  = 2.8 + i * 0.35;
-    var geo = new THREE.PlaneGeometry(size, size, 1, 1);
-    var mesh  = new THREE.Mesh(geo, mat);
-
-    mesh.rotation.x  = -Math.PI / 2;  /* lie flat on ground plane */
-    mesh.position.y  = fogY - i * 0.04; /* stack layers slightly */
-    mesh.position.z  = -i * 0.05;
-    mesh.renderOrder = 10 + i;
-
-    pgFogMeshes.push(mesh);
-    pgScene.add(mesh);
+    pgFogParticles.push(sprite);
+    pgScene.add(sprite);
   }
+}
+
+function updateFogParticles() {
+  var t = pgTime;
+  pgFogParticles.forEach(function(s) {
+    var d = s.userData;
+    /* Swirl drift */
+    d.angle += d.drift;
+    s.position.x = Math.cos(d.angle) * d.radius * 1.4;
+    s.position.z = Math.sin(d.angle) * d.radius;
+    /* Slow rise then reset */
+    s.position.y += d.riseRate;
+    if (s.position.y > d.baseY + 0.9) s.position.y = d.baseY;
+    /* Pulse opacity */
+    s.material.opacity = d.opacity * (0.7 + 0.3 * Math.sin(t * 0.4 + d.phase));
+  });
 }
 
 function stopEnlargerBg() {
@@ -530,7 +498,7 @@ function enlargerLoop() {
   if (pgNoiseUniforms) pgNoiseUniforms.uTime.value = pgTime;
 
   /* Fog uniforms */
-  pgFogUniforms.forEach(function(u) { u.uTime.value = pgTime; });
+  updateFogParticles();
 
   /* Model: slow Y rotation + subtle breathe */
   if (pgEnlargerModel) {
