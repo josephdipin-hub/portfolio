@@ -264,14 +264,9 @@ var PG_NOISE_FRAG = `
     col.b += (1.0 - n) * 0.08;
     col   += scan * vec3(0.3, 0.05, 0.1);
 
-    /* Vignette */
-    vec2  vig = vUv * (1.0 - vUv.yx);
-    float v   = pow(vig.x * vig.y * 18.0, 0.55);
-    col      *= mix(0.0, 1.0, v);
-
     /* Grain */
-    float grain = hash(vUv * uRes + t * 137.0) * 0.035;
-    col += grain * vec3(0.5, 0.15, 0.3);
+float grain = hash(vUv * uRes + t * 137.0) * 0.06;
+col += grain * vec3(0.5, 0.15, 0.3);
 
     gl_FragColor = vec4(col, 0.82);
   }
@@ -403,10 +398,10 @@ function buildFogSystem(modelScale) {
   fogCanvas.width = fogCanvas.height = size;
   var ctx = fogCanvas.getContext('2d');
   var grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
-  grad.addColorStop(0.0,  'rgba(200, 220, 255, 1.0)');
-  grad.addColorStop(0.35, 'rgba(160, 185, 240, 0.6)');
-  grad.addColorStop(0.7,  'rgba(100, 130, 210, 0.2)');
-  grad.addColorStop(1.0,  'rgba(80,  100, 200, 0.0)');
+  grad.addColorStop(0.0,  'rgba(255, 240, 255, 1.0)');
+  grad.addColorStop(0.35, 'rgba(220, 180, 255, 0.8)');
+  grad.addColorStop(0.7,  'rgba(180, 120, 220, 0.3)');
+  grad.addColorStop(1.0,  'rgba(100,  60, 180, 0.0)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
   var fogTex = new THREE.CanvasTexture(fogCanvas);
@@ -431,7 +426,7 @@ function buildFogSystem(modelScale) {
       Math.sin(angle) * radius
     );
 
-    var s = 0.6 + Math.random() * 1.1;
+    var s = 1.2 + Math.random() * 1.8;
     sprite.scale.set(s, s, 1);
 
     /* Store drift params */
@@ -442,7 +437,7 @@ function buildFogSystem(modelScale) {
       radius:   radius,
       drift:    (Math.random() - 0.5) * 0.008,
       riseRate: 0.0004 + Math.random() * 0.0006,
-      opacity:  0.06 + Math.random() * 0.10,
+      opacity: 0.25 + Math.random() * 0.25,
       phase:    Math.random() * Math.PI * 2,
     };
     sprite.material.opacity = sprite.userData.opacity;
