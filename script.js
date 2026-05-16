@@ -37,7 +37,7 @@ const FRAG_SHADER = `
     vec2 uvB = clamp(uv + displacement + vec2(-rgbSplit, 0.0), 0.001, 0.999);
     float r = texture2D(uTexture, uvR).r; float g = texture2D(uTexture, uvG).g;
     float b = texture2D(uTexture, uvB).b; float a = texture2D(uTexture, uvG).a;
-    gl_FragColor = vec4(r, g, b, a * intensity * 0.5);
+    gl_FragColor = vec4(r, g, b, a * intensity * 0.2);
   }
 `;
 const glCanvas = document.getElementById('glsl-canvas');
@@ -562,7 +562,7 @@ function enlargerLoop() {
   if (pgWatchModel && productScroll) {
     var fraction = productScroll.scrollLeft /
       (productScroll.scrollWidth - productScroll.clientWidth || 1);
-    pgWatchModel.position.y = 10.0 - (fraction * 14.0);
+    pgWatchModel.position.y = 3.0 - (fraction * 14.0);
     pgWatchModel.rotation.y = pgTime * 0.3;
   }
 
