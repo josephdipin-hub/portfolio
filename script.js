@@ -297,7 +297,7 @@ function initEnlargerBg() {
 
   /* Camera pulled well back — full model visible */
   pgCamera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 200);
-  pgCamera.position.set(0, -2.0, 6.0);
+  pgCamera.position.set(0, -4.0, 2.0);
   pgCamera.lookAt(0, 2.0, 0);
 
   /* ── Fullscreen datamosh noise — separate orthographic scene ── */
