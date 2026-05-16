@@ -331,7 +331,7 @@ function initEnlargerBg() {
   backLight.position.set(-4, 2, -3);
   pgScene.add(backLight);
 
-  var fill = new THREE.PointLight(0xff1144, 5, 60, 0.2);
+  var fill = new THREE.PointLight(0xff1144, 5, 60, 0.1);
   fill.position.set(6, 6, 5);
   pgScene.add(fill);
 
@@ -367,7 +367,7 @@ function initEnlargerBg() {
     var ctr = new THREE.Vector3(); box.getCenter(ctr);
     var sc  = 3.5 / Math.max(sz.x, sz.y, sz.z);
     pgEnlargerModel.scale.setScalar(sc);
-    pgEnlargerModel.position.set(-ctr.x * sc, -ctr.y * sc +7, -ctr.z * sc);
+    pgEnlargerModel.position.set(-ctr.x * sc, -ctr.y * sc +1, -ctr.z * sc);
 
     pgScene.add(pgEnlargerModel);
 
