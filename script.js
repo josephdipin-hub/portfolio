@@ -192,10 +192,10 @@ function toggleProductGallery(open) {
     productScroll.scrollLeft = 0;
     initEnlargerBg();
     setTimeout(function() {
-    var scroll = document.getElementById('product-scroll');
-    if (scroll) scroll.classList.add('ready');
-   }, 8000); 
+      document.getElementById('product-scroll').classList.add('ready');
+    }, 800);
   } else {
+    document.getElementById('product-scroll').classList.remove('ready');
     stopEnlargerBg();
   }
 }
