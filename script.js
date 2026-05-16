@@ -191,6 +191,10 @@ function toggleProductGallery(open) {
   if (open) {
     productScroll.scrollLeft = 0;
     initEnlargerBg();
+    setTimeout(function() {
+    var scroll = document.getElementById('product-scroll');
+    if (scroll) scroll.classList.add('ready');
+   }, 8000); 
   } else {
     stopEnlargerBg();
   }
@@ -420,6 +424,7 @@ function initEnlargerBg() {
     }, undefined, function() {});
 
     canvas.classList.add('visible');
+    document.getElementById('product-scroll').classList.add('ready');
     enlargerLoop();
   }, undefined, function() {});
 }
