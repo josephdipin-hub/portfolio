@@ -323,9 +323,9 @@ function initEnlargerBg() {
   pgNoiseScene.add(pgNoiseMesh);
 
   /* ── Lighting — reddish-purple davidlangarica mood ── */
-  pgScene.add(new THREE.HemisphereLight(0x2a0010, 0x080015, 2.0));
+  pgScene.add(new THREE.HemisphereLight(0x2a0010, 0x080015, 0.5));
    
-  var backLight = new THREE.PointLight(0xff2255, 8, 15, 1.2);
+  var backLight = new THREE.PointLight(0xff2255, 28, 15, 1.2);
   backLight.position.set(-4, 2, -3);
   pgScene.add(backLight);
   
