@@ -327,22 +327,21 @@ function initEnlargerBg() {
   pgNoiseScene.add(pgNoiseMesh);
 
   /* ── Lighting — reddish-purple davidlangarica mood ── */
-// REPLACE lines 329–352 (entire lighting block):
-pgScene.add(new THREE.HemisphereLight(0x2a0010, 0x080015, 2.0));
+  pgScene.add(new THREE.HemisphereLight(0x2a0010, 0x080015, 2.0));
 
-var key = new THREE.SpotLight(0xff1144, 20, 30, Math.PI * 0.2, 0.5, 1.4);
-key.position.set(0, 9, 3);
-key.target.position.set(0, 0, 0);
-pgScene.add(key);
-pgScene.add(key.target);
+  var key = new THREE.SpotLight(0xff1144, 20, 30, Math.PI * 0.2, 0.5, 1.4);
+  key.position.set(0, 9, 3);
+  key.target.position.set(0, 0, 0);
+  pgScene.add(key);
+  pgScene.add(key.target);
 
-var fill = new THREE.PointLight(0x4400aa, 8, 25, 1.6);
-fill.position.set(-4, 6, 2);
-pgScene.add(fill);
+  var fill = new THREE.PointLight(0x4400aa, 8, 25, 1.6);
+  fill.position.set(-4, 6, 2);
+  pgScene.add(fill);
 
-var rim = new THREE.PointLight(0x880033, 6, 20, 1.8);
-rim.position.set(0, 5, -5);
-pgScene.add(rim);
+  var rim = new THREE.PointLight(0x880033, 6, 20, 1.8);
+  rim.position.set(0, 5, -5);
+  pgScene.add(rim);
 
   /* Load model */
   var loader = new THREE.GLTFLoader();
