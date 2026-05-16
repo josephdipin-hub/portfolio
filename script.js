@@ -357,7 +357,7 @@ function initEnlargerBg() {
       envMapIntensity:  2.5,
     });
       n.castShadow    = true;
-      n.receiveShadow = false;
+      n.receiveShadow = true;
     });
 
     /* Scale + pivot at top of enlarger head (not bounding box center) */
