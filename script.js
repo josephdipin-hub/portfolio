@@ -166,27 +166,28 @@ function togglePortfolio(open) {
 
 /* ══════════════════════════════════════
    PRODUCT GALLERY — FULL PAGE OVERLAY
-   Same pattern as fashion gallery.
-   Durst enlarger as 3D background.
 ══════════════════════════════════════ */
 
 var productPage   = document.getElementById('product-page');
 var productScroll = document.getElementById('product-scroll');
 
-/* Wheel → horizontal scroll (same as fashion gallery) */
 if (productScroll) {
   productScroll.addEventListener('wheel', function(e) {
     e.preventDefault();
     productScroll.scrollLeft += e.deltaY;
   }, { passive: false });
 }
+
+/* scroll → rotation + pgIsScrolling flag */
 productScroll.addEventListener('scroll', function() {
-  var fraction = productScroll.scrollLeft / 
-  (productScroll.scrollWidth - productScroll.clientWidth);
-  pgScrollRot = fraction * Math.PI * 2; // 10 images ≈ 1 rotation
+  var fraction = productScroll.scrollLeft /
+    (productScroll.scrollWidth - productScroll.clientWidth);
+  pgScrollRot = fraction * Math.PI * 2;
+  pgIsScrolling = true;
+  clearTimeout(pgScrollTimer);
+  pgScrollTimer = setTimeout(function() { pgIsScrolling = false; }, 150);
 });
 
-/* ── Toggle ── */
 function toggleProductGallery(open) {
   productPage.classList.toggle('active', open);
   document.body.style.overflow = open ? 'hidden' : 'auto';
@@ -198,18 +199,37 @@ function toggleProductGallery(open) {
   }
 }
 
-/* ══ DURST ENLARGER 3D BACKGROUND ══
-   Metal finish · Reddish-purple ambient
-   Pulled back to show full model
-   Datamosh noise plane behind it
-════════════════════════════════════ */
+/* ══ DURST ENLARGER 3D BACKGROUND ══ */
 var pgRenderer = null, pgScene = null, pgCamera = null;
 var pgNoiseScene = null, pgNoiseCamera = null;
-var pgAnimFrame = null, pgEnlargerModel = null;
+var pgAnimFrame = null, pgEnlargerModel = null, pgEnlargerGroup = null;
+var pgWatchModel = null;
 var pgBgInited  = false, pgTime = 0;
 var pgNoiseMesh = null, pgNoiseUniforms = null;
+var pgScrollRot = 0;
 
-/* Datamosh noise fragment shader — runs on a fullscreen quad behind model */
+/* ── Corner particle emitter state ── */
+var pgCornerParticles = [];
+var pgIsScrolling = false;
+var pgScrollTimer = null;
+
+/* Corner particle texture — small bright dot */
+var _pgCornerTex = null;
+function _buildCornerTex() {
+  var size = 64;
+  var c = document.createElement('canvas');
+  c.width = c.height = size;
+  var ctx = c.getContext('2d');
+  var g = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+  g.addColorStop(0.0, 'rgba(255, 180, 255, 1.0)');
+  g.addColorStop(0.4, 'rgba(200, 100, 255, 0.6)');
+  g.addColorStop(1.0, 'rgba(100,  50, 200, 0.0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  return new THREE.CanvasTexture(c);
+}
+
+/* Datamosh noise shaders */
 var PG_NOISE_VERT = `
   varying vec2 vUv;
   void main() { vUv = uv; gl_Position = vec4(position, 1.0); }
@@ -237,36 +257,30 @@ var PG_NOISE_FRAG = `
     vec2 uv = vUv;
     float t  = uTime * 0.18;
 
-    /* Block displacement — datamosh style */
     float blockY    = floor(uv.y * 32.0) / 32.0;
     float blockRand = hash(vec2(blockY, floor(t * 4.0)));
     float blockShift = step(0.82, blockRand) * (blockRand - 0.5) * 0.06;
     uv.x += blockShift;
 
-    /* Gradient base — dark carrot red top to deep purple bottom (reversed + darkened) */
     vec3 grad = mix(
-      vec3(0.38, 0.09, 0.01),   /* dark carrot red  — top    */
-      vec3(0.05, 0.0,  0.14),   /* very deep purple — bottom */
+      vec3(0.38, 0.09, 0.01),
+      vec3(0.05, 0.0,  0.14),
       vUv.y
     );
 
-    /* Noise modulation — subtle, don't kill the gradient */
     float n1 = fbm(uv * 3.5 + vec2(t * 0.6, t * 0.4));
     float n2 = fbm(uv * 6.0 - vec2(t * 0.3, t * 0.7));
     float n  = n1 * 0.7 + n2 * 0.3;
 
-    /* Scanlines */
     float scan = sin(vUv.y * uRes.y * 0.8 + t * 12.0) * 0.012;
 
     vec3 col  = grad;
-    /* Noise shifts colour slightly — keeps it alive */
     col.r += n * 0.12;
     col.b += (1.0 - n) * 0.08;
     col   += scan * vec3(0.3, 0.05, 0.1);
 
-    /* Grain */
-float grain = hash(vUv * uRes + t * 137.0) * 0.06;
-col += grain * vec3(0.5, 0.15, 0.3);
+    float grain = hash(vUv * uRes + t * 137.0) * 0.06;
+    col += grain * vec3(0.5, 0.15, 0.3);
 
     gl_FragColor = vec4(col, 0.82);
   }
@@ -283,6 +297,7 @@ function initEnlargerBg() {
   if (typeof THREE === 'undefined') return;
 
   pgBgInited = true;
+  _pgCornerTex = _buildCornerTex();
 
   pgRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
   pgRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
@@ -293,14 +308,13 @@ function initEnlargerBg() {
   pgRenderer.outputEncoding = THREE.sRGBEncoding;
   pgRenderer.shadowMap.enabled = false;
 
-  pgScene  = new THREE.Scene();
+  pgScene = new THREE.Scene();
 
-  /* Camera pulled well back — full model visible */
   pgCamera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 200);
   pgCamera.position.set(0, -6.0, 6.0);
   pgCamera.lookAt(0, 3.0, 0);
 
-  /* ── Fullscreen datamosh noise — separate orthographic scene ── */
+  /* Datamosh noise scene */
   pgNoiseUniforms = {
     uTime: { value: 0.0 },
     uRes:  { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
@@ -313,22 +327,19 @@ function initEnlargerBg() {
     depthTest:      false,
     transparent:    true,
   });
-  /* Screen-space quad — use a separate ortho camera so it always fills screen */
   pgNoiseMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), noiseMat);
   pgNoiseMesh.frustumCulled = false;
-
-  /* Dedicated ortho scene — renders first, always fills screen */
   pgNoiseScene  = new THREE.Scene();
   pgNoiseCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   pgNoiseScene.add(pgNoiseMesh);
 
-  /* ── Lighting — reddish-purple davidlangarica mood ── */
+  /* Lighting */
   pgScene.add(new THREE.HemisphereLight(0x2a0010, 0x080015, 0.2));
-   
+
   var backLight = new THREE.PointLight(0xff2255, 28, 15, 0.1);
   backLight.position.set(-4, 2, -3);
   pgScene.add(backLight);
-  
+
   var fill = new THREE.PointLight(0xff1144, 5, 60, 0.2);
   fill.position.set(6, 6, 5);
   pgScene.add(fill);
@@ -337,42 +348,44 @@ function initEnlargerBg() {
   rim.position.set(3, 5, -5);
   pgScene.add(rim);
 
-  /* Load model */
+  /* Load enlarger */
   var loader = new THREE.GLTFLoader();
   loader.load('models/durst_enlarger_darkroom_asset.glb', function(gltf) {
     pgEnlargerModel = gltf.scene;
 
-    /* ── CHROME FINISH — pure mirror chrome ── */
     pgEnlargerModel.traverse(function(n) {
       if (!n.isMesh) return;
       n.material = new THREE.MeshPhysicalMaterial({
-      color:            new THREE.Color(0xffffff),
-      metalness:        0.3,
-      roughness:        0.0,
-      transmission:     1.0,  /* fully transparent glass */
-      thickness:        3.5,  /* light bending amount */
-      ior:              2.5,  /* glass refraction index */
-      transparent:      true,
-      opacity:          1.0,
-      envMapIntensity:  2.5,
-    });
+        color:           new THREE.Color(0xffffff),
+        metalness:       0.3,
+        roughness:       0.0,
+        transmission:    1.0,
+        thickness:       3.5,
+        ior:             2.5,
+        transparent:     true,
+        opacity:         1.0,
+        envMapIntensity: 2.5,
+      });
       n.castShadow    = true;
       n.receiveShadow = true;
     });
 
-    /* Scale + pivot at top of enlarger head (not bounding box center) */
     var box = new THREE.Box3().setFromObject(pgEnlargerModel);
     var sz  = new THREE.Vector3(); box.getSize(sz);
     var ctr = new THREE.Vector3(); box.getCenter(ctr);
     var sc  = 2.415 / Math.max(sz.x, sz.y, sz.z);
     pgEnlargerModel.scale.setScalar(sc);
-    /* Pivot = top of model so the head stays centered during rotation */
-    var topY = box.max.y;
-    pgEnlargerModel.position.set(-ctr.x * sc+0.5, -ctr.y * sc, -ctr.z * sc-3.5);
 
-    pgScene.add(pgEnlargerModel);
+    /* Center model inside group — group origin = model geometric center */
+    pgEnlargerModel.position.set(-ctr.x * sc, -ctr.y * sc, -ctr.z * sc);
 
-    /* For r128: use a simple grey env cube so metal reflects something */
+    /* Wrap in group — rotate group, position group to place in scene */
+    pgEnlargerGroup = new THREE.Group();
+    pgEnlargerGroup.add(pgEnlargerModel);
+    pgEnlargerGroup.position.set(0.5, 0, -3.5); /* left/right, up/down, back/forward */
+    pgScene.add(pgEnlargerGroup);
+
+    /* Env map */
     var cubeRT = new THREE.WebGLCubeRenderTarget(128, {
       format: THREE.RGBFormat,
       generateMipmaps: true,
@@ -386,31 +399,61 @@ function initEnlargerBg() {
       if (n.isMesh && n.material) n.material.envMap = cubeRT.texture;
     });
 
-    /* ── LIQUID NITROGEN FOG ── */
     buildFogSystem(sc);
+
+    /* Load watch — drops in from top on scroll */
+    var loader2 = new THREE.GLTFLoader();
+    loader2.load('models/stopwatch-284.glb', function(gltf2) {
+      pgWatchModel = gltf2.scene;
+
+      pgWatchModel.traverse(function(n) {
+        if (!n.isMesh) return;
+        n.material = new THREE.MeshStandardMaterial({
+          color:           new THREE.Color(0xd0c8d8),
+          metalness:       1.0,
+          roughness:       0.04,
+          envMapIntensity: 2.0,
+        });
+        n.castShadow    = false;
+        n.receiveShadow = false;
+      });
+
+      var box2 = new THREE.Box3().setFromObject(pgWatchModel);
+      var sz2  = new THREE.Vector3(); box2.getSize(sz2);
+      var ctr2 = new THREE.Vector3(); box2.getCenter(ctr2);
+      var sc2  = 2.0 / Math.max(sz2.x, sz2.y, sz2.z);
+      pgWatchModel.scale.setScalar(sc2);
+      pgWatchModel.position.set(-ctr2.x * sc2, -ctr2.y * sc2, -ctr2.z * sc2);
+
+      pgWatchModel.traverse(function(n) {
+        if (n.isMesh && n.material) n.material.envMap = cubeRT.texture;
+      });
+
+      /* Start above screen */
+      pgWatchModel.position.y = 6.0;
+      pgScene.add(pgWatchModel);
+    }, undefined, function() {});
 
     canvas.classList.add('visible');
     enlargerLoop();
   }, undefined, function() { /* silent fail */ });
 }
 
-/* ── LIQUID NITROGEN FOG — PARTICLE SYSTEM ── */
-var pgFogParticles = [], pgFogGeometry = null, pgFogSystem = null;
+/* ── FOG PARTICLE SYSTEM ── */
+var pgFogParticles = [];
 var FOG_PARTICLE_COUNT = 180;
 
 function buildFogSystem(modelScale) {
   var fogY = -1.15;
-
-  /* Soft circle texture — drawn on a canvas */
   var size = 128;
   var fogCanvas = document.createElement('canvas');
   fogCanvas.width = fogCanvas.height = size;
   var ctx = fogCanvas.getContext('2d');
   var grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
-  grad.addColorStop(0.0,  'rgba(255, 240, 255, 1.0)');
-  grad.addColorStop(0.35, 'rgba(220, 180, 255, 0.8)');
-  grad.addColorStop(0.7,  'rgba(180, 120, 220, 0.3)');
-  grad.addColorStop(1.0,  'rgba(100,  60, 180, 0.0)');
+  grad.addColorStop(0.0,  'rgba(255, 255, 255, 0.9)');
+  grad.addColorStop(0.35, 'rgba(220, 210, 230, 0.5)');
+  grad.addColorStop(0.7,  'rgba(180, 170, 200, 0.15)');
+  grad.addColorStop(1.0,  'rgba(150, 140, 180, 0.0)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
   var fogTex = new THREE.CanvasTexture(fogCanvas);
@@ -419,14 +462,12 @@ function buildFogSystem(modelScale) {
     map:         fogTex,
     transparent: true,
     depthWrite:  false,
-    blending:    THREE.AdditiveBlending,
+    blending:    THREE.NormalBlending,
     opacity:     1.0,
   });
 
   for (var i = 0; i < FOG_PARTICLE_COUNT; i++) {
     var sprite = new THREE.Sprite(mat.clone());
-
-    /* Random position in an elliptical disc around model base */
     var angle  = Math.random() * Math.PI * 2;
     var radius = Math.random() * 1.8;
     sprite.position.set(
@@ -434,25 +475,20 @@ function buildFogSystem(modelScale) {
       fogY + Math.random() * 0.5,
       Math.sin(angle) * radius
     );
-
-    var s = 1.2 + Math.random() * 1.8;
+    var s = 0.4 + Math.random() * 0.6;
     sprite.scale.set(s, s, 1);
-
-    /* Store drift params */
     sprite.userData = {
       baseY:    sprite.position.y,
-      speed:    0.003 + Math.random() * 0.005,
       angle:    angle,
       radius:   radius,
       drift:    (Math.random() - 0.5) * 0.008,
       riseRate: 0.0004 + Math.random() * 0.0006,
-      opacity: 0.25 + Math.random() * 0.25,
+      opacity:  0.04 + Math.random() * 0.06,
       phase:    Math.random() * Math.PI * 2,
     };
     sprite.material.opacity = sprite.userData.opacity;
-
     pgFogParticles.push(sprite);
-   // pgScene.add(sprite);
+    pgScene.add(sprite);
   }
 }
 
@@ -460,16 +496,60 @@ function updateFogParticles() {
   var t = pgTime;
   pgFogParticles.forEach(function(s) {
     var d = s.userData;
-    /* Swirl drift */
     d.angle += d.drift;
     s.position.x = Math.cos(d.angle) * d.radius * 1.4;
     s.position.z = Math.sin(d.angle) * d.radius;
-    /* Slow rise then reset */
     s.position.y += d.riseRate;
     if (s.position.y > d.baseY + 0.9) s.position.y = d.baseY;
-    /* Pulse opacity */
     s.material.opacity = d.opacity * (0.7 + 0.3 * Math.sin(t * 0.4 + d.phase));
   });
+}
+
+/* ── CORNER PARTICLE EMITTER ── */
+function spawnCornerParticles() {
+  if (!pgEnlargerGroup) return;
+  for (var i = 0; i < 4; i++) {
+    var sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+      map:         _pgCornerTex,
+      transparent: true,
+      depthWrite:  false,
+      blending:    THREE.AdditiveBlending,
+      opacity:     0.8,
+    }));
+    var s = 0.05 + Math.random() * 0.08;
+    sprite.scale.set(s, s, 1);
+    sprite.position.set(
+      pgEnlargerGroup.position.x + (Math.random() - 0.5) * 1.5,
+      pgEnlargerGroup.position.y + Math.random() * 3.0,
+      pgEnlargerGroup.position.z + (Math.random() - 0.5) * 1.5
+    );
+    sprite.userData = {
+      vx:    (Math.random() - 0.5) * 0.012,
+      vy:    0.008 + Math.random() * 0.012,
+      vz:    (Math.random() - 0.5) * 0.008,
+      life:  1.0,
+      decay: 0.025 + Math.random() * 0.02,
+    };
+    pgCornerParticles.push(sprite);
+    pgScene.add(sprite);
+  }
+}
+
+function updateCornerParticles() {
+  if (pgIsScrolling) spawnCornerParticles();
+  for (var i = pgCornerParticles.length - 1; i >= 0; i--) {
+    var s = pgCornerParticles[i];
+    var d = s.userData;
+    d.life -= d.decay;
+    s.position.x += d.vx;
+    s.position.y += d.vy;
+    s.position.z += d.vz;
+    s.material.opacity = d.life * 0.8;
+    if (d.life <= 0) {
+      pgScene.remove(s);
+      pgCornerParticles.splice(i, 1);
+    }
+  }
 }
 
 function stopEnlargerBg() {
@@ -477,46 +557,46 @@ function stopEnlargerBg() {
   var canvas = document.getElementById('pg-bg-canvas');
   if (canvas) canvas.classList.remove('visible');
 }
-var pgScrollRot = 0;
-window.addEventListener('scroll', function() {
-  // 10:1 ratio — full page scroll height = 1 rotation
-  var scrollFraction = window.scrollY / (document.body.scrollHeight - window.innerHeight);
-  pgScrollRot = scrollFraction * Math.PI * 2;
-});
+
 function enlargerLoop() {
   pgAnimFrame = requestAnimationFrame(enlargerLoop);
   pgTime += 0.008;
 
-  /* Noise uniforms */
   if (pgNoiseUniforms) pgNoiseUniforms.uTime.value = pgTime;
 
-  /* Fog uniforms */
   updateFogParticles();
+  updateCornerParticles();
 
-  /* Model: slow Y rotation + subtle breathe */
-  if (pgEnlargerModel) {
-    // scroll-driven rotation + idle sway on top
-    pgEnlargerModel.rotation.y = pgScrollRot + Math.sin(pgTime * 0.12) * 0.04;
-    pgEnlargerModel.rotation.x = Math.sin(pgTime * 0.07) * 0.03;
+  /* Rotate the group — axis at group origin = model geometric center */
+  if (pgEnlargerGroup) {
+    pgEnlargerGroup.rotation.y = pgScrollRot + Math.sin(pgTime * 0.12) * 0.04;
+    pgEnlargerGroup.rotation.x = Math.sin(pgTime * 0.07) * 0.03;
   }
 
+  /* Watch drops in from top as user scrolls */
+  if (pgWatchModel && productScroll) {
+    var fraction = productScroll.scrollLeft /
+      (productScroll.scrollWidth - productScroll.clientWidth || 1);
+    pgWatchModel.position.y = 6.0 - (fraction * 8.0);
+    pgWatchModel.rotation.y = pgTime * 0.3;
+  }
 
-  /* Camera: gentle drift */
+  /* Camera gentle drift */
   if (pgCamera) {
     pgCamera.position.x = Math.sin(pgTime * 0.09) * 0.25;
-    pgCamera.position.y = 0.5 + Math.sin(pgTime * 0.06) * 0.15;
-    pgCamera.lookAt(0, 0, 0);
+    pgCamera.position.y = -6.0 + Math.sin(pgTime * 0.06) * 0.15;
+    pgCamera.lookAt(0, 3.0, 0);
   }
 
   if (pgRenderer && pgScene && pgCamera) {
     pgRenderer.autoClear = false;
     pgRenderer.clearDepth();
     pgRenderer.autoClearColor = false;
-  if (pgNoiseScene && pgNoiseCamera) {
-    pgRenderer.autoClear = true;
-    pgRenderer.render(pgNoiseScene, pgNoiseCamera);
-    pgRenderer.autoClear = false;
- }
+    if (pgNoiseScene && pgNoiseCamera) {
+      pgRenderer.autoClear = true;
+      pgRenderer.render(pgNoiseScene, pgNoiseCamera);
+      pgRenderer.autoClear = false;
+    }
     pgRenderer.clearDepth();
     pgRenderer.render(pgScene, pgCamera);
   }
