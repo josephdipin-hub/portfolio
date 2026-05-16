@@ -291,6 +291,7 @@ function initEnlargerBg() {
 
   pgRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
   pgRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  pgRenderer.setClearColor(0x000000, 0);
   pgRenderer.setSize(window.innerWidth, window.innerHeight);
   pgRenderer.toneMapping = THREE.ACESFilmicToneMapping;
   pgRenderer.toneMappingExposure = 1.1;
@@ -510,13 +511,15 @@ function enlargerLoop() {
   }
 
   if (pgRenderer && pgScene && pgCamera) {
-    /* 1. Noise bg — clears to transparent, fills screen */
     pgRenderer.autoClear = false;
-    pgRenderer.clear();
-    if (pgNoiseScene && pgNoiseCamera) {
-      pgRenderer.render(pgNoiseScene, pgNoiseCamera);
-    }
-    /* 2. Main scene (model + fog) on top */
+    pgRenderer.clearDepth();
+    pgRenderer.autoClearColor = false;
+  if (pgNoiseScene && pgNoiseCamera) {
+    pgRenderer.autoClear = true;
+    pgRenderer.render(pgNoiseScene, pgNoiseCamera);
+    pgRenderer.autoClear = false;
+ }
+    pgRenderer.clearDepth();
     pgRenderer.render(pgScene, pgCamera);
   }
 }
