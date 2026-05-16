@@ -176,10 +176,11 @@ if (productScroll) {
   }, { passive: false });
 }
 
+var pgScrollRotTarget = 0;
 productScroll.addEventListener('scroll', function() {
   var fraction = productScroll.scrollLeft /
     (productScroll.scrollWidth - productScroll.clientWidth || 1);
-  pgScrollRot = fraction * Math.PI * 2;
+  pgScrollRotTarget = fraction * Math.PI * 2;
   pgIsScrolling = true;
   clearTimeout(pgScrollTimer);
   pgScrollTimer = setTimeout(function() { pgIsScrolling = false; }, 150);
@@ -559,6 +560,7 @@ function enlargerLoop() {
 
   /* Rotate enlarger */
   if (pgEnlargerModel) {
+    pgScrollRot += (pgScrollRotTarget - pgScrollRot) * 0.06;
     pgEnlargerModel.rotation.y = pgScrollRot + Math.sin(pgTime * 0.12) * 0.04;
     pgEnlargerModel.rotation.x = Math.sin(pgTime * 0.07) * 0.03;
   }
