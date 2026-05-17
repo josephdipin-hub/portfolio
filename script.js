@@ -229,6 +229,7 @@ function _buildCornerTex() {
 }
 
 /* ── Datamosh noise shaders ── */
+/*
 var PG_NOISE_VERT = `
   varying vec2 vUv;
   void main() { vUv = uv; gl_Position = vec4(position, 1.0); }
@@ -304,6 +305,7 @@ function initEnlargerBg() {
   pgRenderer.shadowMap.enabled = false;
 
   pgScene = new THREE.Scene();
+   */
 
   /* ── Camera ── */
   pgCamera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 200);
@@ -398,16 +400,17 @@ function initEnlargerBg() {
       pgWatchModel = gltf2.scene;
 
       pgWatchModel.traverse(function(n) {
-        if (!n.isMesh) return;
-        n.material = new THREE.MeshStandardMaterial({
-          color:           new THREE.Color(0xd0c8d8),
-          metalness:       1.0,
-          roughness:       0.04,
-          envMapIntensity: 2.0,
-        });
-        n.castShadow    = false;
-        n.receiveShadow = false;
+       if (!n.isMesh) return;
+       n.material = new THREE.MeshStandardMaterial({
+       color:           new THREE.Color(0xd0c8d8),
+       metalness:       1.0,
+       roughness:       0.04,
+       envMapIntensity: 2.0,
       });
+      n.castShadow    = false;
+      n.receiveShadow = false;
+      n.renderOrder   = 1;
+     });
 
       var box2 = new THREE.Box3().setFromObject(pgWatchModel);
       var sz2  = new THREE.Vector3(); box2.getSize(sz2);
@@ -461,6 +464,7 @@ function buildFogSystem(modelScale) {
     var sprite = new THREE.Sprite(mat.clone());
     var angle  = Math.random() * Math.PI * 2;
     var radius = Math.random() * 1.8;
+    sprite.renderOrder = -1;
     sprite.position.set(
       Math.cos(angle) * radius * 1.4,
       fogY + Math.random() * 0.5,
