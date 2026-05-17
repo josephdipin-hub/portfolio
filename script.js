@@ -229,7 +229,7 @@ function _buildCornerTex() {
 }
 
 /* ── Datamosh noise shaders ── */
-/*
+
 var PG_NOISE_VERT = `
   varying vec2 vUv;
   void main() { vUv = uv; gl_Position = vec4(position, 1.0); }
@@ -305,7 +305,7 @@ function initEnlargerBg() {
   pgRenderer.shadowMap.enabled = false;
 
   pgScene = new THREE.Scene();
-   */
+   
 
   /* ── Camera ── */
   pgCamera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 200);
