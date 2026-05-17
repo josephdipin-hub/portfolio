@@ -438,7 +438,7 @@ var pgFogParticles = [];
 var FOG_PARTICLE_COUNT = 180;
 
 function buildFogSystem(modelScale) {
-  var fogY = -1.15;
+  var fogY = -2.5;
   var size = 128;
   var fogCanvas = document.createElement('canvas');
   fogCanvas.width = fogCanvas.height = size;
