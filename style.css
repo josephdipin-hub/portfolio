@@ -682,3 +682,5 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
+#product-scroll { opacity: 0; transition: opacity 0.6s ease 0.3s; }
+#product-scroll.ready { opacity: 1; }
