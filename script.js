@@ -206,7 +206,7 @@ var pgRenderer     = null, pgScene  = null, pgCamera = null;
 var pgNoiseScene   = null, pgNoiseCamera = null;
 var pgAnimFrame    = null, pgEnlargerModel = null;
 var pgWatchModel   = null;
-var pgBgInited     = false, pgTime = 0;
+var pgBgInited     = false, pgTime = 0, pgLastTime = null;
 var pgNoiseMesh    = null, pgNoiseUniforms = null;
 var pgScrollRot    = 0;
 var pgIsScrolling  = false, pgScrollTimer = null;
@@ -420,7 +420,7 @@ function initEnlargerBg() {
         if (n.isMesh && n.material) n.material.envMap = cubeRT.texture;
       });
 
-      pgWatchModel.position.y = 6.0; /* starts above screen */
+      pgWatchModel.position.y = 6.0;
       pgScene.add(pgWatchModel);
     }, undefined, function() {});
 
@@ -551,26 +551,35 @@ function stopEnlargerBg() {
 
 function enlargerLoop() {
   pgAnimFrame = requestAnimationFrame(enlargerLoop);
-  pgTime += 0.008;
+
+  /* Delta-capped time — prevents jump when tab refocuses */
+  var now = performance.now() * 0.001;
+  if (!pgLastTime) pgLastTime = now;
+  var delta = Math.min(now - pgLastTime, 0.05);
+  pgLastTime = now;
+  pgTime += delta * 0.5;
 
   if (pgNoiseUniforms) pgNoiseUniforms.uTime.value = pgTime;
 
   updateFogParticles();
   updateCornerParticles();
 
-  /* Rotate enlarger */
+  /* Enlarger — lerped scroll rotation + lerped sway */
   if (pgEnlargerModel) {
-    pgScrollRot += (pgScrollRotTarget - pgScrollRot) * 0.06;
-    pgEnlargerModel.rotation.y = pgScrollRot + Math.sin(pgTime * 0.12) * 0.04;
-    pgEnlargerModel.rotation.x = Math.sin(pgTime * 0.07) * 0.03;
+    pgScrollRot += (pgScrollRotTarget - pgScrollRot) * 0.04;
+    var targetY = pgScrollRot + Math.sin(pgTime * 0.12) * 0.04;
+    var targetX = Math.sin(pgTime * 0.07) * 0.03;
+    pgEnlargerModel.rotation.y += (targetY - pgEnlargerModel.rotation.y) * 0.08;
+    pgEnlargerModel.rotation.x += (targetX - pgEnlargerModel.rotation.x) * 0.08;
   }
 
-  /* Watch drops from top on scroll */
+  /* Watch — lerped drop + lerped spin */
   if (pgWatchModel && productScroll) {
     var fraction = productScroll.scrollLeft /
       (productScroll.scrollWidth - productScroll.clientWidth || 1);
-    pgWatchModel.position.y = 4.5 - (fraction * 10.0);
-    pgWatchModel.rotation.y = pgTime * 0.3;
+    var watchTargetY = 4.5 - (fraction * 10.0);
+    pgWatchModel.position.y += (watchTargetY - pgWatchModel.position.y) * 0.05;
+    pgWatchModel.rotation.y += (pgTime * 0.3 - pgWatchModel.rotation.y) * 0.08;
   }
 
   /* Camera gentle drift */
