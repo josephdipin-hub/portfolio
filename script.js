@@ -479,7 +479,7 @@ function buildFogSystem(modelScale) {
     };
     sprite.material.opacity = sprite.userData.opacity;
     pgFogParticles.push(sprite);
-    pgScene.add(sprite);
+    //pgScene.add(sprite);
   }
 }
 
@@ -522,7 +522,7 @@ function spawnCornerParticles() {
       decay: 0.025 + Math.random() * 0.02,
     };
     pgCornerParticles.push(sprite);
-    pgScene.add(sprite);
+    //pgScene.add(sprite);
   }
 }
 
