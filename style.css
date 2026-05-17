@@ -66,7 +66,7 @@ section.min-h-screen {
 /* --- PRODUCT GALLERY OVERLAY --- */
 #product-page {
     position: fixed; inset: 0; width: 100vw; height: 100vh;
-    background: linear-gradient(to bottom, #080012 0%, #0d0024 40%, #1a0300 80%, #2a0600 100%);
+    background: linear-gradient(to top, #080012 0%, #0d0024 40%, #1a0300 80%, #2a0600 100%);
     z-index: 1000;
     display: none; align-items: center; justify-content: center;
     opacity: 0; transition: opacity 0.5s ease; overflow: hidden;
