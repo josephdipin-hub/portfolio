@@ -282,7 +282,7 @@ var PG_NOISE_FRAG = `
     float grain = hash(vUv * uRes + t * 137.0) * 0.06;
     col += grain * vec3(0.5, 0.15, 0.3);
 
-    gl_FragColor = vec4(col * 0.7, 0.82);
+    gl_FragColor = vec4(col, 0.82);
   }
 `;
 
