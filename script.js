@@ -263,10 +263,10 @@ var PG_NOISE_FRAG = `
     uv.x += blockShift;
 
     vec3 grad = mix(
-      vec3(0.38, 0.09, 0.01),
-      vec3(0.05, 0.0,  0.14),
-      vUv.y
-    );
+    vec3(0.05, 0.0,  0.14),   /* deep purple — top */
+    vec3(0.38, 0.09, 0.01),   /* dark red — bottom */
+    vUv.y
+     );
 
     float n1 = fbm(uv * 3.5 + vec2(t * 0.6, t * 0.4));
     float n2 = fbm(uv * 6.0 - vec2(t * 0.3, t * 0.7));
