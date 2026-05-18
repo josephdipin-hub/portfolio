@@ -485,6 +485,40 @@ function buildFogSystem(modelScale) {
     pgFogParticles.push(sprite);
     pgScene.add(sprite);
   }
+   /* ── Stellar dust ── */
+var dustMat = new THREE.SpriteMaterial({
+  map:         _pgCornerTex,
+  transparent: true,
+  depthWrite:  false,
+  blending:    THREE.AdditiveBlending,
+  opacity:     1.0,
+});
+
+for (var d = 0; d < 60; d++) {
+  var dust = new THREE.Sprite(dustMat.clone());
+  var angle  = Math.random() * Math.PI * 2;
+  var radius = Math.random() * 2.0;
+  dust.position.set(
+    Math.cos(angle) * radius * 1.4,
+    fogY + Math.random() * 1.5,
+    Math.sin(angle) * radius
+  );
+  var ds = 0.02 + Math.random() * 0.04;
+  dust.scale.set(ds, ds, 1);
+  dust.renderOrder = -1;
+  dust.userData = {
+    angle:    angle,
+    radius:   radius,
+    drift:    (Math.random() - 0.5) * 0.003,
+    riseRate: 0.0002 + Math.random() * 0.0003,
+    baseY:    dust.position.y,
+    opacity:  0.3 + Math.random() * 0.5,
+    phase:    Math.random() * Math.PI * 2,
+  };
+  dust.material.opacity = dust.userData.opacity;
+  pgFogParticles.push(dust);
+  pgScene.add(dust);
+}
 }
 
 function updateFogParticles() {
