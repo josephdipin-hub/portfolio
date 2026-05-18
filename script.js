@@ -1,4 +1,3 @@
-
 /* ═══════════════════════════════════════════════════════
    GLSL SHADER SYSTEM
 ════════════════════════════════════════════════════════ */
@@ -238,11 +237,10 @@ window.addEventListener('scroll', () => {
   });
 }, { passive: true });
 
-/* Safe horizontal wheel — avoids passive:false warning while still working */
 function attachHorizontalWheel(el) {
   if (!el) return;
   el.addEventListener('wheel', (e) => {
-    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return; // let native horizontal pass
+    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
     e.preventDefault();
     el.scrollLeft += e.deltaY;
   }, { passive: false });
@@ -360,7 +358,6 @@ const PG_NOISE_FRAG = `
 function showBgFallback() {
   const canvas = document.getElementById('pg-bg-canvas');
   if (canvas) canvas.classList.add('visible');
-  /* noise-only bg still runs — just no 3D model */
   if (productScroll) productScroll.classList.add('ready');
 }
 
@@ -410,10 +407,28 @@ function initEnlargerBg() {
   /* Start noise loop immediately so bg isn't blank while model loads */
   enlargerLoop();
 
+  /* ── Loading tracker ── */
+  const loaderEl  = document.getElementById('pg-loader');
+  const pctEl     = document.getElementById('pg-loader-pct');
+  let enlargerPct = 0;
+  let watchPct    = 0;
+
+  function updatePct() {
+    /* Enlarger = 80% of total weight, watch = 20% */
+    const total = Math.round(enlargerPct * 0.8 + watchPct * 0.2);
+    if (pctEl) pctEl.textContent = total + '%';
+    if (total >= 100 && loaderEl) {
+      loaderEl.classList.add('hidden');
+    }
+  }
+
   const loader = new THREE.GLTFLoader();
   loader.load(
     'models/durst_enlarger_darkroom_asset.glb',
     (gltf) => {
+      enlargerPct = 100;
+      updatePct();
+
       pgEnlargerModel = gltf.scene;
       pgEnlargerModel.traverse((n) => {
         if (!n.isMesh) return;
@@ -452,6 +467,9 @@ function initEnlargerBg() {
       loader2.load(
         'models/stopwatch-284.glb',
         (gltf2) => {
+          watchPct = 100;
+          updatePct();
+
           pgWatchModel = gltf2.scene;
           pgWatchModel.traverse((n) => {
             if (!n.isMesh) return;
@@ -470,14 +488,29 @@ function initEnlargerBg() {
           pgWatchModel.position.set(-ctr2.x * sc2, -ctr2.y * sc2 + 6.0, -ctr2.z * sc2);
           pgScene.add(pgWatchModel);
         },
-        undefined,
-        () => { /* watch load fail — silent, enlarger still shows */ }
+        (xhr2) => {                               /* watch progress */
+          if (xhr2.lengthComputable) {
+            watchPct = (xhr2.loaded / xhr2.total) * 100;
+            updatePct();
+          }
+        },
+        () => {                                   /* watch load fail — silent */
+          watchPct = 100;
+          updatePct();
+        }
       );
     },
-    undefined,
+    (xhr) => {                                    /* enlarger progress */
+      if (xhr.lengthComputable) {
+        enlargerPct = (xhr.loaded / xhr.total) * 100;
+        updatePct();
+      }
+    },
     () => {
       /* Enlarger load fail — show noise bg + scroll, no crash */
       pgModelFailed = true;
+      enlargerPct = 100; watchPct = 100;
+      updatePct();
       canvas.classList.add('visible');
       showBgFallback();
     }
