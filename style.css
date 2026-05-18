@@ -33,6 +33,7 @@ section.min-h-screen {
 #brush-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 11; }
 .brush-stamp { position: absolute; width: 100%; filter: url(#datamosh-filter); opacity: 0.6; pointer-events: none; }
 .hero-text { font-family: 'Inter', sans-serif; font-size: 14vw; line-height: 0.8; letter-spacing: -0.06em; text-transform: uppercase; }
+.hero-clip-wrapper { will-change: transform; transition: transform 0.1s linear; }
 .section-label { font-size: 12px; opacity: 0.3; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 2rem; display: block; }
 .golden-container { display: grid; grid-template-columns: 1.618fr 1fr; gap: 4rem; }
 
@@ -66,7 +67,7 @@ section.min-h-screen {
 /* --- PRODUCT GALLERY OVERLAY --- */
 #product-page {
     position: fixed; inset: 0; width: 100vw; height: 100vh;
-    background: linear-gradient(to top, #080012 0%, #0d0024 40%, #1a0300 80%, #2a0600 100%);
+    background: linear-gradient(160deg, #1e0040 0%, #3d0030 35%, #a02800 75%, #e84000 100%);
     z-index: 1000;
     display: none; align-items: center; justify-content: center;
     opacity: 0; transition: opacity 0.5s ease; overflow: hidden;
@@ -74,10 +75,11 @@ section.min-h-screen {
 #product-page.active { display: flex; opacity: 1; }
 
 /* --- EXIT BTN (shared) --- */
-.exit-btn { 
-    padding: 2.5rem; text-align: right; cursor: pointer; opacity: 0.4; 
-    font-size: 7px; letter-spacing: 0.3em; 
-    position: absolute; top: 0; right: 0; z-index: 200; 
+.exit-btn {
+    padding: 1.2rem 2rem; text-align: center; cursor: pointer; opacity: 0.4;
+    font-size: 7px; letter-spacing: 0.3em;
+    position: absolute; bottom: 0; left: 50%; transform: translateX(-50%);
+    z-index: 200; white-space: nowrap;
 }
 .exit-btn:hover { opacity: 1; }
 
@@ -682,5 +684,30 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
   -webkit-tap-highlight-color: transparent;
   touch-action: manipulation;
 }
+
+/* ── Product gallery loading indicator ── */
+#pg-loading {
+  position: absolute;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  pointer-events: none;
+}
+#pg-loading span {
+  font-family: 'Space Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.4em;
+  color: rgba(255, 255, 255, 0.2);
+  text-transform: uppercase;
+  animation: pg-blink 1.4s ease infinite;
+}
+@keyframes pg-blink {
+  0%, 100% { opacity: 0.2; }
+  50%       { opacity: 0.7; }
+}
+
+/* ── Product scroll fade in ── */
 #product-scroll { opacity: 0; transition: opacity 0.6s ease 0.3s; }
 #product-scroll.ready { opacity: 1; }
