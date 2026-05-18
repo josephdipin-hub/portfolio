@@ -143,11 +143,6 @@ window.addEventListener('scroll', () => {
     const currentY = window.pageYOffset;
     if (Math.abs(currentY - lastScrollY) > 35) { createMoshStamp(currentY); lastScrollY = currentY; }
     document.body.classList.toggle('scrolled', currentY > 50);
-    /* Parallax hero text */
-    const hero = document.querySelector('.hero-clip-wrapper');
-    if (hero && currentY < window.innerHeight) {
-      hero.style.transform = `translateY(${currentY * 0.15}px)`;
-    }
     scrollTicking = false;
   });
 }, { passive: true });
@@ -215,6 +210,25 @@ var pgBgInited     = false, pgTime = 0, pgLastTime = null;
 var pgNoiseMesh    = null, pgNoiseUniforms = null;
 var pgScrollRot    = 0;
 var pgIsScrolling  = false, pgScrollTimer = null;
+var pgCornerParticles = [];
+var _pgCornerTex   = null;
+
+/* ── Corner texture ── */
+function _buildCornerTex() {
+  var size = 64;
+  var c = document.createElement('canvas');
+  c.width = c.height = size;
+  var ctx = c.getContext('2d');
+  var g = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+  g.addColorStop(0.0, 'rgba(255, 180, 255, 1.0)');
+  g.addColorStop(0.4, 'rgba(200, 100, 255, 0.6)');
+  g.addColorStop(1.0, 'rgba(100,  50, 200, 0.0)');
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, size, size);
+  return new THREE.CanvasTexture(c);
+}
+
+/* ── Datamosh noise shaders ── */
 
 var PG_NOISE_VERT = `
   varying vec2 vUv;
@@ -249,10 +263,10 @@ var PG_NOISE_FRAG = `
     uv.x += blockShift;
 
     vec3 grad = mix(
-      vec3(0.05, 0.0,  0.14),
-      vec3(0.38, 0.09, 0.01),
-      vUv.y
-    );
+    vec3(0.05, 0.0,  0.14),   /* deep purple — top */
+    vec3(0.38, 0.09, 0.01),   /* dark red — bottom */
+    vUv.y
+     );
 
     float n1 = fbm(uv * 3.5 + vec2(t * 0.6, t * 0.4));
     float n2 = fbm(uv * 6.0 - vec2(t * 0.3, t * 0.7));
@@ -279,6 +293,7 @@ function initEnlargerBg() {
   if (typeof THREE === 'undefined') return;
 
   pgBgInited = true;
+  _pgCornerTex = _buildCornerTex();
 
   pgRenderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true });
   pgRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
@@ -290,11 +305,14 @@ function initEnlargerBg() {
   pgRenderer.shadowMap.enabled = false;
 
   pgScene = new THREE.Scene();
+   
 
+  /* ── Camera ── */
   pgCamera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 200);
   pgCamera.position.set(0, 0.5, 7.0);
   pgCamera.lookAt(0, 0, 0);
 
+  /* ── Noise scene ── */
   pgNoiseUniforms = {
     uTime: { value: 0.0 },
     uRes:  { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
@@ -328,10 +346,6 @@ function initEnlargerBg() {
   rim.position.set(3, 5, -5);
   pgScene.add(rim);
 
-  /* ── Show loading indicator ── */
-  var loadingEl = document.getElementById('pg-loading');
-  if (loadingEl) loadingEl.style.display = 'flex';
-
   /* ── Load enlarger ── */
   var loader = new THREE.GLTFLoader();
   loader.load('models/durst_enlarger_darkroom_asset.glb', function(gltf) {
@@ -354,14 +368,17 @@ function initEnlargerBg() {
       n.receiveShadow = true;
     });
 
+    /* Scale and center */
     var box = new THREE.Box3().setFromObject(pgEnlargerModel);
     var sz  = new THREE.Vector3(); box.getSize(sz);
     var ctr = new THREE.Vector3(); box.getCenter(ctr);
     var sc  = 2.9 / Math.max(sz.x, sz.y, sz.z);
     pgEnlargerModel.scale.setScalar(sc);
     pgEnlargerModel.position.set(-ctr.x * sc, -ctr.y * sc, -ctr.z * sc);
+
     pgScene.add(pgEnlargerModel);
 
+    /* Env map */
     var cubeRT = new THREE.WebGLCubeRenderTarget(128, {
       format: THREE.RGBFormat,
       generateMipmaps: true,
@@ -375,45 +392,159 @@ function initEnlargerBg() {
       if (n.isMesh && n.material) n.material.envMap = cubeRT.texture;
     });
 
+    buildFogSystem(sc);
+
     /* ── Load watch ── */
     var loader2 = new THREE.GLTFLoader();
     loader2.load('models/stopwatch-284.glb', function(gltf2) {
       pgWatchModel = gltf2.scene;
+
       pgWatchModel.traverse(function(n) {
-        if (!n.isMesh) return;
-        n.material = new THREE.MeshStandardMaterial({
-          color:           new THREE.Color(0xd0c8d8),
-          metalness:       1.0,
-          roughness:       0.04,
-          envMapIntensity: 2.0,
-        });
-        n.castShadow    = false;
-        n.receiveShadow = false;
-        n.renderOrder   = 1;
+       if (!n.isMesh) return;
+       n.material = new THREE.MeshStandardMaterial({
+       color:           new THREE.Color(0xd0c8d8),
+       metalness:       1.0,
+       roughness:       0.04,
+       envMapIntensity: 2.0,
       });
+      n.castShadow    = false;
+      n.receiveShadow = false;
+      n.renderOrder   = 1;
+     });
+
       var box2 = new THREE.Box3().setFromObject(pgWatchModel);
       var sz2  = new THREE.Vector3(); box2.getSize(sz2);
       var ctr2 = new THREE.Vector3(); box2.getCenter(ctr2);
       var sc2  = 2.0 / Math.max(sz2.x, sz2.y, sz2.z);
       pgWatchModel.scale.setScalar(sc2);
       pgWatchModel.position.set(-ctr2.x * sc2, -ctr2.y * sc2, -ctr2.z * sc2);
+
       pgWatchModel.traverse(function(n) {
         if (n.isMesh && n.material) n.material.envMap = cubeRT.texture;
       });
+
       pgWatchModel.position.y = 6.0;
       pgScene.add(pgWatchModel);
     }, undefined, function() {});
 
-    /* ── Hide loading, show canvas + scroll ── */
-    if (loadingEl) loadingEl.style.display = 'none';
     canvas.classList.add('visible');
     document.getElementById('product-scroll').classList.add('ready');
     enlargerLoop();
-  }, undefined, function() {
-    /* GLB failed — still show scroll */
-    if (loadingEl) loadingEl.style.display = 'none';
-    document.getElementById('product-scroll').classList.add('ready');
+  }, undefined, function() {});
+}
+
+/* ── FOG PARTICLE SYSTEM ── */
+var pgFogParticles = [];
+var FOG_PARTICLE_COUNT = 180;
+
+function buildFogSystem(modelScale) {
+  var fogY = -1.8;
+  var size = 118;
+  var fogCanvas = document.createElement('canvas');
+  fogCanvas.width = fogCanvas.height = size;
+  var ctx = fogCanvas.getContext('2d');
+  var grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
+  grad.addColorStop(0.0,  'rgba(180, 200, 230, 0.9)');
+  grad.addColorStop(0.35, 'rgba(140, 165, 210, 0.5)');
+  grad.addColorStop(0.7,  'rgba(100, 130, 190, 0.15)');
+  grad.addColorStop(1.0,  'rgba(70,  100, 170, 0.0)');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, size, size);
+  var fogTex = new THREE.CanvasTexture(fogCanvas);
+
+  var mat = new THREE.SpriteMaterial({
+    map:         fogTex,
+    transparent: true,
+    depthWrite:  false,
+    blending:    THREE.NormalBlending,
+    opacity:     1.0,
   });
+
+  for (var i = 0; i < FOG_PARTICLE_COUNT; i++) {
+    var sprite = new THREE.Sprite(mat.clone());
+    var angle  = Math.random() * Math.PI * 2;
+    var radius = Math.random() * 1.8;
+    sprite.renderOrder = -1;
+    sprite.position.set(
+      Math.cos(angle) * radius * 1.4,
+      fogY + Math.random() * 0.5,
+      Math.sin(angle) * radius
+    );
+    var s = 0.4 + Math.random() * 0.6;
+    sprite.scale.set(s, s, 1);
+    sprite.userData = {
+      baseY:    sprite.position.y,
+      angle:    angle,
+      radius:   radius,
+      drift:    (Math.random() - 0.5) * 0.008,
+      riseRate: 0.0004 + Math.random() * 0.0006,
+      opacity:  0.02 + Math.random() * 0.03,
+      phase:    Math.random() * Math.PI * 2,
+    };
+    sprite.material.opacity = sprite.userData.opacity;
+    pgFogParticles.push(sprite);
+    pgScene.add(sprite);
+  }
+}
+
+function updateFogParticles() {
+  var t = pgTime;
+  pgFogParticles.forEach(function(s) {
+    var d = s.userData;
+    d.angle += d.drift;
+    s.position.x = Math.cos(d.angle) * d.radius * 1.4;
+    s.position.z = Math.sin(d.angle) * d.radius;
+    s.position.y += d.riseRate;
+    if (s.position.y > d.baseY + 0.9) s.position.y = d.baseY;
+    s.material.opacity = d.opacity * (0.7 + 0.3 * Math.sin(t * 0.4 + d.phase));
+  });
+}
+
+/* ── CORNER PARTICLE EMITTER ── */
+function spawnCornerParticles() {
+  if (!pgEnlargerModel) return;
+  for (var i = 0; i < 4; i++) {
+    var sprite = new THREE.Sprite(new THREE.SpriteMaterial({
+      map:         _pgCornerTex,
+      transparent: true,
+      depthWrite:  false,
+      blending:    THREE.AdditiveBlending,
+      opacity:     0.8,
+    }));
+    var s = 0.05 + Math.random() * 0.08;
+    sprite.scale.set(s, s, 1);
+    sprite.position.set(
+      pgEnlargerModel.position.x + (Math.random() - 0.5) * 1.5,
+      pgEnlargerModel.position.y + Math.random() * 3.0,
+      pgEnlargerModel.position.z + (Math.random() - 0.5) * 1.5
+    );
+    sprite.userData = {
+      vx:    (Math.random() - 0.5) * 0.012,
+      vy:    0.008 + Math.random() * 0.012,
+      vz:    (Math.random() - 0.5) * 0.008,
+      life:  1.0,
+      decay: 0.025 + Math.random() * 0.02,
+    };
+    pgCornerParticles.push(sprite);
+    pgScene.add(sprite);
+  }
+}
+
+function updateCornerParticles() {
+  if (pgIsScrolling) spawnCornerParticles();
+  for (var i = pgCornerParticles.length - 1; i >= 0; i--) {
+    var s = pgCornerParticles[i];
+    var d = s.userData;
+    d.life -= d.decay;
+    s.position.x += d.vx;
+    s.position.y += d.vy;
+    s.position.z += d.vz;
+    s.material.opacity = d.life * 0.8;
+    if (d.life <= 0) {
+      pgScene.remove(s);
+      pgCornerParticles.splice(i, 1);
+    }
+  }
 }
 
 function stopEnlargerBg() {
@@ -425,6 +556,7 @@ function stopEnlargerBg() {
 function enlargerLoop() {
   pgAnimFrame = requestAnimationFrame(enlargerLoop);
 
+  /* Delta-capped time — prevents jump when tab refocuses */
   var now = performance.now() * 0.001;
   if (!pgLastTime) pgLastTime = now;
   var delta = Math.min(now - pgLastTime, 0.05);
@@ -433,6 +565,10 @@ function enlargerLoop() {
 
   if (pgNoiseUniforms) pgNoiseUniforms.uTime.value = pgTime;
 
+  updateFogParticles();
+  updateCornerParticles();
+
+  /* Enlarger — lerped scroll rotation + lerped sway */
   if (pgEnlargerModel) {
     pgScrollRot += (pgScrollRotTarget - pgScrollRot) * 0.04;
     var targetY = pgScrollRot + Math.sin(pgTime * 0.12) * 0.04;
@@ -441,6 +577,7 @@ function enlargerLoop() {
     pgEnlargerModel.rotation.x += (targetX - pgEnlargerModel.rotation.x) * 0.08;
   }
 
+  /* Watch — lerped drop + lerped spin */
   if (pgWatchModel && productScroll) {
     var fraction = productScroll.scrollLeft /
       (productScroll.scrollWidth - productScroll.clientWidth || 1);
@@ -449,6 +586,7 @@ function enlargerLoop() {
     pgWatchModel.rotation.y += (pgTime * 0.3 - pgWatchModel.rotation.y) * 0.08;
   }
 
+  /* Camera gentle drift */
   if (pgCamera) {
     pgCamera.position.x = Math.sin(pgTime * 0.09) * 0.25;
     pgCamera.position.y = 0.5 + Math.sin(pgTime * 0.06) * 0.15;
