@@ -444,10 +444,10 @@ function buildFogSystem(modelScale) {
   fogCanvas.width = fogCanvas.height = size;
   var ctx = fogCanvas.getContext('2d');
   var grad = ctx.createRadialGradient(size/2, size/2, 0, size/2, size/2, size/2);
-  grad.addColorStop(0.0,  'rgba(255, 255, 255, 0.9)');
-  grad.addColorStop(0.35, 'rgba(220, 210, 230, 0.5)');
-  grad.addColorStop(0.7,  'rgba(180, 170, 200, 0.15)');
-  grad.addColorStop(1.0,  'rgba(150, 140, 180, 0.0)');
+  grad.addColorStop(0.0,  'rgba(180, 200, 230, 0.9)');
+  grad.addColorStop(0.35, 'rgba(140, 165, 210, 0.5)');
+  grad.addColorStop(0.7,  'rgba(100, 130, 190, 0.15)');
+  grad.addColorStop(1.0,  'rgba(70,  100, 170, 0.0)');
   ctx.fillStyle = grad;
   ctx.fillRect(0, 0, size, size);
   var fogTex = new THREE.CanvasTexture(fogCanvas);
