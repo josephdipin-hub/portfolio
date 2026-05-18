@@ -470,7 +470,7 @@ function buildFogSystem(modelScale) {
       fogY + Math.random() * 0.5,
       Math.sin(angle) * radius
     );
-    var s = 0.4 + Math.random() * 0.6;
+    var s = 0.15 + Math.random() * 0.25;
     sprite.scale.set(s, s, 1);
     sprite.userData = {
       baseY:    sprite.position.y,
