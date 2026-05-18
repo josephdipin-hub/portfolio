@@ -398,7 +398,32 @@ joseph.dipin@gmail.com
   </div>
 </section>
 
-<!-- FOOTER -->
+<!-- CONTACT FORM -->
+<section id="contact" data-no-mosh>
+  <div class="contact-inner">
+    <span class="section-label">// CONTACT_DATA</span>
+    <form class="contact-form" id="contact-form" novalidate>
+      <div class="cf-row">
+        <label class="cf-label" for="cf-name">NAME</label>
+        <input class="cf-input" id="cf-name" name="name" type="text" placeholder="your name" autocomplete="name" required>
+      </div>
+      <div class="cf-row">
+        <label class="cf-label" for="cf-email">EMAIL</label>
+        <input class="cf-input" id="cf-email" name="email" type="email" placeholder="your@email.com" autocomplete="email" required>
+      </div>
+      <div class="cf-row">
+        <label class="cf-label" for="cf-service">SERVICE</label>
+        <input class="cf-input" id="cf-service" name="service" type="text" placeholder="fashion / product / newborn / maternity / video">
+      </div>
+      <div class="cf-row">
+        <label class="cf-label" for="cf-message">MESSAGE</label>
+        <textarea class="cf-textarea" id="cf-message" name="message" placeholder="tell me about your project" required></textarea>
+      </div>
+      <button class="cf-submit" type="submit" id="cf-btn">SEND_MESSAGE</button>
+      <div id="cf-status"></div>
+    </form>
+  </div>
+</section>
 <footer data-no-mosh class="px-6 md:px-24 pt-20 pb-10 border-t border-white/5">
   <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
     <a href="mailto:joseph.dipin@gmail.com" class="text-3xl md:text-7xl font-bold tracking-tighter">CONTACT@SYNC</a>
@@ -423,6 +448,61 @@ joseph.dipin@gmail.com
     </svg>
   </div>
 </a>
+<script>
+(function () {
+  const form   = document.getElementById('contact-form');
+  const btn    = document.getElementById('cf-btn');
+  const status = document.getElementById('cf-status');
+  if (!form) return;
 
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const name    = document.getElementById('cf-name').value.trim();
+    const email   = document.getElementById('cf-email').value.trim();
+    const service = document.getElementById('cf-service').value.trim();
+    const message = document.getElementById('cf-message').value.trim();
+
+    if (!name || !email || !message) {
+      status.textContent = 'REQUIRED_FIELDS_MISSING';
+      status.className = 'error';
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      status.textContent = 'INVALID_EMAIL_FORMAT';
+      status.className = 'error';
+      return;
+    }
+
+    btn.disabled = true;
+    btn.textContent = 'SENDING...';
+    status.textContent = '';
+    status.className = '';
+
+    const FORMSPREE_URL = 'https://formspree.io/f/mnjrqrzd'; // ✅ your form
+
+    try {
+      const res = await fetch(FORMSPREE_URL, {
+        method:  'POST',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ name, email, service, message })
+      });
+      if (res.ok) {
+        status.textContent = 'MESSAGE_SENT //';
+        status.className   = 'success';
+        form.reset();
+      } else {
+        throw new Error('server');
+      }
+    } catch {
+      status.textContent = 'SEND_FAILED — TRY EMAIL DIRECTLY';
+      status.className   = 'error';
+    } finally {
+      btn.disabled    = false;
+      btn.textContent = 'SEND_MESSAGE';
+    }
+  });
+})();
+</script>
 </body>
 </html>
