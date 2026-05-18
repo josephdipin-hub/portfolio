@@ -684,3 +684,126 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 }
 #product-scroll { opacity: 0; transition: opacity 0.6s ease 0.3s; }
 #product-scroll.ready { opacity: 1; }
+/* ══════════════════════════════════════
+   CONTACT FORM
+══════════════════════════════════════ */
+#contact {
+  background: #000;
+  color: #fff;
+  padding: 80px 40px;
+  font-family: 'Space Mono', monospace;
+}
+
+#contact .contact-inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+#contact .section-label {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: #888;
+  margin: 0 0 60px;
+  display: block;
+  opacity: 1;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cf-row {
+  border-top: 1px solid #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 0 8px;
+  position: relative;
+}
+
+.cf-row:last-of-type {
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.cf-label {
+  font-size: 8px;
+  letter-spacing: 0.35em;
+  color: #444;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: block;
+  transition: color 0.3s ease;
+}
+
+.cf-row:focus-within .cf-label {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.cf-input,
+.cf-textarea {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  width: 100%;
+  padding: 0 0 16px;
+  caret-color: rgba(255, 255, 255, 0.6);
+  resize: none;
+}
+
+.cf-input::placeholder,
+.cf-textarea::placeholder {
+  color: #2a2a2a;
+}
+
+.cf-textarea {
+  min-height: 100px;
+}
+
+.cf-submit {
+  margin-top: 36px;
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.4);
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  padding: 16px 32px;
+  cursor: pointer;
+  transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+}
+
+.cf-submit:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.cf-submit:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Status message */
+#cf-status {
+  margin-top: 20px;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  height: 16px;
+  color: rgba(255, 255, 255, 0.3);
+  transition: color 0.4s ease;
+}
+
+#cf-status.success { color: rgba(80, 220, 140, 0.7); }
+#cf-status.error   { color: rgba(255, 80, 60, 0.7); }
+
+@media (max-width: 768px) {
+  #contact { padding: 60px 24px; }
+}
