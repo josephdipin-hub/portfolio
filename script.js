@@ -478,7 +478,7 @@ function buildFogSystem(modelScale) {
       radius:   radius,
       drift:    (Math.random() - 0.5) * 0.008,
       riseRate: 0.0004 + Math.random() * 0.0006,
-      opacity:  0.04 + Math.random() * 0.06,
+      opacity:  0.02 + Math.random() * 0.03,
       phase:    Math.random() * Math.PI * 2,
     };
     sprite.material.opacity = sprite.userData.opacity;
