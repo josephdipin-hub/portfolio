@@ -146,14 +146,17 @@
   <!-- Durst enlarger 3D background -->
   <canvas id="pg-bg-canvas"></canvas>
 
+  <!-- Loading indicator -->
+  <div id="pg-loading"><span>LOADING_MODELS</span></div>
+
   <!-- Horizontal scroll — same system as fashion gallery -->
   <div class="horizontal-scroll" id="product-scroll">
 
     <!-- E-COMMERCE -->
-    <div class="album-photo"><img loading="lazy" src="images/product-louis-philippe-sneaker-side-profile-studio-1.webp" alt="LP sneaker side profile"></div>
-    <div class="album-photo"><img loading="lazy" src="images/product-louis-philippe-sneaker-sole-detail-studio-2.webp" alt="LP sneaker sole detail"></div>
-    <div class="album-photo"><img loading="lazy" src="images/product-louis-philippe-tie-box-flatlay-studio-1.webp" alt="LP tie box flatlay"></div>
-    <div class="album-photo"><img loading="lazy" src="images/product-louis-philippe-tie-set-pedestal-studio-2.webp" alt="LP tie set pedestal"></div>
+    <div class="album-photo"><img loading="eager" src="images/product-louis-philippe-sneaker-side-profile-studio-1.webp" alt="LP sneaker side profile"></div>
+    <div class="album-photo"><img loading="eager" src="images/product-louis-philippe-sneaker-sole-detail-studio-2.webp" alt="LP sneaker sole detail"></div>
+    <div class="album-photo"><img loading="eager" src="images/product-louis-philippe-tie-box-flatlay-studio-1.webp" alt="LP tie box flatlay"></div>
+    <div class="album-photo"><img loading="eager" src="images/product-louis-philippe-tie-set-pedestal-studio-2.webp" alt="LP tie set pedestal"></div>
     <div class="album-photo"><img loading="lazy" src="images/product-macclite-wok-overhead-blue-studio-1.webp" alt="MACclite wok overhead"></div>
     <div class="album-photo"><img loading="lazy" src="images/product-macclite-wok-angled-dramatic-studio-2.webp" alt="MACclite wok angled"></div>
     <div class="album-photo"><img loading="lazy" src="images/product-macclite-crepe-pan-side-profile-studio-3.webp" alt="MACclite crepe pan"></div>
@@ -294,7 +297,7 @@ joseph.dipin@gmail.com
 
 <!-- FASHION GALLERY TRIGGER — unchanged -->
 <section class="relative">
-   <div class="portfolio-bg-container" data-no-mosh onclick="togglePortfolio(true)">
+  <div class="portfolio-bg-container" onclick="togglePortfolio(true)">
     <img id="fashion-trigger-img" crossorigin="anonymous" src="images/fashion-lighting-detail-10.webp" alt="fashion photographer Bangalore editorial">
     <div class="portfolio-trigger">FASHION_GALLERY</div>
   </div>
@@ -302,7 +305,7 @@ joseph.dipin@gmail.com
 
 <!-- PRODUCT GALLERY TRIGGER -->
 <section class="relative">
-  <div class="portfolio-bg-container" data-no-mosh onclick="toggleProductGallery(true)">
+  <div class="portfolio-bg-container" onclick="toggleProductGallery(true)">
     <img id="product-trigger-img" crossorigin="anonymous" src="images/product-woven-basket-forest-editorial-bangalore-1.webp" alt="product photographer Bangalore studio">
     <div class="portfolio-trigger">PRODUCT_GALLERY</div>
   </div>
