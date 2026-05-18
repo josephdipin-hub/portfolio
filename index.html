@@ -80,6 +80,19 @@
 }
 </script>
 
+<script type="application/ld+json">
+{
+ "@context": "https://schema.org",
+ "@type": "VideoObject",
+ "name": "Cinematic Fashion Shoot in Bangalore",
+ "description": "Behind the scenes of a fashion shoot in Bangalore",
+ "thumbnailUrl": "https://img.youtube.com/vi/QCJysAf_uZY/maxresdefault.jpg",
+ "uploadDate": "2026-04-30",
+ "contentUrl": "https://www.youtube.com/shorts/QCJysAf_uZY",
+ "embedUrl": "https://www.youtube.com/embed/QCJysAf_uZY"
+}
+</script>
+
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
@@ -98,18 +111,6 @@
 <link rel="stylesheet" href="style.css">
 <link rel="preload" as="image" href="images/fashion-editorial-bangalore-1.webp" type="image/webp" fetchpriority="high">
 <meta name="google-site-verification" content="j8QiKVHH34cGRBFYzd1Of5zDLAwsJJ-F7nlIzTzCB1k" />
-<script type="application/ld+json">
-{
- "@context": "https://schema.org",
- "@type": "VideoObject",
- "name": "Cinematic Fashion Shoot in Bangalore",
- "description": "Behind the scenes of a fashion shoot in Bangalore",
- "thumbnailUrl": "https://img.youtube.com/vi/QCJysAf_uZY/maxresdefault.jpg",
- "uploadDate": "2026-04-30",
- "contentUrl": "https://www.youtube.com/shorts/QCJysAf_uZY",
- "embedUrl": "https://www.youtube.com/embed/QCJysAf_uZY"
-}
-</script>
 </head>
 
 <body>
@@ -118,7 +119,7 @@
 <div id="brush-container"></div>
 
 <!-- ═══════════════════════════════════════
-     FASHION GALLERY — COMPLETELY UNCHANGED
+     FASHION GALLERY
 ════════════════════════════════════════ -->
 <div id="portfolio-page">
   <div class="exit-btn" onclick="togglePortfolio(false)">DISTORTIONS_ARE_INTENTIONAL //<br>TAP_TO_CLOSE</div>
@@ -137,16 +138,22 @@
   </div>
 </div>
 
-<!-- product-page div removed — replaced with inline gallery below -->
-
-<!-- PRODUCT GALLERY — FULL PAGE OVERLAY (like fashion gallery) -->
+<!-- ═══════════════════════════════════════
+     PRODUCT GALLERY
+════════════════════════════════════════ -->
 <div id="product-page">
+
+  <!-- ★ LOADING PERCENTAGE — shows while 3D models stream in -->
+  <div id="pg-loader">
+    <span id="pg-loader-pct">0%</span>
+  </div>
+
   <div class="exit-btn" onclick="toggleProductGallery(false)">PRODUCT_PHOTOGRAPHY //<br>TAP_TO_CLOSE</div>
 
   <!-- Durst enlarger 3D background -->
   <canvas id="pg-bg-canvas"></canvas>
 
-  <!-- Horizontal scroll — same system as fashion gallery -->
+  <!-- Horizontal scroll -->
   <div class="horizontal-scroll" id="product-scroll">
 
     <!-- E-COMMERCE -->
@@ -292,7 +299,7 @@ joseph.dipin@gmail.com
   </div>
 </section>
 
-<!-- FASHION GALLERY TRIGGER — unchanged -->
+<!-- FASHION GALLERY TRIGGER -->
 <section class="relative">
    <div class="portfolio-bg-container" data-no-mosh onclick="togglePortfolio(true)">
     <img id="fashion-trigger-img" crossorigin="anonymous" src="images/fashion-lighting-detail-10.webp" alt="fashion photographer Bangalore editorial">
@@ -424,6 +431,7 @@ joseph.dipin@gmail.com
     </form>
   </div>
 </section>
+
 <footer data-no-mosh class="px-6 md:px-24 pt-20 pb-10 border-t border-white/5">
   <div class="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
     <a href="mailto:joseph.dipin@gmail.com" class="text-3xl md:text-7xl font-bold tracking-tighter">CONTACT@SYNC</a>
@@ -440,7 +448,31 @@ joseph.dipin@gmail.com
   .wa-float:hover { opacity:1;transform:scale(1.08); }
   .wa-btn { width:56px;height:56px;background:#25D366;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(37,211,102,0.4); }
   .wa-btn svg { width:28px;height:28px;fill:#fff; }
+
+  /* ── PRODUCT GALLERY LOADER ── */
+  #pg-loader {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 10;
+    transition: opacity 0.6s ease;
+  }
+  #pg-loader.hidden {
+    opacity: 0;
+    pointer-events: none;
+  }
+  #pg-loader-pct {
+    font-family: 'Space Mono', monospace;
+    font-size: clamp(3rem, 8vw, 7rem);
+    letter-spacing: 0.08em;
+    color: rgba(255, 255, 255, 0.7);
+    font-weight: 400;
+  }
 </style>
+
 <a class="wa-float" href="https://wa.me/919747349190?text=Hi%20Dypin!%20I%20saw%20your%20portfolio%20and%20would%20like%20to%20book%20a%20shoot." target="_blank">
   <div class="wa-btn">
     <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg">
@@ -448,6 +480,7 @@ joseph.dipin@gmail.com
     </svg>
   </div>
 </a>
+
 <script>
 (function () {
   const form   = document.getElementById('contact-form');
@@ -479,7 +512,7 @@ joseph.dipin@gmail.com
     status.textContent = '';
     status.className = '';
 
-    const FORMSPREE_URL = 'https://formspree.io/f/mnjrqrzd'; // ✅ your form
+    const FORMSPREE_URL = 'https://formspree.io/f/mnjrqrzd';
 
     try {
       const res = await fetch(FORMSPREE_URL, {
@@ -504,5 +537,7 @@ joseph.dipin@gmail.com
   });
 })();
 </script>
+
 </body>
 </html>
+
