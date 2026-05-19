@@ -825,7 +825,7 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 }
 #pg-loader-pct {
   font-family: 'Space Mono', monospace;
-  font-size: 10px;
+  font-size: 12px;
   letter-spacing: 0.35em;
   color: rgba(255, 255, 255, 0.45);
   font-weight: 400;
