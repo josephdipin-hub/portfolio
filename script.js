@@ -414,13 +414,23 @@ function initEnlargerBg() {
   let watchPct    = 0;
 
   function updatePct() {
-    /* Enlarger = 80% of total weight, watch = 20% */
-    const total = Math.round(enlargerPct * 0.8 + watchPct * 0.2);
-    if (pctEl) pctEl.textContent = total + '%';
-    if (total >= 100 && loaderEl) {
-      loaderEl.classList.add('hidden');
-    }
+  const total = Math.round(enlargerPct * 0.8 + watchPct * 0.2);
+
+  let stage;
+  if      (total < 25)  stage = 'DEVELOPER';
+  else if (total < 55)  stage = 'STOP_BATH';
+  else if (total < 80)  stage = 'FIXER';
+  else if (total < 100) stage = 'WASH';
+  else                  stage = 'READY //';
+
+  if (pctEl) pctEl.textContent = total < 100
+    ? `${stage} // ${total}%`
+    : stage;
+
+  if (total >= 100 && loaderEl) {
+    setTimeout(() => loaderEl.classList.add('hidden'), 800);
   }
+}
 
   const loader = new THREE.GLTFLoader();
   loader.load(
