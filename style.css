@@ -56,7 +56,7 @@ section.min-h-screen {
 
 /* --- FASHION GALLERY (unchanged) --- */
 #portfolio-page {
-    position: fixed; inset: 0; width: 100vw; height: 100vh;
+    position: fixed; inset: 0; width: 130vw; height: 100vh;
     background: #000; z-index: 1000;
     display: none; align-items: center; justify-content: center;
     opacity: 0; transition: opacity 0.5s ease; overflow: hidden;
