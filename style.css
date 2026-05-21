@@ -59,7 +59,7 @@ section.min-h-screen {
     position: fixed; inset: 0; width: 130vw; height: 100vh;
     background: #000; z-index: 1000;
     display: none; align-items: center; justify-content: center;
-    opacity: 0; transition: opacity 0.5s ease; overflow: hidden;
+    opacity: 0; transition: opacity 0.5s ease; overflow: visible
 }
 #portfolio-page.active { display: flex; opacity: 1; }
 
@@ -84,12 +84,12 @@ section.min-h-screen {
 /* --- HORIZONTAL SCROLL SYSTEM (fashion gallery) --- */
 .horizontal-scroll {
     display: flex; flex-direction: row; align-items: center;
-    width: 100%; height: 100%; padding: 0 10vw; gap: 15vw;
-    overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+    width: 100%; height: 100%; padding: 20px 10vw; gap: 10vw;
+    overflow-x: auto; overflow-y: visible; scrollbar-width: none; gap: 4vw;
 }
 .horizontal-scroll::-webkit-scrollbar { display: none; }
-.album-photo { flex: 0 0 auto; height: 50vh; display: flex; align-items: center; justify-content: center; }
-.album-photo img { height: 100%; width: auto; object-fit: contain; }
+.album-photo { flex: 0 0 auto; height: 90vh; width: 75vw; display: flex; align-items: center; justify-content: center; }
+.album-photo img { height: 100%; width: 100%; object-fit: cover; }
 .asdf-stamp { position: absolute; pointer-events: none; z-index: 110; mix-blend-mode: lighten; filter: url(#asdf-sideways-filter); }
 
 /* ═══════════════════════════════════════
