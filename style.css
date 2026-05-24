@@ -101,35 +101,40 @@ section.min-h-screen {
 }
 #product-page.active { display: flex; opacity: 1; }
 
-/* --- EXIT BUTTON (FIXED) --- */
-.exit-btn { 
-    position: absolute; 
-    top: 0; 
-    right: 0; 
+/* --- MINIMALIST EXIT BUTTON --- */
+.exit-btn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
     z-index: 9999 !important;
-    padding: 1.5rem 1.2rem;
-    cursor: pointer; 
-    font-size: 8px;
-    letter-spacing: 0.2em;
-    text-transform: uppercase;
     
-    background: rgba(0, 0, 0, 0.6); 
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    color: rgba(255, 255, 255, 0.9) !important;
-    pointer-events: auto;
-    transition: opacity 0.3s ease, background 0.3s ease;
+    /* Invisible hit area for mobile */
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     
-    max-width: 60vw;
-    text-align: right;
-    line-height: 1.6;
-    word-break: break-word;
+    cursor: pointer;
+    background: transparent !important; /* Forces no background */
+    
+    /* Typography for the 'X' */
+    font-family: 'Inter', sans-serif;
+    font-size: 28px;
+    font-weight: 300;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.4);
+    
+    mix-blend-mode: normal;
+    transition: color 0.3s ease, transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
 }
 
-.exit-btn:hover { 
-    opacity: 1; 
-    background: rgba(0, 0, 0, 0.8);
+/* Subtle, sharp interaction */
+.exit-btn:hover {
+    color: #fff;
+    transform: rotate(90deg) scale(1.1); /* Adds a sharp, mechanical rotation */
 }
+
 
 
 /* --- HORIZONTAL SCROLL SYSTEM (fashion gallery) --- */
