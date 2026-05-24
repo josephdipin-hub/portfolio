@@ -50,12 +50,9 @@ section.min-h-screen {
     cursor: pointer;
     background: transparent;
 }
-
-/* Hide the images to save rendering memory */
-.portfolio-bg-container img {
-    display: none !important;
+.portfolio-bg-container img { 
+    display: none !important; 
 }
-
 .portfolio-trigger {
     position: relative; 
     font-family: 'Inter', sans-serif; 
@@ -66,25 +63,20 @@ section.min-h-screen {
     text-transform: uppercase; 
     z-index: 30; 
     pointer-events: none;
-    
-    /* Hollow text state */
     color: transparent;
     -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
     transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
 }
-
-/* Solid fill and glow on hover */
-.portfolio-bg-container:hover .portfolio-trigger {
+.portfolio-bg-container:hover .portfolio-trigger { 
     color: rgba(255, 255, 255, 0.9);
     -webkit-text-stroke: 1px transparent;
     text-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
-    transform: scale(1.02) skewX(-2deg);
+    transform: scale(1.02) skewX(-2deg); 
 }
-
 
 /* --- FASHION GALLERY --- */
 #portfolio-page {
-    position: fixed; inset: 0; width: 130vw; height: 100vh;
+    position: fixed; inset: 0; width: 100vw; height: 100vh;
     background: #000; z-index: 1000;
     display: none; align-items: center; justify-content: center;
     opacity: 0; transition: opacity 0.5s ease; overflow: hidden;
@@ -94,57 +86,53 @@ section.min-h-screen {
 /* --- PRODUCT GALLERY OVERLAY --- */
 #product-page {
     position: fixed; inset: 0; width: 100vw; height: 100vh;
-    background: #000;
+    background: linear-gradient(to top, #080012 0%, #0d0024 40%, #1a0300 80%, #2a0600 100%);
     z-index: 1000;
     display: none; align-items: center; justify-content: center;
     opacity: 0; transition: opacity 0.5s ease; overflow: hidden;
 }
 #product-page.active { display: flex; opacity: 1; }
 
-/* --- MINIMALIST EXIT BUTTON --- */
+/* --- EXIT BTN (shared) --- */
 .exit-btn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
+    position: fixed !important;
+    top: 24px;
+    right: 24px;
     z-index: 9999 !important;
-    
-    /* Invisible hit area for mobile */
     width: 60px;
     height: 60px;
     display: flex;
     align-items: center;
     justify-content: center;
-    
     cursor: pointer;
-    background: transparent !important; /* Forces no background */
-    
-    /* Typography for the 'X' */
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
     font-family: 'Inter', sans-serif;
-    font-size: 28px;
+    font-size: 32px;
     font-weight: 300;
     line-height: 1;
-    color: rgba(255, 255, 255, 0.4);
-    
-    mix-blend-mode: normal;
+    color: rgba(255, 255, 255, 0.6);
+    mix-blend-mode: normal !important;
     transition: color 0.3s ease, transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
 }
-
-/* Subtle, sharp interaction */
-.exit-btn:hover {
+.exit-btn:hover { 
     color: #fff;
-    transform: rotate(90deg) scale(1.1); /* Adds a sharp, mechanical rotation */
+    transform: rotate(90deg) scale(1.1);
 }
 
-
-
-/* --- HORIZONTAL SCROLL SYSTEM (fashion gallery) --- */
+/* --- HORIZONTAL SCROLL SYSTEM --- */
 .horizontal-scroll {
     display: flex; flex-direction: row; align-items: center;
-    width: 100%; height: 100%; padding: 0 10vw; gap: 15vw;
+    width: 100%; height: 100%; padding: 0 10vw; gap: 8vw;
     overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
 }
 .horizontal-scroll::-webkit-scrollbar { display: none; }
-.album-photo { flex: 0 0 auto; height: 50vh; display: flex; align-items: center; justify-content: center; }
+.album-photo { flex: 0 0 auto; height: 75vh; display: flex; align-items: center; justify-content: center; }
 .album-photo img { height: 100%; width: auto; object-fit: contain; }
 .asdf-stamp { position: absolute; pointer-events: none; z-index: 110; mix-blend-mode: lighten; filter: url(#asdf-sideways-filter); }
 
@@ -405,7 +393,7 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
     }
 }
 
-/* ── ZONE PILLS ── */
+/* ── ZONE PILLS — David Langarica style navigation ── */
 #darkroom-zone-pills {
     position: absolute;
     top: 28px;
@@ -575,8 +563,6 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
     opacity 0.9s ease,
     transform 0.9s ease,
     box-shadow 0.5s ease;
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
 }
 .pg-item.revealed {
   opacity: 1;
@@ -626,6 +612,73 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.97);
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  cursor: pointer;
+}
+#pg-lightbox.active { display: flex; }
+#pg-lightbox-img {
+  max-width: 88vw;
+  max-height: 82vh;
+  object-fit: contain;
+  display: block;
+  animation: pg-reveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes pg-reveal {
+  from { opacity: 0; transform: scale(0.97); filter: brightness(0.3) saturate(0); }
+  to   { opacity: 1; transform: scale(1);    filter: brightness(1)   saturate(1); }
+}
+#pg-lightbox-meta {
+  margin-top: 18px;
+  font-family: 'Space Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.3em;
+  color: rgba(255,255,255,0.22);
+  text-transform: uppercase;
+}
+#pg-lightbox-close {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.25);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 10px;
+  transition: color 0.2s ease;
+}
+#pg-lightbox-close:hover { color: rgba(255,255,255,0.8); }
+
+@media (max-width: 768px) {
+  #pg-grid { padding: 40px 20px 16px; }
+  .pg-item { width: 200px; height: 260px; }
+}
+
+/* ── 3D BG CANVAS inside #product-page overlay ── */
+#pg-bg-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.6s ease;
+}
+#pg-bg-canvas.visible { opacity: 1; }
+
+/* scroll strip above canvas */
+#product-scroll { position: relative; z-index: 1; }
+
+/* ── LIGHTBOX outside main — override blend mode ── */
+#pg-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.97);
   z-index: 9000;
   display: none;
   align-items: center;
@@ -657,10 +710,8 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 }
 #pg-lightbox-close {
   position: absolute;
-  top: 24px;
-  right: 28px;
-  background: none;
-  border: none;
+  top: 24px; right: 28px;
+  background: none; border: none;
   color: rgba(255,255,255,0.3);
   font-size: 20px;
   cursor: pointer;
@@ -670,48 +721,13 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 }
 #pg-lightbox-close:hover { color: #fff; }
 
-/* ── 3D BG CANVAS inside #product-page overlay ── */
-#pg-bg-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 1.6s ease;
+/* ── pg-item — no pointer-events conflict on mobile ── */
+.pg-item {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
-#pg-bg-canvas.visible { opacity: 1; }
-
-/* scroll strip above canvas */
-#product-scroll { position: relative; z-index: 1; }
 #product-scroll { opacity: 0; transition: opacity 0.6s ease 0.3s; }
 #product-scroll.ready { opacity: 1; }
-
-/* ── PRODUCT GALLERY LOADER ── */
-#pg-loader {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 10;
-  transition: opacity 0.6s ease;
-  background: #000;
-}
-#pg-loader.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-#pg-loader-pct {
-  font-family: 'Space Mono', monospace;
-  font-size: 12px;
-  letter-spacing: 0.35em;
-  color: rgba(255, 255, 255, 0.45);
-  font-weight: 400;
-  text-transform: uppercase;
-}
 
 /* ══════════════════════════════════════
    CONTACT FORM
@@ -835,6 +851,29 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 
 @media (max-width: 768px) {
   #contact { padding: 60px 24px; }
-  #pg-grid { padding: 40px 20px 16px; }
-  .pg-item { width: 200px; height: 260px; }
+}
+
+/* ── PRODUCT GALLERY LOADER ── */
+#pg-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.6s ease;
+  background: #000;
+}
+#pg-loader.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+#pg-loader-pct {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.35em;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 400;
+  text-transform: uppercase;
 }
