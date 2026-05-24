@@ -82,7 +82,7 @@ section.min-h-screen {
 }
 
 
-/* --- FASHION GALLERY (unchanged) --- */
+/* --- FASHION GALLERY --- */
 #portfolio-page {
     position: fixed; inset: 0; width: 130vw; height: 100vh;
     background: #000; z-index: 1000;
@@ -94,32 +94,36 @@ section.min-h-screen {
 /* --- PRODUCT GALLERY OVERLAY --- */
 #product-page {
     position: fixed; inset: 0; width: 100vw; height: 100vh;
-    background: linear-gradient(to top, #080012 0%, #0d0024 40%, #1a0300 80%, #2a0600 100%);
+    background: #000;
     z-index: 1000;
     display: none; align-items: center; justify-content: center;
     opacity: 0; transition: opacity 0.5s ease; overflow: hidden;
 }
 #product-page.active { display: flex; opacity: 1; }
 
-/* Update your existing .exit-btn with these properties */
+/* --- EXIT BUTTON (FIXED) --- */
 .exit-btn { 
     position: absolute; 
     top: 0; 
     right: 0; 
-    z-index: 9999 !important; /* Force UI to the top layer */
-    padding: 2.5rem; 
+    z-index: 9999 !important;
+    padding: 1.5rem 1.2rem;
     cursor: pointer; 
-    font-size: 8px; /* Slightly larger for mobile readability */
-    letter-spacing: 0.3em; 
+    font-size: 8px;
+    letter-spacing: 0.2em;
     text-transform: uppercase;
     
-    /* Legibility boost */
     background: rgba(0, 0, 0, 0.6); 
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
     color: rgba(255, 255, 255, 0.9) !important;
-    pointer-events: auto; /* Ensure it captures clicks */
+    pointer-events: auto;
     transition: opacity 0.3s ease, background 0.3s ease;
+    
+    max-width: 60vw;
+    text-align: right;
+    line-height: 1.6;
+    word-break: break-word;
 }
 
 .exit-btn:hover { 
@@ -396,7 +400,7 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
     }
 }
 
-/* ── ZONE PILLS — David Langarica style navigation ── */
+/* ── ZONE PILLS ── */
 #darkroom-zone-pills {
     position: absolute;
     top: 28px;
@@ -566,6 +570,8 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
     opacity 0.9s ease,
     transform 0.9s ease,
     box-shadow 0.5s ease;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
 }
 .pg-item.revealed {
   opacity: 1;
@@ -615,73 +621,6 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
   position: fixed;
   inset: 0;
   background: rgba(0,0,0,0.97);
-  z-index: 2000;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  cursor: pointer;
-}
-#pg-lightbox.active { display: flex; }
-#pg-lightbox-img {
-  max-width: 88vw;
-  max-height: 82vh;
-  object-fit: contain;
-  display: block;
-  animation: pg-reveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-}
-@keyframes pg-reveal {
-  from { opacity: 0; transform: scale(0.97); filter: brightness(0.3) saturate(0); }
-  to   { opacity: 1; transform: scale(1);    filter: brightness(1)   saturate(1); }
-}
-#pg-lightbox-meta {
-  margin-top: 18px;
-  font-family: 'Space Mono', monospace;
-  font-size: 8px;
-  letter-spacing: 0.3em;
-  color: rgba(255,255,255,0.22);
-  text-transform: uppercase;
-}
-#pg-lightbox-close {
-  position: absolute;
-  top: 24px;
-  right: 28px;
-  background: none;
-  border: none;
-  color: rgba(255,255,255,0.25);
-  font-size: 18px;
-  cursor: pointer;
-  padding: 10px;
-  transition: color 0.2s ease;
-}
-#pg-lightbox-close:hover { color: rgba(255,255,255,0.8); }
-
-@media (max-width: 768px) {
-  #pg-grid { padding: 40px 20px 16px; }
-  .pg-item { width: 200px; height: 260px; }
-}
-
-/* ── 3D BG CANVAS inside #product-page overlay ── */
-#pg-bg-canvas {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  z-index: 0;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 1.6s ease;
-}
-#pg-bg-canvas.visible { opacity: 1; }
-
-/* scroll strip above canvas */
-#product-scroll { position: relative; z-index: 1; }
-
-/* ── LIGHTBOX outside main — override blend mode ── */
-#pg-lightbox {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.97);
   z-index: 9000;
   display: none;
   align-items: center;
@@ -713,8 +652,10 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 }
 #pg-lightbox-close {
   position: absolute;
-  top: 24px; right: 28px;
-  background: none; border: none;
+  top: 24px;
+  right: 28px;
+  background: none;
+  border: none;
   color: rgba(255,255,255,0.3);
   font-size: 20px;
   cursor: pointer;
@@ -724,13 +665,49 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 }
 #pg-lightbox-close:hover { color: #fff; }
 
-/* ── pg-item — no pointer-events conflict on mobile ── */
-.pg-item {
-  -webkit-tap-highlight-color: transparent;
-  touch-action: manipulation;
+/* ── 3D BG CANVAS inside #product-page overlay ── */
+#pg-bg-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.6s ease;
 }
+#pg-bg-canvas.visible { opacity: 1; }
+
+/* scroll strip above canvas */
+#product-scroll { position: relative; z-index: 1; }
 #product-scroll { opacity: 0; transition: opacity 0.6s ease 0.3s; }
 #product-scroll.ready { opacity: 1; }
+
+/* ── PRODUCT GALLERY LOADER ── */
+#pg-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.6s ease;
+  background: #000;
+}
+#pg-loader.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+#pg-loader-pct {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.35em;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
 /* ══════════════════════════════════════
    CONTACT FORM
 ══════════════════════════════════════ */
@@ -853,28 +830,6 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 
 @media (max-width: 768px) {
   #contact { padding: 60px 24px; }
+  #pg-grid { padding: 40px 20px 16px; }
+  .pg-item { width: 200px; height: 260px; }
 }
-/* ── PRODUCT GALLERY LOADER ── */
-#pg-loader {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-  z-index: 10;
-  transition: opacity 0.6s ease;
-  background: #000;
-}
-#pg-loader.hidden {
-  opacity: 0;
-  pointer-events: none;
-}
-#pg-loader-pct {
-  font-family: 'Space Mono', monospace;
-  font-size: 12px;
-  letter-spacing: 0.35em;
-  color: rgba(255, 255, 255, 0.45);
-  font-weight: 400;
-  text-transform: uppercase;
-               }
