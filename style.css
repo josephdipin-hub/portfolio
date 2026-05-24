@@ -73,13 +73,32 @@ section.min-h-screen {
 }
 #product-page.active { display: flex; opacity: 1; }
 
-/* --- EXIT BTN (shared) --- */
+/* Update your existing .exit-btn with these properties */
 .exit-btn { 
-    padding: 2.5rem; text-align: right; cursor: pointer; opacity: 0.4; 
-    font-size: 7px; letter-spacing: 0.3em; 
-    position: absolute; top: 0; right: 0; z-index: 200; 
+    position: absolute; 
+    top: 0; 
+    right: 0; 
+    z-index: 9999 !important; /* Force UI to the top layer */
+    padding: 2.5rem; 
+    cursor: pointer; 
+    font-size: 8px; /* Slightly larger for mobile readability */
+    letter-spacing: 0.3em; 
+    text-transform: uppercase;
+    
+    /* Legibility boost */
+    background: rgba(0, 0, 0, 0.6); 
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    color: rgba(255, 255, 255, 0.9) !important;
+    pointer-events: auto; /* Ensure it captures clicks */
+    transition: opacity 0.3s ease, background 0.3s ease;
 }
-.exit-btn:hover { opacity: 1; }
+
+.exit-btn:hover { 
+    opacity: 1; 
+    background: rgba(0, 0, 0, 0.8);
+}
+
 
 /* --- HORIZONTAL SCROLL SYSTEM (fashion gallery) --- */
 .horizontal-scroll {
