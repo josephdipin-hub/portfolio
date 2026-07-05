@@ -611,3 +611,13 @@ function applyMood() {
 }
 applyMood();
 setInterval(applyMood, 60 * 1000);
+document.querySelectorAll('#album-scroll img, #product-scroll img').forEach(img => {
+  img.addEventListener('contextmenu', e => e.preventDefault());
+  img.addEventListener('dragstart', e => e.preventDefault());
+});
+
+document.addEventListener('keydown', e => {
+  if (e.key === 'F12' || (e.ctrlKey && e.shiftKey && ['I','J','C'].includes(e.key)) || (e.ctrlKey && e.key === 'u')) {
+    e.preventDefault();
+  }
+});
