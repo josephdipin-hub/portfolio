@@ -440,7 +440,22 @@ joseph.dipin@gmail.com
 </footer>
 
 </main>
-
+  
+<style>
+.album-photo img {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+</style>
+<script>
+document.querySelectorAll('#album-scroll img, #product-scroll img').forEach(img => {
+  img.addEventListener('contextmenu', e => e.preventDefault());
+  img.addEventListener('dragstart', e => e.preventDefault());
+});
+</script>
+  
 <script src="script.js"></script>
 
 <style>
