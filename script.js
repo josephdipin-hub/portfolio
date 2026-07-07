@@ -622,7 +622,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-* ═══════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════
    PATCH: 3D MONITOR DISPLAY — Behind Scroll Hint
    Minimal addition: GLB + vertical video, auto-play muted
 ════════════════════════════════════════════════════════ */
