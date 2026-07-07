@@ -117,12 +117,13 @@
     return;
   }
   
+  // FIXED POSITION CONTAINER
   const container = document.createElement('div');
   container.style.cssText = `
     position: fixed;
-    width: 280px;
-    height: 380px;
-    top: 35%;
+    width: 320px;
+    height: 420px;
+    top: 32%;
     left: 50%;
     transform: translateX(-50%);
     z-index: -1;
@@ -131,56 +132,41 @@
   document.body.appendChild(container);
   
   const canvas = document.createElement('canvas');
+  canvas.style.width = '100%';
+  canvas.style.height = '100%';
   container.appendChild(canvas);
   
+  // THREE.js SCENE
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(45, 280 / 380, 0.1, 1000);
-  camera.position.z = 3;
+  const camera = new THREE.PerspectiveCamera(50, 320 / 420, 0.1, 1000);
+  camera.position.set(0, 0.2, 2.2);
+  camera.lookAt(0, 0, 0);
   
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, precision: 'highp' });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-  renderer.setSize(280, 380);
+  renderer.setSize(320, 420);
   renderer.setClearColor(0x000000, 0);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.2;
+  renderer.shadowMap.enabled = true;
   
-  const light1 = new THREE.PointLight(0xffffff, 2.5, 10);
-  light1.position.set(2, 3, 2);
-  scene.add(light1);
+  // LIGHTING - Better for 3D
+  const keyLight = new THREE.PointLight(0xffffff, 2.8, 20);
+  keyLight.position.set(1.5, 2, 1.5);
+  keyLight.castShadow = true;
+  scene.add(keyLight);
   
-  const light2 = new THREE.PointLight(0x8888ff, 1.5, 8);
-  light2.position.set(-2, 1, 2);
-  scene.add(light2);
+  const fillLight = new THREE.PointLight(0x7799ff, 1.2, 15);
+  fillLight.position.set(-1.5, 1, 1.5);
+  scene.add(fillLight);
   
-  scene.add(new THREE.AmbientLight(0x444444, 1.2));
+  const rimLight = new THREE.PointLight(0xff6644, 0.8, 10);
+  rimLight.position.set(0, -1, -1.5);
+  scene.add(rimLight);
   
-  const gltfLoader = new THREE.GLTFLoader();
-  let videoTexture = null;
-  let monitorMesh = null;
+  scene.add(new THREE.AmbientLight(0x555555, 0.8));
   
-  gltfLoader.load('models/display_terminal.glb', (gltf) => {
-    const monitor = gltf.scene;
-    monitor.scale.set(2, 2, 2);
-    monitor.rotation.y = 0.2;
-    monitor.rotation.x = 0.1;
-    
-    monitor.traverse((node) => {
-      if (node.isMesh && node.material) {
-        node.castShadow = true;
-        if (videoTexture) {
-          node.material.map = videoTexture;
-          node.material.emissiveMap = videoTexture;
-          node.material.emissiveIntensity = 0.6;
-        }
-      }
-    });
-    
-    scene.add(monitor);
-    monitorMesh = monitor;
-    startRender();
-  }, undefined, () => {
-    startRender();
-  });
-  
+  // VIDEO TEXTURE
   const video = document.createElement('video');
   video.src = 'videos/hb_1783348123181fashion_photographer_whitefield.mp4';
   video.autoplay = true;
@@ -190,23 +176,81 @@
   video.crossOrigin = 'anonymous';
   document.body.appendChild(video);
   
+  let videoTexture = null;
   video.addEventListener('loadeddata', () => {
     videoTexture = new THREE.VideoTexture(video);
     videoTexture.minFilter = THREE.LinearFilter;
     videoTexture.magFilter = THREE.LinearFilter;
+    videoTexture.colorSpace = THREE.SRGBColorSpace;
     
-    if (monitorMesh) {
-      monitorMesh.traverse((node) => {
-        if (node.isMesh && node.material) {
-          node.material.map = videoTexture;
-          node.material.emissiveMap = videoTexture;
-        }
-      });
-    }
+    // Reapply to monitor when video loads
+    if (monitorMesh) applyVideoToMonitor();
   });
   
   video.play().catch(() => {});
   
+  // GLB LOADER
+  const gltfLoader = new THREE.GLTFLoader();
+  let monitorMesh = null;
+  let screenMaterial = null;
+  
+  function applyVideoToMonitor() {
+    if (!videoTexture || !monitorMesh) return;
+    
+    monitorMesh.traverse((node) => {
+      if (node.isMesh && node.material) {
+        const nodeName = node.name.toLowerCase();
+        
+        // Screen/Display detection
+        if (nodeName.includes('screen') || 
+            nodeName.includes('display') || 
+            nodeName.includes('panel') ||
+            nodeName.includes('lcd') ||
+            node.material.name.toLowerCase().includes('screen')) {
+          
+          // Create material for screen
+          const screenMat = new THREE.MeshStandardMaterial({
+            map: videoTexture,
+            emissiveMap: videoTexture,
+            emissive: new THREE.Color(0x333333),
+            emissiveIntensity: 0.6,
+            metalness: 0.0,
+            roughness: 0.1,
+            side: THREE.DoubleSide
+          });
+          
+          node.material = screenMat;
+          node.castShadow = true;
+          node.receiveShadow = true;
+        } else {
+          // Monitor frame/body
+          node.material.metalness = 0.8;
+          node.material.roughness = 0.2;
+          node.castShadow = true;
+          node.receiveShadow = true;
+        }
+      }
+    });
+  }
+  
+  gltfLoader.load('models/display_terminal.glb', (gltf) => {
+    monitorMesh = gltf.scene;
+    monitorMesh.scale.set(1.8, 1.8, 1.8);
+    monitorMesh.rotation.y = 0.12;
+    monitorMesh.rotation.x = 0.08;
+    
+    applyVideoToMonitor();
+    scene.add(monitorMesh);
+    
+    startRender();
+  }, (progress) => {
+    // Loading progress
+  }, (error) => {
+    console.error('Failed to load monitor GLB:', error);
+    startRender();
+  });
+  
+  // RENDER LOOP
   let isRendering = false;
   function startRender() {
     if (isRendering) return;
@@ -214,14 +258,23 @@
     
     function render() {
       requestAnimationFrame(render);
-      if (monitorMesh) monitorMesh.rotation.y += 0.0008;
+      
+      // Gentle rotation
+      if (monitorMesh) {
+        monitorMesh.rotation.y += 0.00035;
+      }
+      
       renderer.render(scene, camera);
     }
+    
     render();
   }
   
+  // RESIZE HANDLER
   window.addEventListener('resize', () => {
-    renderer.setSize(280, 380);
+    renderer.setSize(320, 420);
+    camera.aspect = 320 / 420;
+    camera.updateProjectionMatrix();
   });
 })();
 </script>
