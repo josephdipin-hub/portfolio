@@ -621,3 +621,108 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
   }
 });
+
+* ═══════════════════════════════════════════════════════
+   PATCH: 3D MONITOR DISPLAY — Behind Scroll Hint
+   Minimal addition: GLB + vertical video, auto-play muted
+════════════════════════════════════════════════════════ */
+
+(function initMonitorPatch() {
+  if (typeof THREE === 'undefined') return;
+  
+  const hints = document.querySelectorAll('.scroll-hint, [class*="hint"]');
+  if (hints.length === 0) return;
+  
+  const hintEl = hints[0];
+  
+  const container = document.createElement('div');
+  container.id = 'monitor-patch-container';
+  container.style.cssText = `
+    position: absolute;
+    width: 300px;
+    height: 400px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: -1;
+    pointer-events: none;
+  `;
+  
+  const canvas = document.createElement('canvas');
+  container.appendChild(canvas);
+  hintEl.parentElement.insertBefore(container, hintEl);
+  
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(45, 300 / 400, 0.1, 1000);
+  camera.position.z = 3;
+  
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  renderer.setSize(300, 400);
+  renderer.setClearColor(0x000000, 0);
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  
+  // Minimal lighting
+  const light1 = new THREE.PointLight(0xffffff, 2, 10);
+  light1.position.set(2, 3, 2);
+  scene.add(light1);
+  
+  const light2 = new THREE.PointLight(0x8888ff, 1, 8);
+  light2.position.set(-2, 1, 2);
+  scene.add(light2);
+  
+  scene.add(new THREE.AmbientLight(0x333333, 1));
+  
+  // Load monitor GLB + video
+  const gltfLoader = new THREE.GLTFLoader();
+  let videoTexture = null;
+  
+  gltfLoader.load('portfolio/models/display_terminal.glb', (gltf) => {
+    const monitor = gltf.scene;
+    monitor.scale.set(2, 2, 2);
+    monitor.rotation.y = 0.2;
+    monitor.rotation.x = 0.1;
+    
+    if (videoTexture) {
+      monitor.traverse((node) => {
+        if (node.isMesh) {
+          node.material.map = videoTexture;
+          node.material.emissiveMap = videoTexture;
+          node.material.emissiveIntensity = 0.7;
+          node.castShadow = true;
+        }
+      });
+    }
+    
+    scene.add(monitor);
+    
+    // Gentle rotation
+    function rotateMonitor() {
+      requestAnimationFrame(rotateMonitor);
+      monitor.rotation.y += 0.0008;
+      renderer.render(scene, camera);
+    }
+    rotateMonitor();
+  });
+  
+  // Video setup
+  const video = document.createElement('video');
+  video.src = 'portfolio/videos/hb_1783348123181fashion_photographer_whitefield.mp4';
+  video.autoplay = true;
+  video.muted = true;
+  video.loop = true;
+  video.playsInline = true;
+  
+  video.addEventListener('loadeddata', () => {
+    videoTexture = new THREE.VideoTexture(video);
+    videoTexture.minFilter = THREE.LinearFilter;
+    videoTexture.magFilter = THREE.LinearFilter;
+  });
+  
+  video.play().catch(() => {});
+  
+  // Handle resize
+  window.addEventListener('resize', () => {
+    renderer.setSize(300, 400);
+  });
+})();
