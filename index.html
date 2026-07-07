@@ -228,18 +228,35 @@
   }
   
   gltfLoader.load('models/display_terminal.glb', (gltf) => {
-    monitorMesh = gltf.scene;
-    monitorMesh.scale.set(2.2, 2.2, 2.2);
-    monitorMesh.rotation.y = 0.1;
-    monitorMesh.rotation.x = 0.05;
-    
-    applyVideo();
-    scene.add(monitorMesh);
-    
-    render();
-  }, undefined, () => {
-    render();
-  });
+  monitorMesh = gltf.scene;
+
+  // Auto-fit: measure real size, scale + center it
+  const box = new THREE.Box3().setFromObject(monitorMesh);
+  const size = new THREE.Vector3();
+  const center = new THREE.Vector3();
+  box.getSize(size);
+  box.getCenter(center);
+
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const targetSize = 2.5; // how big it should appear in the scene
+  const scale = targetSize / maxDim;
+
+  monitorMesh.scale.setScalar(scale);
+  monitorMesh.position.set(
+    -center.x * scale,
+    -center.y * scale,
+    -center.z * scale
+  );
+  monitorMesh.rotation.y = 0.1;
+
+  applyVideo();
+  scene.add(monitorMesh);
+
+  render();
+}, undefined, (error) => {
+  console.error('GLB failed to load:', error);
+  render();
+});
   
   // RENDER
   function render() {
