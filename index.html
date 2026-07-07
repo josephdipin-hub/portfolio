@@ -118,7 +118,6 @@
   }
   
   const container = document.createElement('div');
-  container.id = 'monitor-patch-container';
   container.style.cssText = `
     position: fixed;
     width: 280px;
@@ -144,33 +143,33 @@
   renderer.setClearColor(0x000000, 0);
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   
-  const light1 = new THREE.PointLight(0xffffff, 2, 10);
+  const light1 = new THREE.PointLight(0xffffff, 2.5, 10);
   light1.position.set(2, 3, 2);
   scene.add(light1);
   
-  const light2 = new THREE.PointLight(0x8888ff, 1, 8);
+  const light2 = new THREE.PointLight(0x8888ff, 1.5, 8);
   light2.position.set(-2, 1, 2);
   scene.add(light2);
   
-  scene.add(new THREE.AmbientLight(0x333333, 1));
+  scene.add(new THREE.AmbientLight(0x444444, 1.2));
   
   const gltfLoader = new THREE.GLTFLoader();
   let videoTexture = null;
   let monitorMesh = null;
   
-  gltfLoader.load('portfolio/models/display_terminal.glb', (gltf) => {
+  gltfLoader.load('models/display_terminal.glb', (gltf) => {
     const monitor = gltf.scene;
     monitor.scale.set(2, 2, 2);
     monitor.rotation.y = 0.2;
     monitor.rotation.x = 0.1;
     
     monitor.traverse((node) => {
-      if (node.isMesh) {
+      if (node.isMesh && node.material) {
         node.castShadow = true;
         if (videoTexture) {
           node.material.map = videoTexture;
           node.material.emissiveMap = videoTexture;
-          node.material.emissiveIntensity = 0.7;
+          node.material.emissiveIntensity = 0.6;
         }
       }
     });
@@ -183,12 +182,12 @@
   });
   
   const video = document.createElement('video');
-  video.src = 'portfolio/videos/hb_1783348123181fashion_photographer_whitefield.mp4';
+  video.src = 'videos/hb_1783348123181fashion_photographer_whitefield.mp4';
   video.autoplay = true;
   video.muted = true;
   video.loop = true;
   video.playsInline = true;
-  video.style.display = 'none';
+  video.crossOrigin = 'anonymous';
   document.body.appendChild(video);
   
   video.addEventListener('loadeddata', () => {
