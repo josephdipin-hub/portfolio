@@ -611,3 +611,42 @@ function applyMood() {
 }
 applyMood();
 setInterval(applyMood, 60 * 1000);
+
+/* ═══════════════════════════════════════════════════════
+   VOLUMETRIC SHOWREEL PROJECTION — scroll-driven 3D camera pan
+   Scoped to its own scroll track (getBoundingClientRect-based),
+   NOT global document scroll — it only reacts while the viewer is
+   actually scrolling through this section, not across the whole page.
+════════════════════════════════════════════════════════ */
+(function () {
+  const track      = document.getElementById('showreel-scroll-track');
+  const cameraView = document.getElementById('cameraView');
+  const ambientBeam = document.getElementById('ambientBeam');
+  if (!track || !cameraView || !ambientBeam) return;
+
+  const basePitch = 12;
+  const baseYaw   = -15;
+  const basePanY  = -20;
+
+  function updateShowreelCamera() {
+    const rect = track.getBoundingClientRect();
+    const trackHeight = rect.height - window.innerHeight;
+    if (trackHeight <= 0) return;
+    // 0 when this section's top just reaches the top of the viewport,
+    // 1 when its bottom does.
+    const scrollPercent = Math.min(1, Math.max(0, -rect.top / trackHeight));
+
+    const currentPitch = basePitch - (scrollPercent * 24);
+    const currentYaw   = baseYaw   + (scrollPercent * 30);
+    const currentPanY  = basePanY  + (scrollPercent * 40);
+    cameraView.style.transform = `translateY(${currentPanY}px) rotateX(${currentPitch}deg) rotateY(${currentYaw}deg)`;
+
+    const beamX = (scrollPercent * 80) - 40;
+    const beamY = (scrollPercent * 50) - 25;
+    ambientBeam.style.transform = `translate(calc(-10% + ${beamX}px), calc(-10% + ${beamY}px))`;
+  }
+
+  window.addEventListener('scroll', updateShowreelCamera, { passive: true });
+  window.addEventListener('resize', updateShowreelCamera);
+  updateShowreelCamera();
+})();
