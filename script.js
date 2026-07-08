@@ -591,7 +591,7 @@ document.addEventListener('keydown', e => {
         }
     `;
 
-    let renderer, scene, camera, videoTexture, shaderMaterial, debugCube;
+    let renderer, scene, camera, videoTexture, shaderMaterial;
     let projectorModel, leftReel, rightReel, lensMesh;
     let isVideoPlaying = false;
     let engineReady = false; // true once the model has loaded and the timeline is built
@@ -616,18 +616,6 @@ document.addEventListener('keydown', e => {
         dirLight.position.set(5, 8, 5);
         scene.add(dirLight);
 
-        // ─── TEMP DIAGNOSTIC — DELETE ONCE CONFIRMED WORKING ───
-        // Independent of the GLB entirely. If you scroll into the projector
-        // zone and see a spinning wireframe cube, the canvas/z-index/WebGL
-        // pipeline is fine and the issue is isolated to the GLB (path or scale).
-        // If you see nothing, the problem is upstream of the model.
-        debugCube = new THREE.Mesh(
-            new THREE.BoxGeometry(1.2, 1.2, 1.2),
-            new THREE.MeshNormalMaterial({ wireframe: true })
-        );
-        scene.add(debugCube);
-        // ─── END TEMP DIAGNOSTIC ───
-
         videoTexture = new THREE.VideoTexture(video);
         videoTexture.colorSpace = THREE.SRGBColorSpace;
         videoTexture.minFilter = THREE.LinearFilter;
@@ -650,7 +638,7 @@ document.addEventListener('keydown', e => {
 
         const loader = new THREE.GLTFLoader();
         loader.load(
-            'Portfolio/models/call_of_duty_infinite_warfare_projector.glb',
+            'models/call_of_duty_infinite_warfare_projector.glb',
             (gltf) => {
                 projectorModel = gltf.scene;
 
@@ -699,7 +687,7 @@ document.addEventListener('keydown', e => {
                 // Previously a failed load (bad path, 404, CORS) failed completely
                 // silently: no timeline was ever built, but nothing told you why
                 // the canvas stayed empty. Now it's logged instead of a mystery.
-                console.error('[projector] GLB failed to load — check the path exists at Portfolio/models/call_of_duty_infinite_warfare_projector.glb', err);
+                console.error('[projector] GLB failed to load — check the path exists at models/call_of_duty_infinite_warfare_projector.glb', err);
             }
         );
     }
@@ -757,7 +745,6 @@ document.addEventListener('keydown', e => {
     function renderLoop(ts) {
         requestAnimationFrame(renderLoop);
         if (shaderMaterial) shaderMaterial.uniforms.uTime.value = ts * 0.001;
-        if (debugCube) { debugCube.rotation.x += 0.01; debugCube.rotation.y += 0.015; }
         if (renderer && scene && camera) renderer.render(scene, camera);
     }
 
