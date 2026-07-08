@@ -670,7 +670,7 @@ document.addEventListener('keydown', e => {
                 const center = new THREE.Vector3();
                 box.getCenter(center);
                 const maxDim = Math.max(size.x, size.y, size.z) || 1;
-                const targetSize = 3; // desired on-screen scale in scene units
+                const targetSize = 2.4; // desired on-screen scale in scene units (reduced so it doesn't clip on narrow/mobile aspect ratios)
                 const fitScale = targetSize / maxDim;
 
                 projectorModel.scale.setScalar(fitScale);
@@ -696,9 +696,15 @@ document.addEventListener('keydown', e => {
         // Set cinematic initial profile positioning configuration looks
         // (applied on top of the auto-fit position/scale set at load time)
         projectorModel.rotation.set(0.3, Math.PI / 2, 0);
-        projectorModel.position.y -= 0.4;
+        projectorModel.position.x = 0;               // dead-center horizontally
+        projectorModel.position.y -= 0.9;             // sit further down the frame
         projectorModel.position.z -= 1;
+        projectorModel.visible = false;               // hidden until the viewer starts scrolling
         scene.add(projectorModel);
+
+        // Pull the camera back so the model reads fully within frame on narrow
+        // (mobile portrait) viewports instead of clipping off the left edge.
+        camera.position.z = 8;
 
         const tl = gsap.timeline({
             scrollTrigger: {
@@ -706,6 +712,9 @@ document.addEventListener('keydown', e => {
                 start: "top top",
                 end: "bottom bottom",
                 scrub: 1,
+                onEnter: () => { projectorModel.visible = true; },
+                onEnterBack: () => { projectorModel.visible = true; },
+                onLeaveBack: () => { projectorModel.visible = false; }, // hide again if scrolled back up into the hero
                 onUpdate: (self) => {
                     const spinSpeed = self.getVelocity() * 0.0007;
                     if (leftReel) leftReel.rotation.z += spinSpeed;
@@ -714,8 +723,11 @@ document.addEventListener('keydown', e => {
             }
         });
 
-        // Step 1: Realignment axis turn from profile look to front facing posture
-        tl.to(projectorModel.rotation, { x: 0, y: 0, z: 0, duration: 2, ease: "power1.inOut" })
+        // Step 1: Realignment axis turn from profile look to front facing posture.
+        // The lens sits on the OPPOSITE face of this model from its default (0,0,0)
+        // orientation, so the "dead-straight, lens facing viewer" target is a 180°
+        // turn (Math.PI on Y), not the model's raw front (0).
+        tl.to(projectorModel.rotation, { x: 0, y: Math.PI, z: 0, duration: 2, ease: "power1.inOut" })
           .to(projectorModel.position, { z: 1.5, duration: 2, ease: "power1.inOut" }, "<")
           
         // Step 2: Linear camera depth zoom transition path straight into lens barrel elements
