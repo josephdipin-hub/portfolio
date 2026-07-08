@@ -625,7 +625,7 @@ document.addEventListener('keydown', e => {
         });
 
         const loader = new THREE.GLTFLoader();
-        loader.load('models/call_of_duty_infinite_warfare_projector.glb', (gltf) => {
+        loader.load('Portfolio/models/call_of_duty_infinite_warfare_projector.glb', (gltf) => {
             projectorModel = gltf.scene;
             
             projectorModel.traverse((child) => {
