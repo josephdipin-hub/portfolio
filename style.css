@@ -877,3 +877,98 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
   font-weight: 400;
   text-transform: uppercase;
 }
+
+/* ═══════════════════════════════════════════════════════
+   VOLUMETRIC SHOWREEL PROJECTION — replaces the old click-to-play
+   YouTube facade with an always-playing, floating 3D "screen" that
+   pans/tilts with scroll (VR-glasses feel — no scanlines, no squish,
+   just a clean video inside a soft-lit 3D projection space).
+   Everything below is scoped under #showreel-viewport so it can never
+   collide with other elements elsewhere on the page.
+════════════════════════════════════════════════════════ */
+#showreel-scroll-track {
+    position: relative;
+    height: 220vh; /* scroll distance that drives the camera pan — local to this section only */
+}
+#showreel-viewport {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    perspective: 1400px;
+    background: radial-gradient(circle at 50% 50%, #0d141d 0%, #020406 100%);
+}
+#showreel-viewport .wall-spotlight {
+    position: absolute;
+    top: -10%;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90vw;
+    height: 80vh;
+    background: radial-gradient(ellipse at top, rgba(56, 85, 115, 0.6) 0%, rgba(0, 0, 0, 0) 75%);
+    pointer-events: none;
+    z-index: 1;
+}
+#showreel-viewport .floor-uplight {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100vw;
+    height: 40vh;
+    background: linear-gradient(to top, rgba(20, 32, 48, 0.5) 0%, rgba(0, 0, 0, 0) 100%);
+    pointer-events: none;
+    z-index: 1;
+}
+#showreel-viewport .volumetric-cone {
+    position: absolute;
+    width: 160vw;
+    height: 160vh;
+    background: radial-gradient(circle at 35% 35%, rgba(180, 215, 255, 0.07) 0%, rgba(100, 160, 255, 0.01) 40%, rgba(0, 0, 0, 0) 65%);
+    pointer-events: none;
+    z-index: 2;
+    mix-blend-mode: screen;
+    will-change: transform;
+    transform: translate(-10%, -10%);
+}
+#showreel-viewport .scene {
+    width: 300px;
+    height: 533px;
+    position: relative;
+    transform-style: preserve-3d;
+    will-change: transform;
+    transform: translateY(-20px) rotateX(12deg) rotateY(-15deg);
+    z-index: 3;
+}
+#showreel-viewport .projection-container {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    box-shadow:
+        0 0 140px rgba(160, 200, 255, 0.08),
+        0 40px 100px rgba(0, 0, 0, 0.7);
+    mask-image: radial-gradient(ellipse 95% 95% at center, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%);
+    -webkit-mask-image: radial-gradient(ellipse 95% 95% at center, rgba(0,0,0,1) 65%, rgba(0,0,0,0) 100%);
+}
+#showreel-viewport .projection-container iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    display: block;
+    filter: blur(0.6px) hue-rotate(190deg) saturate(1.05) brightness(1.06) contrast(0.96);
+    opacity: 0.94;
+}
+#showreel-viewport .projection-vignette {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at center, transparent 20%, rgba(2, 4, 6, 0.65) 100%);
+    pointer-events: none;
+    z-index: 4;
+    mix-blend-mode: multiply;
+}
+@media (max-width: 480px) {
+    #showreel-viewport .scene { width: 240px; height: 427px; }
+}
