@@ -567,11 +567,11 @@ document.addEventListener('keydown', e => {
 
     const canvas = document.getElementById('three-projector-canvas');
     const video = document.getElementById('showreelVideo');
-    const showreelOverlay = document.getElementById('showreel-overlay');
     if (!canvas || !video) return;
 
     let renderer, scene, camera;
     let projectorModel, leftReel, rightReel, lensMesh;
+    let screenPlane, screenMat;
     let isVideoPlaying = false;
     let engineReady = false; // true once the model has loaded and the timeline is built
 
@@ -594,6 +594,55 @@ document.addEventListener('keydown', e => {
         const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
         dirLight.position.set(5, 8, 5);
         scene.add(dirLight);
+
+        // ─── VIRTUAL SCREEN — the showreel lives on its own flat plane, not on
+        // the model's geometry (that's what was warping it into a "skinned"
+        // look before). It's parented to the camera so it floats in front of
+        // the viewer like a HUD/hologram panel, complete with real perspective
+        // depth (it's an actual 3D object, not a flat CSS overlay) and a
+        // slight idle drift/tilt handled in renderLoop().
+        const videoTexture = new THREE.VideoTexture(video);
+        videoTexture.colorSpace = THREE.SRGBColorSpace;
+        videoTexture.minFilter = THREE.LinearFilter;
+
+        screenMat = new THREE.ShaderMaterial({
+            transparent: true,
+            uniforms: {
+                uVideoTexture: { value: videoTexture },
+                uTime: { value: 0 },
+                uOpacity: { value: 0 }
+            },
+            vertexShader: `
+                varying vec2 vUv;
+                void main() {
+                    vUv = uv;
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+                }
+            `,
+            fragmentShader: `
+                uniform sampler2D uVideoTexture;
+                uniform float uTime;
+                uniform float uOpacity;
+                varying vec2 vUv;
+                void main() {
+                    vec4 baseColor = texture2D(uVideoTexture, vUv);
+                    float scan = sin(vUv.y * 700.0 + uTime * 4.0) * 0.06;
+                    vec3 col = baseColor.rgb + scan;
+                    float vign = smoothstep(0.9, 0.35, distance(vUv, vec2(0.5)));
+                    gl_FragColor = vec4(col * mix(0.75, 1.0, vign), uOpacity);
+                }
+            `
+        });
+
+        screenPlane = new THREE.Mesh(new THREE.PlaneGeometry(2.6, 1.5), screenMat);
+        screenPlane.visible = false;
+        // Positioned as a child of the camera, slightly off-axis, so it always
+        // sits in front of the viewer like a floating screen rather than a
+        // flat, camera-facing billboard.
+        screenPlane.position.set(0.05, 0, -3.2);
+        screenPlane.rotation.set(-0.05, 0.12, 0);
+        camera.add(screenPlane);
+        scene.add(camera);
 
         // Render loop now starts immediately instead of waiting on the GLTF
         // promise. This guarantees the canvas is always actively cleared/drawn
@@ -685,7 +734,7 @@ document.addEventListener('keydown', e => {
                 onEnterBack: () => { projectorModel.visible = true; },
                 onLeaveBack: () => {
                     projectorModel.visible = false; // hide again if scrolled back up into the hero
-                    if (showreelOverlay) showreelOverlay.classList.remove('active');
+                    if (screenPlane) { screenPlane.visible = false; screenMat.uniforms.uOpacity.value = 0; }
                     if (isVideoPlaying) { video.pause(); isVideoPlaying = false; }
                 },
                 onUpdate: (self) => {
@@ -722,14 +771,18 @@ document.addEventListener('keydown', e => {
                   // to the side as the camera gets close.
                   if (lensMesh) camera.lookAt(lensMesh.getWorldPosition(new THREE.Vector3()));
 
-                  // Past ~85% through the dive, swap from the 3D model to the flat
-                  // fullscreen showreel overlay (see #showreel-overlay in CSS/HTML)
-                  // instead of texturing the video onto the lens mesh itself — texture-
-                  // mapping it onto the barrel geometry was what read as the video
-                  // "skinned" onto the metal surface rather than a clean video reveal.
+                  // Past ~85% through the dive, swap from the 3D model to the floating
+                  // virtual-screen plane (see screenPlane above) instead of texturing
+                  // the video onto the lens mesh itself — texture-mapping it onto the
+                  // barrel geometry was what read as the video "skinned" onto the metal
+                  // surface rather than a clean video reveal.
                   const revealed = p > 0.85;
+                  const revealAmount = Math.max(0, (p - 0.85) / 0.15); // 0→1 over the last 15%
                   if (projectorModel) projectorModel.visible = !revealed;
-                  if (showreelOverlay) showreelOverlay.classList.toggle('active', revealed);
+                  if (screenPlane) {
+                      screenPlane.visible = revealed;
+                      screenMat.uniforms.uOpacity.value = revealAmount;
+                  }
 
                   if (revealed && !isVideoPlaying) {
                       video.play().catch(() => {});
@@ -744,6 +797,16 @@ document.addEventListener('keydown', e => {
 
     function renderLoop(ts) {
         requestAnimationFrame(renderLoop);
+        const t = ts * 0.001;
+        if (screenMat) screenMat.uniforms.uTime.value = t;
+        if (screenPlane && screenPlane.visible) {
+            // Subtle idle drift so the virtual screen feels like it's floating
+            // rather than pinned dead-still in front of the camera.
+            screenPlane.position.x = 0.05 + Math.sin(t * 0.6) * 0.03;
+            screenPlane.position.y = Math.sin(t * 0.45) * 0.025;
+            screenPlane.rotation.y = 0.12 + Math.sin(t * 0.5) * 0.02;
+            screenPlane.rotation.x = -0.05 + Math.cos(t * 0.4) * 0.015;
+        }
         if (renderer && scene && camera) renderer.render(scene, camera);
     }
 
