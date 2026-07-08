@@ -567,31 +567,10 @@ document.addEventListener('keydown', e => {
 
     const canvas = document.getElementById('three-projector-canvas');
     const video = document.getElementById('showreelVideo');
+    const showreelOverlay = document.getElementById('showreel-overlay');
     if (!canvas || !video) return;
 
-    const PROJ_VERT = `
-        varying vec2 vUv;
-        void main() {
-            vUv = uv;
-            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
-        }
-    `;
-
-    const PROJ_FRAG = `
-        uniform sampler2D uVideoTexture;
-        uniform float uTime;
-        uniform float uScanlineIntensity;
-        varying vec2 vUv;
-        void main() {
-            vec2 uv = vUv;
-            vec4 baseColor = texture2D(uVideoTexture, uv);
-            float scanline = sin(uv.y * 800.0 + uTime * 5.0) * 0.15;
-            vec4 lineNoise = vec4(scanline, scanline, scanline, 0.0) * uScanlineIntensity;
-            gl_FragColor = baseColor + lineNoise;
-        }
-    `;
-
-    let renderer, scene, camera, videoTexture, shaderMaterial;
+    let renderer, scene, camera;
     let projectorModel, leftReel, rightReel, lensMesh;
     let isVideoPlaying = false;
     let engineReady = false; // true once the model has loaded and the timeline is built
@@ -616,20 +595,6 @@ document.addEventListener('keydown', e => {
         dirLight.position.set(5, 8, 5);
         scene.add(dirLight);
 
-        videoTexture = new THREE.VideoTexture(video);
-        videoTexture.colorSpace = THREE.SRGBColorSpace;
-        videoTexture.minFilter = THREE.LinearFilter;
-
-        shaderMaterial = new THREE.ShaderMaterial({
-            vertexShader: PROJ_VERT,
-            fragmentShader: PROJ_FRAG,
-            uniforms: {
-                uVideoTexture: { value: videoTexture },
-                uTime: { value: 0 },
-                uScanlineIntensity: { value: 0.0 }
-            }
-        });
-
         // Render loop now starts immediately instead of waiting on the GLTF
         // promise. This guarantees the canvas is always actively cleared/drawn
         // (never a dead, un-rendered black frame) even while the model is
@@ -645,16 +610,20 @@ document.addEventListener('keydown', e => {
                 projectorModel.traverse((child) => {
                     if (child.isMesh) {
                         const name = child.name.toLowerCase();
-                        if (child.material && !name.includes('lens') && !name.includes('glass')) {
+                        if (child.material) {
                             child.material.precision = "mediump";
                         }
                         if (name.includes('reel') || name.includes('wheel') || name.includes('gear')) {
                             if (name.includes('01') || name.includes('front') || name.includes('l')) leftReel = child;
                             if (name.includes('02') || name.includes('back') || name.includes('r')) rightReel = child;
                         }
+                        // lensMesh is kept only as a positional reference for the camera dive —
+                        // its original material is left untouched, so the video is never painted
+                        // onto the geometry itself (that was reading as a warped "skin"). The
+                        // showreel instead reveals as a separate fullscreen overlay once the
+                        // camera is close enough — see buildScrollTimeline().
                         if (name.includes('lens') || name.includes('glass') || name.includes('optic')) {
                             lensMesh = child;
-                            child.material = shaderMaterial;
                         }
                     }
                 });
@@ -697,7 +666,7 @@ document.addEventListener('keydown', e => {
         // (applied on top of the auto-fit position/scale set at load time)
         projectorModel.rotation.set(0.3, Math.PI / 2, 0);
         projectorModel.position.x = 0;               // dead-center horizontally
-        projectorModel.position.y -= 0.9;             // sit further down the frame
+        projectorModel.position.y -= 0.65;            // sit further down the frame (midpoint between the two prior positions)
         projectorModel.position.z -= 1;
         projectorModel.visible = false;               // hidden until the viewer starts scrolling
         scene.add(projectorModel);
@@ -714,7 +683,11 @@ document.addEventListener('keydown', e => {
                 scrub: 1,
                 onEnter: () => { projectorModel.visible = true; },
                 onEnterBack: () => { projectorModel.visible = true; },
-                onLeaveBack: () => { projectorModel.visible = false; }, // hide again if scrolled back up into the hero
+                onLeaveBack: () => {
+                    projectorModel.visible = false; // hide again if scrolled back up into the hero
+                    if (showreelOverlay) showreelOverlay.classList.remove('active');
+                    if (isVideoPlaying) { video.pause(); isVideoPlaying = false; }
+                },
                 onUpdate: (self) => {
                     const spinSpeed = self.getVelocity() * 0.0007;
                     if (leftReel) leftReel.rotation.z += spinSpeed;
@@ -742,11 +715,26 @@ document.addEventListener('keydown', e => {
               ease: "power2.in",
               onUpdate: function() {
                   const p = this.progress();
-                  shaderMaterial.uniforms.uScanlineIntensity.value = p;
-                  if (p > 0.8 && !isVideoPlaying) {
+
+                  // Keep the camera continuously AIMED at the lens as it approaches
+                  // (not just moving toward it) — this is what keeps the lens dead
+                  // center in frame through the whole dive instead of drifting off
+                  // to the side as the camera gets close.
+                  if (lensMesh) camera.lookAt(lensMesh.getWorldPosition(new THREE.Vector3()));
+
+                  // Past ~85% through the dive, swap from the 3D model to the flat
+                  // fullscreen showreel overlay (see #showreel-overlay in CSS/HTML)
+                  // instead of texturing the video onto the lens mesh itself — texture-
+                  // mapping it onto the barrel geometry was what read as the video
+                  // "skinned" onto the metal surface rather than a clean video reveal.
+                  const revealed = p > 0.85;
+                  if (projectorModel) projectorModel.visible = !revealed;
+                  if (showreelOverlay) showreelOverlay.classList.toggle('active', revealed);
+
+                  if (revealed && !isVideoPlaying) {
                       video.play().catch(() => {});
                       isVideoPlaying = true;
-                  } else if (p <= 0.8 && isVideoPlaying) {
+                  } else if (!revealed && isVideoPlaying) {
                       video.pause();
                       isVideoPlaying = false;
                   }
@@ -756,7 +744,6 @@ document.addEventListener('keydown', e => {
 
     function renderLoop(ts) {
         requestAnimationFrame(renderLoop);
-        if (shaderMaterial) shaderMaterial.uniforms.uTime.value = ts * 0.001;
         if (renderer && scene && camera) renderer.render(scene, camera);
     }
 
