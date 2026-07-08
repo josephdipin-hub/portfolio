@@ -877,3 +877,18 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
   font-weight: 400;
   text-transform: uppercase;
 }
+/* ═══════════════════════════════════════════════════════
+   PROJECTOR OVERLAY COMPOSITION SYSTEM
+════════════════════════════════════════════════════════ */
+#projector-trigger-zone {
+    box-sizing: border-box;
+    pointer-events: auto;
+}
+
+#three-projector-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 16;
+    mix-blend-mode: screen;
+}
