@@ -621,3 +621,180 @@ document.addEventListener('keydown', e => {
     e.preventDefault();
   }
 });
+
+/* ═══════════════════════════════════════════════════════
+   MOBILE-READY INTERACTIVE 3D PROJECTOR & REEL PHYSICS ENGINE
+════════════════════════════════════════════════════════ */
+(function() {
+    if (typeof gsap === 'undefined' || typeof THREE === 'undefined') return;
+    gsap.registerPlugin(ScrollTrigger);
+
+    const canvas = document.getElementById('three-projector-canvas');
+    const video = document.getElementById('showreelVideo');
+    if (!canvas || !video) return;
+
+    // Custom Matrix Scanline Shaders for VISUAL_SYNTH Design Profile
+    const PROJ_VERT = `
+        varying vec2 vUv;
+        void main() {
+            vUv = uv;
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    `;
+
+    const PROJ_FRAG = `
+        uniform sampler2D uVideoTexture;
+        uniform float uTime;
+        uniform float uScanlineIntensity;
+        varying vec2 vUv;
+        void main() {
+            vec2 uv = vUv;
+            vec4 baseColor = texture2D(uVideoTexture, uv);
+            float scanline = sin(uv.y * 800.0 + uTime * 5.0) * 0.15;
+            vec4 lineNoise = vec4(scanline, scanline, scanline, 0.0) * uScanlineIntensity;
+            gl_FragColor = baseColor + lineNoise;
+        }
+    `;
+
+    let renderer, scene, camera, videoTexture, shaderMaterial;
+    let projectorModel, leftReel, rightReel, lensMesh;
+    let isVideoPlaying = false;
+
+    function initProjectorEngine() {
+        // Disabled antialiasing to lower GPU overhead on mobile webview
+        renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: false });
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.outputEncoding = THREE.sRGBEncoding;
+
+        scene = new THREE.Scene();
+        camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+        camera.position.set(0, 0, 6);
+
+        scene.add(new THREE.AmbientLight(0xffffff, 0.2));
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
+        dirLight.position.set(5, 8, 5);
+        scene.add(dirLight);
+
+        videoTexture = new THREE.VideoTexture(video);
+        videoTexture.colorSpace = THREE.SRGBColorSpace;
+        videoTexture.minFilter = THREE.LinearFilter;
+
+        shaderMaterial = new THREE.ShaderMaterial({
+            vertexShader: PROJ_VERT,
+            fragmentShader: PROJ_FRAG,
+            uniforms: {
+                uVideoTexture: { value: videoTexture },
+                uTime: { value: 0 },
+                uScanlineIntensity: { value: 0.0 }
+            }
+        });
+
+        const loader = new THREE.GLTFLoader();
+        loader.load(
+            'models/call_of_duty_infinite_warfare_projector.glb', 
+            (gltf) => {
+                // Remove loader display overlay once heavy asset drops successfully
+                const loaderEl = document.getElementById('pg-loader');
+                if (loaderEl) loaderEl.classList.add('hidden');
+
+                projectorModel = gltf.scene;
+                
+                projectorModel.traverse((child) => {
+                    if (child.isMesh) {
+                        const name = child.name.toLowerCase();
+                        
+                        // Downscale engine asset precision constraints dynamically
+                        if (child.material && !name.includes('lens') && !name.includes('glass')) {
+                            child.material.precision = "mediump";
+                        }
+
+                        // Component registration graph mapper
+                        if (name.includes('reel') || name.includes('wheel') || name.includes('gear')) {
+                            if (name.includes('01') || name.includes('front') || name.includes('l')) leftReel = child;
+                            if (name.includes('02') || name.includes('back') || name.includes('r')) rightReel = child;
+                        }
+                        if (name.includes('lens') || name.includes('glass') || name.includes('optic')) {
+                            lensMesh = child;
+                            child.material = shaderMaterial;
+                        }
+                    }
+                });
+
+                buildScrollTimeline();
+                renderLoop(0);
+            },
+            (xhr) => {
+                // Connect into your main screen loader text node elements cleanly
+                if (xhr.lengthComputable) {
+                    const percentComplete = Math.round((xhr.loaded / xhr.total) * 100);
+                    const pctEl = document.getElementById('pg-loader-pct');
+                    if (pctEl) pctEl.textContent = `SYNTHESIZING PROJECTOR // ${percentComplete}%`;
+                }
+            }
+        );
+    }
+
+    function buildScrollTimeline() {
+        // Setup initial side-profile orientation offset (90 deg on Y, slight top angle tilt)
+        projectorModel.rotation.set(0.3, Math.PI / 2, 0); 
+        projectorModel.position.set(0, -0.4, -1);
+
+        const tl = gsap.timeline({
+            scrollTrigger: {
+                trigger: "#projector-trigger-zone",
+                start: "top top",
+                end: "bottom bottom",
+                scrub: 1,
+                pin: true,
+                onUpdate: (self) => {
+                    // Direct dynamic velocity calculations bound to wheel components
+                    const spinSpeed = self.getVelocity() * 0.0007;
+                    if (leftReel) leftReel.rotation.z += spinSpeed;
+                    if (rightReel) rightReel.rotation.z -= spinSpeed;
+                }
+            }
+        });
+
+        // PHASE 1: Realign projector to front facing posture on scroll progress
+        tl.to(projectorModel.rotation, { x: 0, y: 0, z: 0, duration: 2, ease: "power1.inOut" })
+          .to(projectorModel.position, { z: 1.5, duration: 2, ease: "power1.inOut" }, "<")
+          
+        // PHASE 2 & 3: Lock viewport canvas tracking window and dive into lens array optics
+          .to(camera.position, {
+              x: lensMesh ? lensMesh.position.x : 0,
+              y: lensMesh ? lensMesh.position.y : 0,
+              z: lensMesh ? lensMesh.position.z + 0.8 : 2.5,
+              duration: 3,
+              ease: "power2.in",
+              onUpdate: function() {
+                  const p = this.progress();
+                  shaderMaterial.uniforms.uScanlineIntensity.value = p;
+                  
+                  // Mobile browser interaction constraints protection trigger
+                  if (p > 0.8 && !isVideoPlaying) {
+                      video.play().catch(() => {});
+                      isVideoPlaying = true;
+                  } else if (p <= 0.8 && isVideoPlaying) {
+                      video.pause();
+                      isVideoPlaying = false;
+                  }
+              }
+          });
+    }
+
+    function renderLoop(ts) {
+        requestAnimationFrame(renderLoop);
+        if (shaderMaterial) shaderMaterial.uniforms.uTime.value = ts * 0.001;
+        if (renderer && scene && camera) renderer.render(scene, camera);
+    }
+
+    window.addEventListener('resize', () => {
+        if (!camera || !renderer) return;
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    initProjectorEngine();
+})();
