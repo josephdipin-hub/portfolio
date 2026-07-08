@@ -594,16 +594,22 @@ document.addEventListener('keydown', e => {
     let renderer, scene, camera, videoTexture, shaderMaterial;
     let projectorModel, leftReel, rightReel, lensMesh;
     let isVideoPlaying = false;
+    let engineReady = false; // true once the model has loaded and the timeline is built
 
     function initProjectorEngine() {
         renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: false });
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        // updateStyle=false: keeps the CSS-driven 100%/100vh sizing on the canvas
+        // element intact instead of Three stomping it with inline pixel styles,
+        // which is what was collapsing the canvas to 0px on mobile before layout settled.
+        renderer.setSize(window.innerWidth, window.innerHeight, false);
+        renderer.setClearColor(0x000000, 0); // fully transparent clear, every frame
         renderer.outputEncoding = THREE.sRGBEncoding;
 
         scene = new THREE.Scene();
         camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
         camera.position.set(0, 0, 6);
+        camera.lookAt(0, 0, 0);
 
         scene.add(new THREE.AmbientLight(0xffffff, 0.2));
         const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
@@ -624,36 +630,74 @@ document.addEventListener('keydown', e => {
             }
         });
 
-        const loader = new THREE.GLTFLoader();
-        loader.load('Portfolio/models/call_of_duty_infinite_warfare_projector.glb', (gltf) => {
-            projectorModel = gltf.scene;
-            
-            projectorModel.traverse((child) => {
-                if (child.isMesh) {
-                    const name = child.name.toLowerCase();
-                    if (child.material && !name.includes('lens') && !name.includes('glass')) {
-                        child.material.precision = "mediump";
-                    }
-                    if (name.includes('reel') || name.includes('wheel') || name.includes('gear')) {
-                        if (name.includes('01') || name.includes('front') || name.includes('l')) leftReel = child;
-                        if (name.includes('02') || name.includes('back') || name.includes('r')) rightReel = child;
-                    }
-                    if (name.includes('lens') || name.includes('glass') || name.includes('optic')) {
-                        lensMesh = child;
-                        child.material = shaderMaterial;
-                    }
-                }
-            });
+        // Render loop now starts immediately instead of waiting on the GLTF
+        // promise. This guarantees the canvas is always actively cleared/drawn
+        // (never a dead, un-rendered black frame) even while the model is
+        // still downloading, or if it fails to load entirely.
+        renderLoop(0);
 
-            buildScrollTimeline();
-            renderLoop(0);
-        });
+        const loader = new THREE.GLTFLoader();
+        loader.load(
+            'Portfolio/models/call_of_duty_infinite_warfare_projector.glb',
+            (gltf) => {
+                projectorModel = gltf.scene;
+
+                projectorModel.traverse((child) => {
+                    if (child.isMesh) {
+                        const name = child.name.toLowerCase();
+                        if (child.material && !name.includes('lens') && !name.includes('glass')) {
+                            child.material.precision = "mediump";
+                        }
+                        if (name.includes('reel') || name.includes('wheel') || name.includes('gear')) {
+                            if (name.includes('01') || name.includes('front') || name.includes('l')) leftReel = child;
+                            if (name.includes('02') || name.includes('back') || name.includes('r')) rightReel = child;
+                        }
+                        if (name.includes('lens') || name.includes('glass') || name.includes('optic')) {
+                            lensMesh = child;
+                            child.material = shaderMaterial;
+                        }
+                    }
+                });
+
+                // Game-ripped GLBs frequently come in at an arbitrary, un-normalized
+                // scale/pivot. If the mesh ends up much larger than expected, the
+                // camera can literally land INSIDE the geometry, which renders as a
+                // solid black frame (you're staring at the unlit inside of a face)
+                // even though "everything loaded fine". Auto-fit removes that guesswork.
+                const box = new THREE.Box3().setFromObject(projectorModel);
+                const size = new THREE.Vector3();
+                box.getSize(size);
+                const center = new THREE.Vector3();
+                box.getCenter(center);
+                const maxDim = Math.max(size.x, size.y, size.z) || 1;
+                const targetSize = 3; // desired on-screen scale in scene units
+                const fitScale = targetSize / maxDim;
+
+                projectorModel.scale.setScalar(fitScale);
+                // Re-center after scaling so the model's own pivot offset doesn't
+                // push it out of frame.
+                projectorModel.position.sub(center.multiplyScalar(fitScale));
+
+                console.log('[projector] model loaded + auto-fit', { maxDim, fitScale });
+                buildScrollTimeline();
+                engineReady = true;
+            },
+            undefined,
+            (err) => {
+                // Previously a failed load (bad path, 404, CORS) failed completely
+                // silently: no timeline was ever built, but nothing told you why
+                // the canvas stayed empty. Now it's logged instead of a mystery.
+                console.error('[projector] GLB failed to load — check the path exists at Portfolio/models/call_of_duty_infinite_warfare_projector.glb', err);
+            }
+        );
     }
 
     function buildScrollTimeline() {
         // Set cinematic initial profile positioning configuration looks
-        projectorModel.rotation.set(0.3, Math.PI / 2, 0); 
-        projectorModel.position.set(0, -0.4, -1);
+        // (applied on top of the auto-fit position/scale set at load time)
+        projectorModel.rotation.set(0.3, Math.PI / 2, 0);
+        projectorModel.position.y -= 0.4;
+        projectorModel.position.z -= 1;
         scene.add(projectorModel);
 
         const tl = gsap.timeline({
@@ -675,10 +719,13 @@ document.addEventListener('keydown', e => {
           .to(projectorModel.position, { z: 1.5, duration: 2, ease: "power1.inOut" }, "<")
           
         // Step 2: Linear camera depth zoom transition path straight into lens barrel elements
+        // (function-based values so GSAP reads the lens's actual WORLD position at the
+        // moment this tween starts, i.e. after step 1's rotation/move has settled — using
+        // lensMesh.position directly would give its local, pre-animation coordinates)
           .to(camera.position, {
-              x: lensMesh ? lensMesh.position.x : 0,
-              y: lensMesh ? lensMesh.position.y : 0,
-              z: lensMesh ? lensMesh.position.z + 0.8 : 2.5,
+              x: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).x : 0,
+              y: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).y : 0,
+              z: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).z + 0.8 : 2.5,
               duration: 3,
               ease: "power2.in",
               onUpdate: function() {
@@ -705,7 +752,7 @@ document.addEventListener('keydown', e => {
         if (!camera || !renderer) return;
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
-        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setSize(window.innerWidth, window.innerHeight, false);
     });
 
     initProjectorEngine();
