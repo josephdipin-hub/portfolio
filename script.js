@@ -624,10 +624,9 @@ setInterval(applyMood, 60 * 1000);
   const track       = document.getElementById('showreel-3d-track');
   const viewport     = document.getElementById('showreel-3d-viewport');
   const cameraView   = document.getElementById('showreelCameraView');
-  const ambientBeam  = document.getElementById('showreelAmbientBeam');
   const fgVideo       = document.getElementById('showreelVideo');
   const bgVideo       = document.querySelector('#showreel-3d-viewport .showreel-ambient-bg');
-  if (!track || !viewport || !cameraView || !ambientBeam || !fgVideo) return;
+  if (!track || !viewport || !cameraView || !fgVideo) return;
 
   const basePitch = 12;
   const baseYaw   = -15;
@@ -658,10 +657,6 @@ setInterval(applyMood, 60 * 1000);
     const currentYaw   = baseYaw   + (scrollPercent * 30);
     const currentPanY  = basePanY  + (scrollPercent * 40);
     cameraView.style.transform = `translateY(${currentPanY}px) rotateX(${currentPitch}deg) rotateY(${currentYaw}deg)`;
-
-    const beamX = (scrollPercent * 80) - 40;
-    const beamY = (scrollPercent * 50) - 25;
-    ambientBeam.style.transform = `translate(calc(-10% + ${beamX}px), calc(-10% + ${beamY}px))`;
   }
 
   window.addEventListener('scroll', updateShowreelCamera, { passive: true });
@@ -760,7 +755,8 @@ setInterval(applyMood, 60 * 1000);
         scrub: 1,
         onEnter: () => { projectorModel.visible = true; },
         onEnterBack: () => { projectorModel.visible = true; },
-        onLeaveBack: () => { projectorModel.visible = false; },
+        onLeave: () => { projectorModel.visible = false; },     // scrolled past the end — clear it so it stops blocking the showreel below
+        onLeaveBack: () => { projectorModel.visible = false; }, // scrolled back up into the hero
         onUpdate: (self) => {
           const spinSpeed = self.getVelocity() * 0.0007;
           if (leftReel) leftReel.rotation.z += spinSpeed;
