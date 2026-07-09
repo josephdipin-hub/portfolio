@@ -94,6 +94,8 @@
 </script>
 
 <script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/RGBELoader.js"></script>
@@ -263,6 +265,31 @@
   </div>
 </section>
 
+<!-- 3D REEL PROJECTOR — background element, animates in as you scroll past the hero -->
+<div id="projector-background-track">
+  <div class="projector-sticky-window">
+    <canvas id="three-projector-canvas"></canvas>
+  </div>
+</div>
+<div id="projector-trigger-anchor" style="width:100%;height:150vh;pointer-events:none;"></div>
+
+<!-- VOLUMETRIC SHOWREEL PROJECTION — local video, reveals + tilts as you keep scrolling -->
+<div id="showreel-3d-track">
+  <div id="showreel-3d-viewport">
+    <video class="showreel-ambient-bg" src="videos/hb_1783348123181fashion_photographer_whitefield.mp4" muted loop playsinline autoplay></video>
+    <div class="wall-spotlight"></div>
+    <div class="volumetric-cone" id="showreelAmbientBeam"></div>
+    <div class="floor-uplight"></div>
+
+    <div class="scene" id="showreelCameraView">
+      <div class="projection-container">
+        <video id="showreelVideo" src="videos/hb_1783348123181fashion_photographer_whitefield.mp4" muted loop playsinline></video>
+        <div class="projection-vignette"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- PROFILE -->
 <section class="px-10 md:px-24 py-20">
   <div class="golden-container">
@@ -347,24 +374,31 @@ joseph.dipin@gmail.com
   </div>
 </section>
 
-<!-- VOLUMETRIC SHOWREEL PROJECTION -->
-<div id="showreel-scroll-track" data-no-mosh>
-  <div id="showreel-viewport">
-    <div class="wall-spotlight"></div>
-    <div class="volumetric-cone" id="ambientBeam"></div>
-    <div class="floor-uplight"></div>
-
-    <div class="scene" id="cameraView">
-      <div class="projection-container">
-        <iframe
-          src="https://www.youtube.com/embed/QCJysAf_uZY?autoplay=1&mute=1&loop=1&playlist=QCJysAf_uZY&controls=0&modestbranding=1"
-          allow="autoplay; encrypted-media"
-          allowfullscreen>
-        </iframe>
-        <div class="projection-vignette"></div>
-      </div>
+<!-- YOUTUBE -->
+<div data-no-mosh style="display:flex;justify-content:center;margin:40px 0;">
+  <div id="yt-facade" onclick="loadYT(this)" data-id="QCJysAf_uZY"
+    style="cursor:pointer;position:relative;width:100%;max-width:315px;margin:0 auto;aspect-ratio:9/16;background:#000;overflow:hidden;">
+    <img src="https://i.ytimg.com/vi/QCJysAf_uZY/hqdefault.jpg" loading="lazy"
+      alt="Dypin Joseph - Fashion & Product Photographer Bangalore"
+      style="width:100%;height:100%;object-fit:cover;opacity:0.8;">
+    <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;pointer-events:none;">
+      <svg width="60" height="60" viewBox="0 0 60 60" fill="none">
+        <circle cx="30" cy="30" r="30" fill="rgba(255,255,255,0.15)"/>
+        <polygon points="24,18 24,42 44,30" fill="white"/>
+      </svg>
     </div>
   </div>
+  <script>
+    function loadYT(el) {
+      const iframe = document.createElement('iframe');
+      iframe.src = `https://www.youtube.com/embed/QCJysAf_uZY?autoplay=1`;
+      iframe.allow = 'autoplay; encrypted-media';
+      iframe.allowFullscreen = true;
+      iframe.dataset.noMosh = '';
+      Object.assign(iframe.style, { width:'100%', height:'100%', border:'none', position:'absolute', inset:'0' });
+      el.replaceWith(iframe);
+    }
+  </script>
 </div>
 
 <!-- FAQ -->
