@@ -625,7 +625,6 @@ setInterval(applyMood, 60 * 1000);
   const viewport     = document.getElementById('showreel-3d-viewport');
   const cameraView   = document.getElementById('showreelCameraView');
   const fgVideo       = document.getElementById('showreelVideo');
-  const bgVideo       = document.querySelector('#showreel-3d-viewport .showreel-ambient-bg');
   if (!track || !viewport || !cameraView || !fgVideo) return;
 
   const basePitch = 12;
@@ -645,11 +644,9 @@ setInterval(applyMood, 60 * 1000);
     viewport.classList.toggle('revealed', revealed);
     if (revealed && !started) {
       fgVideo.play().catch(() => {});
-      if (bgVideo) bgVideo.play().catch(() => {});
       started = true;
     } else if (!revealed && started) {
       fgVideo.pause();
-      if (bgVideo) bgVideo.pause();
       started = false;
     }
 
@@ -753,10 +750,29 @@ setInterval(applyMood, 60 * 1000);
         start: "top top",
         end: "bottom bottom",
         scrub: 1,
-        onEnter: () => { projectorModel.visible = true; },
-        onEnterBack: () => { projectorModel.visible = true; },
-        onLeave: () => { projectorModel.visible = false; },     // scrolled past the end — clear it so it stops blocking the showreel below
-        onLeaveBack: () => { projectorModel.visible = false; }, // scrolled back up into the hero
+        onEnter: () => {
+          const trackEl = document.getElementById('projector-background-track');
+          if (trackEl) trackEl.classList.remove('faded');
+          projectorModel.visible = true;
+        },
+        onEnterBack: () => {
+          const trackEl = document.getElementById('projector-background-track');
+          if (trackEl) trackEl.classList.remove('faded');
+          projectorModel.visible = true;
+        },
+        onLeave: () => {
+          // Crossfade out rather than an abrupt pop, so it reads as a
+          // hand-off into the showreel section right below instead of
+          // two disconnected scenes.
+          const trackEl = document.getElementById('projector-background-track');
+          if (trackEl) trackEl.classList.add('faded');
+          setTimeout(() => { if (projectorModel) projectorModel.visible = false; }, 650);
+        },
+        onLeaveBack: () => {
+          const trackEl = document.getElementById('projector-background-track');
+          if (trackEl) trackEl.classList.add('faded');
+          setTimeout(() => { if (projectorModel) projectorModel.visible = false; }, 650);
+        },
         onUpdate: (self) => {
           const spinSpeed = self.getVelocity() * 0.0007;
           if (leftReel) leftReel.rotation.z += spinSpeed;
