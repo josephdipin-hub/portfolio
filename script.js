@@ -613,28 +613,46 @@ applyMood();
 setInterval(applyMood, 60 * 1000);
 
 /* ═══════════════════════════════════════════════════════
-   VOLUMETRIC SHOWREEL PROJECTION — scroll-driven 3D camera pan
-   Scoped to its own scroll track (getBoundingClientRect-based),
-   NOT global document scroll — it only reacts while the viewer is
-   actually scrolling through this section, not across the whole page.
+   VOLUMETRIC SHOWREEL PROJECTION — local video (videos/ folder),
+   scroll-driven 3D tilt + fade-in reveal. Scoped to its own scroll
+   track (getBoundingClientRect-based), not global document scroll —
+   it only reacts while the viewer is actually scrolling through this
+   section. Both the sharp foreground video and the blurred ambient
+   background video are kept in sync (played/paused together).
 ════════════════════════════════════════════════════════ */
 (function () {
-  const track      = document.getElementById('showreel-scroll-track');
-  const cameraView = document.getElementById('cameraView');
-  const ambientBeam = document.getElementById('ambientBeam');
-  if (!track || !cameraView || !ambientBeam) return;
+  const track       = document.getElementById('showreel-3d-track');
+  const viewport     = document.getElementById('showreel-3d-viewport');
+  const cameraView   = document.getElementById('showreelCameraView');
+  const ambientBeam  = document.getElementById('showreelAmbientBeam');
+  const fgVideo       = document.getElementById('showreelVideo');
+  const bgVideo       = document.querySelector('#showreel-3d-viewport .showreel-ambient-bg');
+  if (!track || !viewport || !cameraView || !ambientBeam || !fgVideo) return;
 
   const basePitch = 12;
   const baseYaw   = -15;
   const basePanY  = -20;
+  let started = false;
 
   function updateShowreelCamera() {
     const rect = track.getBoundingClientRect();
     const trackHeight = rect.height - window.innerHeight;
     if (trackHeight <= 0) return;
-    // 0 when this section's top just reaches the top of the viewport,
-    // 1 when its bottom does.
     const scrollPercent = Math.min(1, Math.max(0, -rect.top / trackHeight));
+
+    // Fade the whole panel in over the first 12% of its own track instead
+    // of popping in abruptly.
+    const revealed = scrollPercent > 0.02;
+    viewport.classList.toggle('revealed', revealed);
+    if (revealed && !started) {
+      fgVideo.play().catch(() => {});
+      if (bgVideo) bgVideo.play().catch(() => {});
+      started = true;
+    } else if (!revealed && started) {
+      fgVideo.pause();
+      if (bgVideo) bgVideo.pause();
+      started = false;
+    }
 
     const currentPitch = basePitch - (scrollPercent * 24);
     const currentYaw   = baseYaw   + (scrollPercent * 30);
@@ -649,4 +667,137 @@ setInterval(applyMood, 60 * 1000);
   window.addEventListener('scroll', updateShowreelCamera, { passive: true });
   window.addEventListener('resize', updateShowreelCamera);
   updateShowreelCamera();
+})();
+
+/* ═══════════════════════════════════════════════════════
+   3D REEL PROJECTOR — background GLB model that turns from a side
+   profile to face-on as you scroll past the hero, reels spinning
+   with scroll velocity. Purely decorative on the landing page; the
+   showreel reveal below is now its own independent section.
+════════════════════════════════════════════════════════ */
+(function () {
+  if (typeof gsap === 'undefined' || typeof THREE === 'undefined') return;
+  gsap.registerPlugin(ScrollTrigger);
+
+  const canvas = document.getElementById('three-projector-canvas');
+  if (!canvas) return;
+
+  let renderer, scene, camera;
+  let projectorModel, leftReel, rightReel, lensMesh;
+  let engineReady = false;
+
+  function initProjectorEngine() {
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: false });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
+    renderer.setClearColor(0x000000, 0);
+    renderer.outputEncoding = THREE.sRGBEncoding;
+
+    scene = new THREE.Scene();
+    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 0, 8);
+    camera.lookAt(0, 0, 0);
+
+    scene.add(new THREE.AmbientLight(0xffffff, 0.2));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
+    dirLight.position.set(5, 8, 5);
+    scene.add(dirLight);
+
+    renderLoop(0);
+
+    const loader = new THREE.GLTFLoader();
+    loader.load(
+      'models/call_of_duty_infinite_warfare_projector.glb',
+      (gltf) => {
+        projectorModel = gltf.scene;
+
+        projectorModel.traverse((child) => {
+          if (child.isMesh) {
+            const name = child.name.toLowerCase();
+            if (child.material) child.material.precision = "mediump";
+            if (name.includes('reel') || name.includes('wheel') || name.includes('gear')) {
+              if (name.includes('01') || name.includes('front') || name.includes('l')) leftReel = child;
+              if (name.includes('02') || name.includes('back') || name.includes('r')) rightReel = child;
+            }
+            if (name.includes('lens') || name.includes('glass') || name.includes('optic')) {
+              lensMesh = child;
+            }
+          }
+        });
+
+        // Auto-fit: game-ripped GLBs come in at arbitrary scale/pivot.
+        const box = new THREE.Box3().setFromObject(projectorModel);
+        const size = new THREE.Vector3();
+        box.getSize(size);
+        const center = new THREE.Vector3();
+        box.getCenter(center);
+        const maxDim = Math.max(size.x, size.y, size.z) || 1;
+        const fitScale = 2.4 / maxDim;
+        projectorModel.scale.setScalar(fitScale);
+        projectorModel.position.sub(center.multiplyScalar(fitScale));
+
+        buildScrollTimeline();
+        engineReady = true;
+      },
+      undefined,
+      (err) => console.error('[projector] GLB failed to load', err)
+    );
+  }
+
+  function buildScrollTimeline() {
+    projectorModel.rotation.set(0.3, Math.PI / 2, 0);
+    projectorModel.position.x = 0;
+    projectorModel.position.y -= 0.65;
+    projectorModel.position.z -= 1;
+    projectorModel.visible = false;
+    scene.add(projectorModel);
+
+    const tl = gsap.timeline({
+      scrollTrigger: {
+        trigger: "#projector-trigger-anchor",
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 1,
+        onEnter: () => { projectorModel.visible = true; },
+        onEnterBack: () => { projectorModel.visible = true; },
+        onLeaveBack: () => { projectorModel.visible = false; },
+        onUpdate: (self) => {
+          const spinSpeed = self.getVelocity() * 0.0007;
+          if (leftReel) leftReel.rotation.z += spinSpeed;
+          if (rightReel) rightReel.rotation.z -= spinSpeed;
+        }
+      }
+    });
+
+    // Step 1: profile → face-on turn (lens sits on the opposite face
+    // from the model's raw default orientation, hence target y = PI).
+    tl.to(projectorModel.rotation, { x: 0, y: Math.PI, z: 0, duration: 2, ease: "power1.inOut" })
+      .to(projectorModel.position, { z: 1.5, duration: 2, ease: "power1.inOut" }, "<")
+      // Step 2: camera dive toward the lens, continuously re-aimed so it
+      // stays centered instead of drifting off as the camera approaches.
+      .to(camera.position, {
+          x: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).x : 0,
+          y: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).y : 0,
+          z: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).z + 1.2 : 2.5,
+          duration: 3,
+          ease: "power2.in",
+          onUpdate: function() {
+              if (lensMesh) camera.lookAt(lensMesh.getWorldPosition(new THREE.Vector3()));
+          }
+      });
+  }
+
+  function renderLoop(ts) {
+    requestAnimationFrame(renderLoop);
+    if (renderer && scene && camera) renderer.render(scene, camera);
+  }
+
+  window.addEventListener('resize', () => {
+    if (!camera || !renderer) return;
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
+  });
+
+  initProjectorEngine();
 })();
