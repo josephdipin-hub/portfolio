@@ -766,12 +766,12 @@ setInterval(applyMood, 60 * 1000);
           // two disconnected scenes.
           const trackEl = document.getElementById('projector-background-track');
           if (trackEl) trackEl.classList.add('faded');
-          setTimeout(() => { if (projectorModel) projectorModel.visible = false; }, 650);
+          setTimeout(() => { if (projectorModel) projectorModel.visible = false; }, 65);
         },
         onLeaveBack: () => {
           const trackEl = document.getElementById('projector-background-track');
           if (trackEl) trackEl.classList.add('faded');
-          setTimeout(() => { if (projectorModel) projectorModel.visible = false; }, 650);
+          setTimeout(() => { if (projectorModel) projectorModel.visible = false; }, 65);
         },
         onUpdate: (self) => {
           const spinSpeed = self.getVelocity() * 0.0007;
@@ -783,8 +783,8 @@ setInterval(applyMood, 60 * 1000);
 
     // Step 1: profile → face-on turn (lens sits on the opposite face
     // from the model's raw default orientation, hence target y = PI).
-    tl.to(projectorModel.rotation, { x: 0, y: Math.PI, z: 0, duration: 2, ease: "power1.inOut" })
-      .to(projectorModel.position, { z: 1.5, duration: 2, ease: "power1.inOut" }, "<")
+    tl.to(projectorModel.rotation, { x: 0, y: Math.PI, z: 0, duration: 4, ease: "power1.inOut" })
+      .to(projectorModel.position, { z: 1.5, duration: 4, ease: "power1.inOut" }, "<")
       // Step 2: camera dive toward the lens, continuously re-aimed so it
       // stays centered instead of drifting off as the camera approaches.
       .to(camera.position, {
