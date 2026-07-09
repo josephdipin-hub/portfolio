@@ -888,7 +888,7 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 ════════════════════════════════════════════════════════ */
 #showreel-3d-track {
     position: relative;
-    height: 150vh; /* scroll distance that drives the camera pan — local to this section only */
+    height: 100vh; /* scroll distance that drives the camera pan — local to this section only */
 }
 #showreel-3d-viewport {
     position: sticky;
@@ -930,7 +930,7 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 }
 #showreel-3d-viewport {
     opacity: 0;
-    transition: opacity 0.8s ease;
+    transition: opacity 0.3s ease;
 }
 #showreel-3d-viewport.revealed {
     opacity: 1;
@@ -940,7 +940,7 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
     top: 0; left: 0; right: 0; bottom: 0;
     background: radial-gradient(circle at center, transparent 20%, rgba(2, 4, 6, 0.65) 100%);
     pointer-events: none;
-    z-index: 4;
+    z-index: 3;
     mix-blend-mode: multiply;
 }
 @media (max-width: 480px) {
@@ -974,14 +974,14 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 #projector-background-track {
     position: fixed;
     top: 0;
-    left: 0;
+    left: -10;
     width: 100vw;
     height: 100vh;
-    z-index: 15;
+    z-index: 18;
     background: transparent;
     pointer-events: none;
     opacity: 1;
-    transition: opacity 0.6s ease;
+    transition: opacity 1s ease;
 }
 #projector-background-track.faded {
     opacity: 0;
