@@ -900,39 +900,7 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
     justify-content: center;
     overflow: hidden;
     perspective: 1400px;
-    background: radial-gradient(circle at 50% 50%, #0d141d 0%, #020406 100%);
-}
-#showreel-3d-viewport .wall-spotlight {
-    position: absolute;
-    top: -10%;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 90vw;
-    height: 80vh;
-    background: radial-gradient(ellipse at top, rgba(56, 85, 115, 0.6) 0%, rgba(0, 0, 0, 0) 75%);
-    pointer-events: none;
-    z-index: 1;
-}
-#showreel-3d-viewport .floor-uplight {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100vw;
-    height: 40vh;
-    background: linear-gradient(to top, rgba(20, 32, 48, 0.5) 0%, rgba(0, 0, 0, 0) 100%);
-    pointer-events: none;
-    z-index: 1;
-}
-#showreel-3d-viewport .volumetric-cone {
-    position: absolute;
-    width: 160vw;
-    height: 160vh;
-    background: radial-gradient(circle at 35% 35%, rgba(180, 215, 255, 0.07) 0%, rgba(100, 160, 255, 0.01) 40%, rgba(0, 0, 0, 0) 65%);
-    pointer-events: none;
-    z-index: 2;
-    mix-blend-mode: screen;
-    will-change: transform;
-    transform: translate(-10%, -10%);
+    background: transparent; /* ambient lighting is now global — see #site-ambient-glow */
 }
 #showreel-3d-viewport .scene {
     width: 300px;
@@ -977,6 +945,25 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 }
 @media (max-width: 480px) {
     #showreel-3d-viewport .scene { width: 240px; height: 427px; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   SITE-WIDE AMBIENT DEPTH GLOW — replaces flat pitch-black with a
+   soft, fixed, very low-opacity glow behind the whole page (sits just
+   above the raw black body, below the GLSL canvas/content layers).
+   Purely atmospheric — pointer-events off, never intercepts anything.
+════════════════════════════════════════════════════════ */
+#site-ambient-glow {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 70vw 60vh at 20% 10%, rgba(60, 90, 130, 0.10) 0%, rgba(0,0,0,0) 60%),
+        radial-gradient(ellipse 70vw 60vh at 85% 90%, rgba(90, 70, 60, 0.08) 0%, rgba(0,0,0,0) 60%),
+        radial-gradient(ellipse 100vw 100vh at 50% 50%, rgba(20, 25, 32, 0.4) 0%, rgba(0,0,0,0) 70%);
 }
 
 /* ═══════════════════════════════════════════════════════
