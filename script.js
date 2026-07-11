@@ -1,4 +1,99 @@
 /* ═══════════════════════════════════════════════════════
+   SITE LOADER — tracks REAL loading progress of the hero photos, the
+   projector GLB, and the showreel video. The rest of the page stays
+   hidden (body.loading) until it hits 100%, so the visitor never lands
+   mid-scroll on half-loaded assets. A safety timeout guarantees no one
+   gets stuck staring at a stalled screen if something fails to load.
+════════════════════════════════════════════════════════ */
+(function () {
+  const loaderEl = document.getElementById('site-loader');
+  const fillEl   = document.getElementById('site-loader-fill');
+  const pctEl    = document.getElementById('site-loader-pct');
+  if (!loaderEl || !fillEl || !pctEl) return;
+
+  document.body.classList.add('loading');
+
+  const HERO_IMAGES = [
+    'images/fashion-editorial-bangalore-1.webp',
+    'images/fashion-model-studio-2.webp',
+    'images/fashion-portrait-lighting-3.webp',
+    'images/catalogue-product-shoot-4.webp',
+    'images/product-photography-bangalore-1.webp',
+    'images/studio-fashion-portrait-6.webp'
+  ];
+
+  const progress = {}; // key -> { weight, value(0..1) }
+  function setProgress(key, weight, value) {
+    progress[key] = { weight, value: Math.max(0, Math.min(1, value)) };
+    recompute();
+  }
+
+  function recompute() {
+    let doneW = 0, totW = 0;
+    Object.values(progress).forEach(p => { totW += p.weight; doneW += p.weight * p.value; });
+    const pct = totW > 0 ? Math.round((doneW / totW) * 100) : 0;
+    fillEl.style.width = pct + '%';
+    pctEl.textContent = String(pct).padStart(2, '0') + '%';
+    if (pct >= 100) finish();
+  }
+
+  let finished = false;
+  function finish() {
+    if (finished) return;
+    finished = true;
+    setTimeout(() => {
+      loaderEl.classList.add('loader-hidden');
+      document.body.classList.remove('loading');
+    }, 300);
+  }
+
+  // Hero images — 30%
+  setProgress('hero', 30, 0);
+  let heroLoaded = 0;
+  HERO_IMAGES.forEach((src) => {
+    const img = new Image();
+    img.onload = img.onerror = () => {
+      heroLoaded++;
+      setProgress('hero', 30, heroLoaded / HERO_IMAGES.length);
+    };
+    img.src = src;
+  });
+
+  // Projector GLB — 40% (biggest single asset). The projector engine
+  // further down calls window.__reportProjectorProgress from its
+  // GLTFLoader onProgress callback.
+  setProgress('projector', 40, 0);
+  window.__reportProjectorProgress = (fraction) => setProgress('projector', 40, fraction);
+
+  // Showreel video — 30%
+  setProgress('video', 30, 0);
+  const showreelVideoEl = document.getElementById('showreelVideo');
+  if (showreelVideoEl) {
+    const onVideoProgress = () => {
+      if (showreelVideoEl.readyState >= 3) {
+        setProgress('video', 30, 1);
+        showreelVideoEl.removeEventListener('progress', onVideoProgress);
+        showreelVideoEl.removeEventListener('canplay', onVideoProgress);
+        showreelVideoEl.removeEventListener('loadeddata', onVideoProgress);
+      }
+    };
+    showreelVideoEl.addEventListener('progress', onVideoProgress);
+    showreelVideoEl.addEventListener('canplay', onVideoProgress);
+    showreelVideoEl.addEventListener('loadeddata', onVideoProgress);
+  } else {
+    setProgress('video', 30, 1);
+  }
+
+  // Safety net — force-complete after 9s no matter what, so a slow
+  // connection or a failed asset never leaves someone stuck.
+  setTimeout(() => {
+    setProgress('hero', 30, 1);
+    setProgress('projector', 40, 1);
+    setProgress('video', 30, 1);
+  }, 9000);
+})();
+
+/* ═══════════════════════════════════════════════════════
    GLSL SHADER SYSTEM
 ════════════════════════════════════════════════════════ */
 const VERT_SHADER = `
@@ -625,12 +720,62 @@ setInterval(applyMood, 60 * 1000);
   const viewport     = document.getElementById('showreel-3d-viewport');
   const cameraView   = document.getElementById('showreelCameraView');
   const fgVideo       = document.getElementById('showreelVideo');
+  const moshContainer = document.getElementById('brush-container');
   if (!track || !viewport || !cameraView || !fgVideo) return;
 
   const basePitch = 12;
   const baseYaw   = -15;
   const basePanY  = -20;
   let started = false;
+  let isRevealed = false;
+
+  // The site-wide datamosh effect clones DOM nodes, which doesn't work for
+  // <video> — a cloned <video> element has no live playing frame, it just
+  // shows black/frame-zero. So the showreel gets its own version: capture
+  // the ACTUAL current video frame to a small canvas and mosh that instead.
+  function createVideoMoshStamp() {
+    if (!moshContainer || !fgVideo.videoWidth) return;
+    const rect = fgVideo.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    if (rect.bottom < 0 || rect.top > window.innerHeight) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 180;
+    canvas.height = Math.round(180 * (rect.height / rect.width));
+    const ctx = canvas.getContext('2d');
+    try {
+      ctx.drawImage(fgVideo, 0, 0, canvas.width, canvas.height);
+    } catch (e) { return; }
+
+    canvas.className = 'video-mosh-stamp';
+    Object.assign(canvas.style, {
+      position: 'fixed',
+      left: rect.left + 'px',
+      top: rect.top + 'px',
+      width: rect.width + 'px',
+      height: rect.height + 'px'
+    });
+    moshContainer.appendChild(canvas);
+    canvas.animate([
+      { opacity: 0.65, transform: 'translateY(0px) scale(1)' },
+      { opacity: 0,     transform: 'translateY(36px) scale(1.02)' }
+    ], { duration: 700, easing: 'cubic-bezier(0.25, 1, 0.5, 1)' }).onfinish = () => canvas.remove();
+  }
+
+  let lastVideoMoshY = window.pageYOffset;
+  let videoMoshTicking = false;
+  window.addEventListener('scroll', () => {
+    if (!isRevealed || videoMoshTicking) return;
+    videoMoshTicking = true;
+    requestAnimationFrame(() => {
+      const currentY = window.pageYOffset;
+      if (Math.abs(currentY - lastVideoMoshY) > 35) {
+        createVideoMoshStamp();
+        lastVideoMoshY = currentY;
+      }
+      videoMoshTicking = false;
+    });
+  }, { passive: true });
 
   function updateShowreelCamera() {
     const rect = track.getBoundingClientRect();
@@ -641,6 +786,7 @@ setInterval(applyMood, 60 * 1000);
     // Fade the whole panel in over the first 12% of its own track instead
     // of popping in abruptly.
     const revealed = scrollPercent > 0.02;
+    isRevealed = revealed;
     viewport.classList.toggle('revealed', revealed);
     if (revealed && !started) {
       fgVideo.play().catch(() => {});
@@ -650,10 +796,16 @@ setInterval(applyMood, 60 * 1000);
       started = false;
     }
 
+    // Grow in from slightly smaller over the first 18% of this section's
+    // scroll, so the screen feels like it's continuing to emerge out of the
+    // projector hand-off rather than appearing at full size immediately.
+    const growProgress = Math.min(1, scrollPercent / 0.18);
+    const scale = 0.82 + growProgress * 0.18;
+
     const currentPitch = basePitch - (scrollPercent * 24);
     const currentYaw   = baseYaw   + (scrollPercent * 30);
     const currentPanY  = basePanY  + (scrollPercent * 40);
-    cameraView.style.transform = `translateY(${currentPanY}px) rotateX(${currentPitch}deg) rotateY(${currentYaw}deg)`;
+    cameraView.style.transform = `translateY(${currentPanY}px) rotateX(${currentPitch}deg) rotateY(${currentYaw}deg) scale(${scale})`;
   }
 
   window.addEventListener('scroll', updateShowreelCamera, { passive: true });
@@ -743,9 +895,17 @@ setInterval(applyMood, 60 * 1000);
 
         buildScrollTimeline();
         engineReady = true;
+        if (window.__reportProjectorProgress) window.__reportProjectorProgress(1);
       },
-      undefined,
-      (err) => console.error('[projector] GLB failed to load', err)
+      (xhr) => {
+        if (xhr.lengthComputable && window.__reportProjectorProgress) {
+          window.__reportProjectorProgress(xhr.loaded / xhr.total);
+        }
+      },
+      (err) => {
+        console.error('[projector] GLB failed to load', err);
+        if (window.__reportProjectorProgress) window.__reportProjectorProgress(1); // don't block the loader on a failed asset
+      }
     );
   }
 
@@ -796,7 +956,7 @@ setInterval(applyMood, 60 * 1000);
 
     // Step 1: profile → face-on turn (lens sits on the opposite face
     // from the model's raw default orientation, hence target y = PI).
-    tl.to(projectorModel.rotation, { x: 0, y: Math.PI, z: 0, duration: 2, ease: "power1.inOut" })
+    tl.to(projectorModel.rotation, { x: 0, y: Math.PI * 0.55, z: 0, duration: 2, ease: "power1.inOut" })
       .to(projectorModel.position, { z: 1.5, duration: 2, ease: "power1.inOut" }, "<")
       // Step 2: camera dive toward the lens, continuously re-aimed so it
       // stays centered instead of drifting off as the camera approaches.
