@@ -63,15 +63,32 @@ section.min-h-screen {
     text-transform: uppercase; 
     z-index: 30; 
     pointer-events: none;
-    color: transparent;
-    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
-    transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+    color: rgba(255, 255, 255, 0.1);
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.55);
+    transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
 }
-.portfolio-bg-container:hover .portfolio-trigger { 
+.portfolio-bg-container:hover .portfolio-trigger,
+.portfolio-bg-container:active .portfolio-trigger { 
     color: rgba(255, 255, 255, 0.9);
     -webkit-text-stroke: 1px transparent;
     text-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
     transform: scale(1.02) skewX(-2deg); 
+}
+.portfolio-bg-container::after {
+    content: 'TAP TO VIEW →';
+    position: absolute;
+    bottom: 1.2vw;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: rgba(255, 255, 255, 0.35);
+    z-index: 30;
+    pointer-events: none;
+}
+.portfolio-bg-container:active::after {
+    color: rgba(255, 255, 255, 0.7);
 }
 
 /* --- FASHION GALLERY --- */
@@ -888,7 +905,7 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 ════════════════════════════════════════════════════════ */
 #showreel-3d-track {
     position: relative;
-    height: 100vh; /* scroll distance that drives the camera pan — local to this section only */
+    height: 130vh; /* scroll distance that drives the camera pan — local to this section only */
 }
 #showreel-3d-viewport {
     position: sticky;
@@ -912,8 +929,8 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
     z-index: 3;
 }
 #showreel-3d-viewport .projection-container {
-    width: 110%;
-    height: 110%;
+    width: 100%;
+    height: 100%;
     position: relative;
     box-shadow:
         0 0 140px rgba(160, 200, 255, 0.08),
@@ -930,7 +947,7 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 }
 #showreel-3d-viewport {
     opacity: 0;
-    transition: opacity 1s ease;
+    transition: opacity 0.8s ease;
 }
 #showreel-3d-viewport.revealed {
     opacity: 1;
@@ -940,7 +957,7 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
     top: 0; left: 0; right: 0; bottom: 0;
     background: radial-gradient(circle at center, transparent 20%, rgba(2, 4, 6, 0.65) 100%);
     pointer-events: none;
-    z-index: 3;
+    z-index: 4;
     mix-blend-mode: multiply;
 }
 @media (max-width: 480px) {
@@ -974,21 +991,21 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 #projector-background-track {
     position: fixed;
     top: 0;
-    left: -50;
+    left: 0;
     width: 100vw;
     height: 100vh;
-    z-index: 18;
+    z-index: 15;
     background: transparent;
     pointer-events: none;
     opacity: 1;
-    transition: opacity 1s ease;
+    transition: opacity 0.6s ease;
 }
 #projector-background-track.faded {
     opacity: 0;
 }
 .projector-sticky-window {
     width: 100%;
-    height: 130%;
+    height: 100%;
     overflow: hidden;
     position: relative;
 }
