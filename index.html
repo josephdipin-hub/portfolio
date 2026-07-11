@@ -117,6 +117,14 @@
 
 <body>
 
+<div id="site-loader">
+  <div id="site-loader-inner">
+    <div id="site-loader-label">VISUAL_SYNTH // INITIALIZING</div>
+    <div id="site-loader-bar"><div id="site-loader-fill"></div></div>
+    <div id="site-loader-pct">00%</div>
+  </div>
+</div>
+
 <div id="site-ambient-glow"></div>
 <canvas id="glsl-canvas"></canvas>
 <div id="brush-container"></div>
@@ -267,7 +275,7 @@
 </section>
 
 <!-- 3D REEL PROJECTOR — background element, animates in as you scroll past the hero -->
-<div id="projector-background-track">
+<div id="projector-background-track" data-no-mosh>
   <div class="projector-sticky-window">
     <canvas id="three-projector-canvas"></canvas>
   </div>
@@ -275,7 +283,7 @@
 <div id="projector-trigger-anchor" style="width:100%;height:90vh;pointer-events:none;"></div>
 
 <!-- VOLUMETRIC SHOWREEL PROJECTION — local video, reveals + tilts as you keep scrolling -->
-<div id="showreel-3d-track">
+<div id="showreel-3d-track" data-no-mosh>
   <div id="showreel-3d-viewport">
     <div class="scene" id="showreelCameraView">
       <div class="projection-container">
