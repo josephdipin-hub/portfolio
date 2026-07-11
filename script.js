@@ -724,9 +724,22 @@ setInterval(applyMood, 60 * 1000);
         const center = new THREE.Vector3();
         box.getCenter(center);
         const maxDim = Math.max(size.x, size.y, size.z) || 1;
-        const fitScale = 2.4 / maxDim;
+        const fitScale = 1.7 / maxDim; // smaller target size — more conservative margin against clipping
         projectorModel.scale.setScalar(fitScale);
         projectorModel.position.sub(center.multiplyScalar(fitScale));
+
+        // Narrow (portrait/mobile) viewports have a much tighter HORIZONTAL
+        // field of view than vertical at a fixed vertical FOV camera — that
+        // mismatch is what was clipping the model off the left edge on
+        // phones even though it looked fine at wider aspect ratios. Push the
+        // camera back based on the ACTUAL current aspect ratio instead of a
+        // fixed guess, so it always fits both dimensions.
+        const aspect = window.innerWidth / window.innerHeight;
+        const vFovRad = camera.fov * Math.PI / 180;
+        const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
+        const requiredDist = (1.7 * 0.75) / Math.tan(hFovRad / 2); // 0.75 = safety margin
+        camera.position.z = Math.max(8, requiredDist);
+        camera.updateProjectionMatrix();
 
         buildScrollTimeline();
         engineReady = true;
@@ -766,12 +779,12 @@ setInterval(applyMood, 60 * 1000);
           // two disconnected scenes.
           const trackEl = document.getElementById('projector-background-track');
           if (trackEl) trackEl.classList.add('faded');
-          setTimeout(() => { if (projectorModel) projectorModel.visible = false; }, 65);
+          setTimeout(() => { if (projectorModel) projectorModel.visible = false; }, 650);
         },
         onLeaveBack: () => {
           const trackEl = document.getElementById('projector-background-track');
           if (trackEl) trackEl.classList.add('faded');
-          setTimeout(() => { if (projectorModel) projectorModel.visible = false; }, 65);
+          setTimeout(() => { if (projectorModel) projectorModel.visible = false; }, 650);
         },
         onUpdate: (self) => {
           const spinSpeed = self.getVelocity() * 0.0007;
@@ -783,8 +796,8 @@ setInterval(applyMood, 60 * 1000);
 
     // Step 1: profile → face-on turn (lens sits on the opposite face
     // from the model's raw default orientation, hence target y = PI).
-    tl.to(projectorModel.rotation, { x: 0, y: Math.PI, z: 0, duration: 4, ease: "power1.inOut" })
-      .to(projectorModel.position, { z: 1.5, duration: 4, ease: "power1.inOut" }, "<")
+    tl.to(projectorModel.rotation, { x: 0, y: Math.PI, z: 0, duration: 2, ease: "power1.inOut" })
+      .to(projectorModel.position, { z: 1.5, duration: 2, ease: "power1.inOut" }, "<")
       // Step 2: camera dive toward the lens, continuously re-aimed so it
       // stays centered instead of drifting off as the camera approaches.
       .to(camera.position, {
