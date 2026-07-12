@@ -947,7 +947,6 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 }
 #showreel-3d-viewport {
     opacity: 0;
-    transition: opacity 0.8s ease;
 }
 #showreel-3d-viewport.revealed {
     opacity: 1;
@@ -997,11 +996,6 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
     z-index: 15;
     background: transparent;
     pointer-events: none;
-    opacity: 1;
-    transition: opacity 0.6s ease;
-}
-#projector-background-track.faded {
-    opacity: 0;
 }
 .projector-sticky-window {
     width: 100%;
