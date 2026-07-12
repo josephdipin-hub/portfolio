@@ -265,7 +265,12 @@ function createMoshStamp(yPos) {
   const existing = container.querySelectorAll('.brush-stamp');
   if (existing.length >= 2) existing[0].remove();
   const vh = window.innerHeight;
-  const noMoshEls = document.querySelectorAll('[data-no-mosh]');
+  // Only content-flow no-mosh sections (footer, forms, etc.) affect the
+  // safe-height clipping — the fixed-position 3D/video layers are handled
+  // separately below by physically stripping them out of the clone, since
+  // being full-viewport fixed elements they'd otherwise always force
+  // safeHeight to 0 and silently disable the whole effect everywhere.
+  const noMoshEls = document.querySelectorAll('[data-no-mosh]:not(#projector-background-track):not(#showreel-3d-track)');
   let safeHeight = vh;
   noMoshEls.forEach(el => {
     const rect = el.getBoundingClientRect();
@@ -278,7 +283,12 @@ function createMoshStamp(yPos) {
   noMoshEls.forEach(el => el.style.visibility = 'hidden');
   const stamp = document.createElement('div');
   stamp.className = 'brush-stamp';
-  stamp.appendChild(master.cloneNode(true));
+  const clone = master.cloneNode(true);
+  // Belt-and-suspenders: physically remove the 3D canvases and any video
+  // elements from the ghost-stamp clone, so they can never appear
+  // duplicated/frozen in the scroll-trail effect no matter what.
+  clone.querySelectorAll('#projector-background-track, #showreel-3d-track, video, canvas').forEach(el => el.remove());
+  stamp.appendChild(clone);
   stamp.style.top = `-${yPos}px`;
   noMoshEls.forEach(el => el.style.visibility = '');
   if (safeHeight < vh) stamp.style.clipPath = `inset(0 0 ${vh - safeHeight}px 0)`;
@@ -923,29 +933,10 @@ setInterval(applyMood, 60 * 1000);
         start: "top top",
         end: "bottom bottom",
         scrub: 1,
-        onEnter: () => {
-          const trackEl = document.getElementById('projector-background-track');
-          if (trackEl) trackEl.classList.remove('faded');
-          projectorModel.visible = true;
-        },
-        onEnterBack: () => {
-          const trackEl = document.getElementById('projector-background-track');
-          if (trackEl) trackEl.classList.remove('faded');
-          projectorModel.visible = true;
-        },
-        onLeave: () => {
-          // Crossfade out rather than an abrupt pop, so it reads as a
-          // hand-off into the showreel section right below instead of
-          // two disconnected scenes.
-          const trackEl = document.getElementById('projector-background-track');
-          if (trackEl) trackEl.classList.add('faded');
-          setTimeout(() => { if (projectorModel) projectorModel.visible = false; }, 650);
-        },
-        onLeaveBack: () => {
-          const trackEl = document.getElementById('projector-background-track');
-          if (trackEl) trackEl.classList.add('faded');
-          setTimeout(() => { if (projectorModel) projectorModel.visible = false; }, 650);
-        },
+        onEnter: () => { projectorModel.visible = true; },
+        onEnterBack: () => { projectorModel.visible = true; },
+        onLeave: () => { projectorModel.visible = false; },     // instant — no fade, hands off straight to the showreel
+        onLeaveBack: () => { projectorModel.visible = false; },
         onUpdate: (self) => {
           const spinSpeed = self.getVelocity() * 0.0007;
           if (leftReel) leftReel.rotation.z += spinSpeed;
@@ -954,16 +945,15 @@ setInterval(applyMood, 60 * 1000);
       }
     });
 
-    // Step 1: profile → face-on turn (lens sits on the opposite face
-    // from the model's raw default orientation, hence target y = PI).
-    tl.to(projectorModel.rotation, { x: 0, y: Math.PI * 0.55, z: 0, duration: 2, ease: "power1.inOut" })
+    // Step 1: profile → 90° turn.
+    tl.to(projectorModel.rotation, { x: 0, y: Math.PI / 2, z: 0, duration: 2, ease: "power1.inOut" })
       .to(projectorModel.position, { z: 1.5, duration: 2, ease: "power1.inOut" }, "<")
-      // Step 2: camera dive toward the lens, continuously re-aimed so it
-      // stays centered instead of drifting off as the camera approaches.
+      // Step 2: camera dives MUCH closer into the lens before cutting to the
+      // showreel — small offset so it ends up right up against the glass.
       .to(camera.position, {
           x: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).x : 0,
           y: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).y : 0,
-          z: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).z + 1.2 : 2.5,
+          z: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).z + 0.15 : 2.5,
           duration: 3,
           ease: "power2.in",
           onUpdate: function() {
