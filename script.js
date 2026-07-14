@@ -848,8 +848,8 @@ setInterval(applyMood, 60 * 1000);
   let engineReady = false;
 
   function initProjectorEngine() {
-    renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: false });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.2));
+    renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
     renderer.setSize(window.innerWidth, window.innerHeight, false);
     renderer.setClearColor(0x000000, 0);
     renderer.outputEncoding = THREE.sRGBEncoding;
@@ -859,8 +859,8 @@ setInterval(applyMood, 60 * 1000);
     camera.position.set(0, 0, 8);
     camera.lookAt(0, 0, 0);
 
-    scene.add(new THREE.AmbientLight(0xffffff, 0.2));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.8);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.35));
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.3);
     dirLight.position.set(5, 8, 5);
     scene.add(dirLight);
 
@@ -875,7 +875,6 @@ setInterval(applyMood, 60 * 1000);
         projectorModel.traverse((child) => {
           if (child.isMesh) {
             const name = child.name.toLowerCase();
-            if (child.material) child.material.precision = "mediump";
             if (name.includes('reel') || name.includes('wheel') || name.includes('gear')) {
               if (name.includes('01') || name.includes('front') || name.includes('l')) leftReel = child;
               if (name.includes('02') || name.includes('back') || name.includes('r')) rightReel = child;
@@ -983,8 +982,16 @@ setInterval(applyMood, 60 * 1000);
     if (renderer && scene && camera) renderer.render(scene, camera);
   }
 
+  let lastKnownWidth = window.innerWidth;
   window.addEventListener('resize', () => {
     if (!camera || !renderer) return;
+    // Mobile browsers fire 'resize' when the URL bar collapses/expands
+    // during scroll, changing innerHeight with no real resize happening —
+    // that was causing a tiny, unwanted "contraction" of the model mid-
+    // scroll as the camera/canvas silently recalculated. Only react to
+    // actual width changes (real resize or orientation change).
+    if (window.innerWidth === lastKnownWidth) return;
+    lastKnownWidth = window.innerWidth;
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight, false);
