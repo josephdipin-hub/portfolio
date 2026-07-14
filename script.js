@@ -7,9 +7,10 @@
 ════════════════════════════════════════════════════════ */
 (function () {
   const loaderEl = document.getElementById('site-loader');
-  const fillEl   = document.getElementById('site-loader-fill');
+  const ringEl   = document.getElementById('film-loader-ring');
   const pctEl    = document.getElementById('site-loader-pct');
-  if (!loaderEl || !fillEl || !pctEl) return;
+  const frameEl  = document.getElementById('film-frame-num');
+  if (!loaderEl || !ringEl || !pctEl) return;
 
   document.body.classList.add('loading');
 
@@ -32,8 +33,12 @@
     let doneW = 0, totW = 0;
     Object.values(progress).forEach(p => { totW += p.weight; doneW += p.weight * p.value; });
     const pct = totW > 0 ? Math.round((doneW / totW) * 100) : 0;
-    fillEl.style.width = pct + '%';
-    pctEl.textContent = String(pct).padStart(2, '0') + '%';
+    ringEl.style.setProperty('--pct', pct);
+    pctEl.textContent = String(pct).padStart(2, '0');
+    if (frameEl) {
+      const frame = Math.max(1, Math.min(36, Math.round((pct / 100) * 36)));
+      frameEl.textContent = String(frame).padStart(3, '0');
+    }
     if (pct >= 100) finish();
   }
 
@@ -284,10 +289,12 @@ function createMoshStamp(yPos) {
   const stamp = document.createElement('div');
   stamp.className = 'brush-stamp';
   const clone = master.cloneNode(true);
-  // Belt-and-suspenders: physically remove the 3D canvases and any video
-  // elements from the ghost-stamp clone, so they can never appear
-  // duplicated/frozen in the scroll-trail effect no matter what.
-  clone.querySelectorAll('#projector-background-track, #showreel-3d-track, video, canvas').forEach(el => el.remove());
+  // Hide (not remove) video/canvas pixels in the clone so they can't ghost
+  // into the scroll-trail. Removing the wrapper elements instead would
+  // shrink the clone's total height and desync everything below them from
+  // the real page's layout — that's what was making unrelated sections
+  // (like PROFILE_DATA) appear to "clone" into the wrong spot further down.
+  clone.querySelectorAll('video, canvas').forEach(el => { el.style.visibility = 'hidden'; });
   stamp.appendChild(clone);
   stamp.style.top = `-${yPos}px`;
   noMoshEls.forEach(el => el.style.visibility = '');
