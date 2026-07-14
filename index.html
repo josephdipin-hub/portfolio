@@ -119,9 +119,14 @@
 
 <div id="site-loader">
   <div id="site-loader-inner">
-    <div id="site-loader-label">VISUAL_SYNTH // INITIALIZING</div>
-    <div id="site-loader-bar"><div id="site-loader-fill"></div></div>
-    <div id="site-loader-pct">00%</div>
+    <div id="film-loader-ring">
+      <div id="film-loader-ring-inner">
+        <div id="site-loader-pct">00</div>
+        <div id="film-loader-pct-sign">% EXPOSED</div>
+      </div>
+    </div>
+    <div id="film-strip"><div id="film-strip-track"></div></div>
+    <div id="site-loader-label">LOADING_ROLL // FRAME <span id="film-frame-num">001</span>/036</div>
   </div>
 </div>
 
@@ -280,7 +285,7 @@
     <canvas id="three-projector-canvas"></canvas>
   </div>
 </div>
-<div id="projector-trigger-anchor" style="width:100%;height:120vh;pointer-events:none;"></div>
+<div id="projector-trigger-anchor" style="width:100%;height:130vh;pointer-events:none;"></div>
 
 <!-- VOLUMETRIC SHOWREEL PROJECTION — local video, reveals + tilts as you keep scrolling -->
 <div id="showreel-3d-track" data-no-mosh>
