@@ -9,7 +9,6 @@
   const loaderEl = document.getElementById('site-loader');
   const ringEl   = document.getElementById('film-loader-ring');
   const pctEl    = document.getElementById('site-loader-pct');
-  const frameEl  = document.getElementById('film-frame-num');
   if (!loaderEl || !ringEl || !pctEl) return;
 
   document.body.classList.add('loading');
@@ -35,10 +34,6 @@
     const pct = totW > 0 ? Math.round((doneW / totW) * 100) : 0;
     ringEl.style.setProperty('--pct', pct);
     pctEl.textContent = String(pct).padStart(2, '0');
-    if (frameEl) {
-      const frame = Math.max(1, Math.min(36, Math.round((pct / 100) * 36)));
-      frameEl.textContent = String(frame).padStart(3, '0');
-    }
     if (pct >= 100) finish();
   }
 
@@ -936,10 +931,15 @@ setInterval(applyMood, 60 * 1000);
 
     const tl = gsap.timeline({
       scrollTrigger: {
-        trigger: "#projector-trigger-anchor",
-        start: "top top",
-        end: "bottom bottom",
-        scrub: 1,
+        // Starts once the hero is scrolled 50% past the top of the viewport
+        // (its center crossing the top), and ends exactly where the showreel
+        // section begins — not a fixed vh guess, so there's never dead
+        // scroll space between "projector finishes" and "video starts."
+        trigger: "#hero-section",
+        start: "center top",
+        endTrigger: "#showreel-3d-track",
+        end: "top top",
+        scrub: 1.3, // slightly higher scrub lag = a softer, less linear-feeling catch-up as you scroll
         onEnter: () => { projectorModel.visible = true; },
         onEnterBack: () => { projectorModel.visible = true; },
         onLeave: () => { projectorModel.visible = false; },     // instant — no fade, hands off straight to the showreel
@@ -952,17 +952,21 @@ setInterval(applyMood, 60 * 1000);
       }
     });
 
-    // Step 1: profile → 90° turn.
-    tl.to(projectorModel.rotation, { x: 0, y: Math.PI / 2, z: 0, duration: 2, ease: "power1.inOut" })
-      .to(projectorModel.position, { z: 1.5, duration: 2, ease: "power1.inOut" }, "<")
+    // Step 1: an ACTUAL 90° turn from the starting profile pose (previous
+    // version accidentally targeted the same value it started at, so it
+    // never visibly rotated at all). power3.inOut gives a curved ease-in/
+    // ease-out feel instead of a flat, linear-feeling turn.
+    tl.to(projectorModel.rotation, { x: 0, y: Math.PI, z: 0, duration: 2, ease: "power3.inOut" })
+      .to(projectorModel.position, { z: 1.5, duration: 2, ease: "power3.inOut" }, "<")
       // Step 2: camera dives MUCH closer into the lens before cutting to the
-      // showreel — small offset so it ends up right up against the glass.
+      // showreel. expo.in gives a strong accelerating curve — slow at first,
+      // then a fast final rush into the glass — instead of a steady linear zoom.
       .to(camera.position, {
           x: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).x : 0,
           y: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).y : 0,
           z: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).z + 0.15 : 2.5,
           duration: 3,
-          ease: "power2.in",
+          ease: "expo.in",
           onUpdate: function() {
               if (lensMesh) camera.lookAt(lensMesh.getWorldPosition(new THREE.Vector3()));
           }
