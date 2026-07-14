@@ -1036,23 +1036,36 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
 
 /* Minimal thin-ring winding indicator */
 #film-loader-ring {
-    --pct: 0;
     width: 64px;
     height: 64px;
-    border-radius: 50%;
-    background: conic-gradient(rgba(255, 255, 255, 0.85) calc(var(--pct) * 1%), rgba(255, 255, 255, 0.12) 0);
     display: flex;
     align-items: center;
     justify-content: center;
     margin: 0 auto 14px;
     position: relative;
 }
-#film-loader-ring::before {
-    content: '';
+/* Outer toothed ring — a repeating-conic-gradient mask cuts teeth notches
+   into a solid disc, giving an actual cog silhouette rather than a smooth
+   circle. Rotates in discrete steps (a ratchet tick), not a smooth spin. */
+#gear-teeth {
     position: absolute;
-    inset: 3px;
+    inset: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.8);
+    -webkit-mask-image: repeating-conic-gradient(#000 0deg 14deg, transparent 14deg 30deg);
+    mask-image: repeating-conic-gradient(#000 0deg 14deg, transparent 14deg 30deg);
+    animation: gear-wind 2.6s steps(12) infinite;
+}
+#gear-hub {
+    position: absolute;
+    inset: 13px;
     border-radius: 50%;
     background: #000;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+}
+@keyframes gear-wind {
+    from { transform: rotate(0deg); }
+    to   { transform: rotate(360deg); }
 }
 #film-loader-ring-inner {
     position: relative;
@@ -1060,7 +1073,7 @@ footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowr
     line-height: 1;
 }
 #site-loader-pct {
-    font-size: 14px;
+    font-size: 13px;
     font-weight: 500;
     letter-spacing: 0.02em;
     color: rgba(255, 255, 255, 0.85);
