@@ -32,7 +32,12 @@
     let doneW = 0, totW = 0;
     Object.values(progress).forEach(p => { totW += p.weight; doneW += p.weight * p.value; });
     const pct = totW > 0 ? Math.round((doneW / totW) * 100) : 0;
-    ringEl.style.setProperty('--pct', pct);
+    const gearTeethEl = document.getElementById('gear-teeth');
+    if (gearTeethEl) {
+      // Ticks faster as it nears completion — winds down quicker instead
+      // of a flat, unchanging spin the whole time.
+      gearTeethEl.style.animationDuration = Math.max(0.6, 2.6 - (pct / 100) * 2) + 's';
+    }
     pctEl.textContent = String(pct).padStart(2, '0');
     if (pct >= 100) finish();
   }
