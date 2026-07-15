@@ -974,15 +974,10 @@ setInterval(applyMood, 60 * 1000);
 
     const tl = gsap.timeline({
       scrollTrigger: {
-        // Starts once the hero is scrolled 50% past the top of the viewport
-        // (its center crossing the top), and ends exactly where the showreel
-        // section begins — not a fixed vh guess, so there's never dead
-        // scroll space between "projector finishes" and "video starts."
-        trigger: "#hero-section",
-        start: "center top",
-        endTrigger: "#showreel-3d-track",
-        end: "top top",
-        scrub: 1.3, // slightly higher scrub lag = a softer, less linear-feeling catch-up as you scroll
+        trigger: "#projector-trigger-anchor",
+        start: "top top",
+        end: "bottom bottom",
+        scrub: 1.3,
         onEnter: () => { projectorModel.visible = true; },
         onEnterBack: () => { projectorModel.visible = true; },
         onLeave: () => { projectorModel.visible = false; },     // instant — no fade, hands off straight to the showreel
