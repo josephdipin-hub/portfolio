@@ -974,9 +974,15 @@ setInterval(applyMood, 60 * 1000);
 
     const tl = gsap.timeline({
       scrollTrigger: {
-        trigger: "#projector-trigger-anchor",
-        start: "top top",
-        end: "bottom bottom",
+        // Starts exactly where the hero ends (right after "SCROLL_TO_PROCEED"
+        // scrolls out) and ends exactly where the showreel section begins —
+        // bound directly to those two elements' real positions instead of a
+        // fixed vh distance, so it can't drift into a gap or an overlap
+        // regardless of how tall either section actually renders.
+        trigger: "#hero-section",
+        start: "bottom top",
+        endTrigger: "#showreel-3d-track",
+        end: "top top",
         scrub: 1.3,
         onEnter: () => { projectorModel.visible = true; },
         onEnterBack: () => { projectorModel.visible = true; },
