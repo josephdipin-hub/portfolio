@@ -1006,7 +1006,8 @@ setInterval(applyMood, 60 * 1000);
         // out of view (not the whole hero section), and ends exactly where
         // the showreel section begins.
         trigger: "#scroll-hint",
-        start: "bottom top",
+        //start: "bottom top",
+        start: () => "bottom top+=" + (window.innerHeight * 0.5),
         endTrigger: "#showreel-3d-track",
         end: "top top",
         scrub: 1.3,
