@@ -7,9 +7,8 @@
 ════════════════════════════════════════════════════════ */
 (function () {
   const loaderEl = document.getElementById('site-loader');
-  const ringEl   = document.getElementById('film-loader-ring');
   const pctEl    = document.getElementById('site-loader-pct');
-  if (!loaderEl || !ringEl || !pctEl) return;
+  if (!loaderEl || !pctEl) return;
 
   document.body.classList.add('loading');
 
@@ -32,12 +31,6 @@
     let doneW = 0, totW = 0;
     Object.values(progress).forEach(p => { totW += p.weight; doneW += p.weight * p.value; });
     const pct = totW > 0 ? Math.round((doneW / totW) * 100) : 0;
-    const gearTeethEl = document.getElementById('gear-teeth');
-    if (gearTeethEl) {
-      // Ticks faster as it nears completion — winds down quicker instead
-      // of a flat, unchanging spin the whole time.
-      gearTeethEl.style.animationDuration = Math.max(0.6, 2.6 - (pct / 100) * 2) + 's';
-    }
     pctEl.textContent = String(pct).padStart(2, '0');
     if (pct >= 100) finish();
   }
@@ -96,6 +89,52 @@
     setProgress('projector', 40, 1);
     setProgress('video', 30, 1);
   }, 9000);
+})();
+
+/* ═══════════════════════════════════════════════════════
+   WINDER GEAR PATH — generates the wavy zigzag gear-tooth outline used
+   as the crank-arm loader's clip-path. Pure math, runs once on load.
+════════════════════════════════════════════════════════ */
+(function () {
+  const pathEl = document.getElementById('winder-gear-path');
+  if (!pathEl) return;
+
+  const points = 360;
+  const teeth = 12;
+  const thickness = 0.022;
+  const baseRadius = 0.42;
+  const amplitude = 0.04;
+
+  function getWaveOffset(angle) {
+    const phase = (angle * teeth) % (Math.PI * 2);
+    if (phase < Math.PI) {
+      const xVal = (phase - Math.PI / 2) / (Math.PI / 2);
+      return Math.sqrt(Math.max(0, 1 - xVal * xVal));
+    } else {
+      const xVal = (phase - 3 * Math.PI / 2) / (Math.PI / 2);
+      return -Math.sqrt(Math.max(0, 1 - xVal * xVal));
+    }
+  }
+
+  let d = '';
+  for (let i = 0; i <= points; i++) {
+    const angle = (i / points) * Math.PI * 2;
+    const wave = getWaveOffset(angle);
+    const r = baseRadius + (wave * amplitude);
+    const x = 0.5 + Math.cos(angle) * r;
+    const y = 0.5 + Math.sin(angle) * r;
+    d += (i === 0 ? 'M ' : 'L ') + x + ',' + y + ' ';
+  }
+  for (let i = points; i >= 0; i--) {
+    const angle = (i / points) * Math.PI * 2;
+    const wave = getWaveOffset(angle);
+    const r = (baseRadius - thickness) + (wave * amplitude);
+    const x = 0.5 + Math.cos(angle) * r;
+    const y = 0.5 + Math.sin(angle) * r;
+    d += 'L ' + x + ',' + y + ' ';
+  }
+  d += 'Z';
+  pathEl.setAttribute('d', d);
 })();
 
 /* ═══════════════════════════════════════════════════════
