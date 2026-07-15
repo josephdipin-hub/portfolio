@@ -138,6 +138,18 @@
 })();
 
 /* ═══════════════════════════════════════════════════════
+   SHARED DRACO LOADER — attached to every GLTFLoader below. Only kicks in
+   if a GLB is actually Draco-compressed (smaller downloads, faster GPU
+   upload); has zero effect on files that aren't, so this is safe to leave
+   wired in regardless of whether any current asset is compressed yet.
+════════════════════════════════════════════════════════ */
+let sharedDracoLoader = null;
+if (window.THREE && THREE.DRACOLoader) {
+  sharedDracoLoader = new THREE.DRACOLoader();
+  sharedDracoLoader.setDecoderPath('https://www.gstatic.com/draco/versioned/decoders/1.5.6/');
+}
+
+/* ═══════════════════════════════════════════════════════
    GLSL SHADER SYSTEM
 ════════════════════════════════════════════════════════ */
 const VERT_SHADER = `
@@ -185,7 +197,7 @@ let glVelocity = 0, glIntensity = 0, glTargetVel = 0, glTargetInt = 0, glLastY =
 
 function initGL() {
   if (!window.THREE) return;
-  glRenderer = new THREE.WebGLRenderer({ canvas: glCanvas, alpha: true, antialias: false });
+  glRenderer = new THREE.WebGLRenderer({ canvas: glCanvas, alpha: true, antialias: true });
   glRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
   glRenderer.setSize(window.innerWidth, window.innerHeight);
   glScene = new THREE.Scene();
@@ -213,16 +225,28 @@ function initGL() {
   });
 }
 
+let glPageHidden = false;
+
 function glRenderLoop(ts) {
   requestAnimationFrame(glRenderLoop);
+  if (glPageHidden) return; // tab not visible — don't burn GPU/battery in the background
   glVelocity  += (glTargetVel - glVelocity)  * 0.12;
   glIntensity += (glTargetInt - glIntensity) * 0.08;
   glTargetVel *= 0.88; glTargetInt *= 0.92;
+  // At rest, the shader's own alpha is already ~0 (intensity multiplies the
+  // output alpha directly) — skipping the render call here just leaves the
+  // canvas showing its last (already near-invisible) frame instead of
+  // paying for a full-screen redraw on every single frame forever.
+  if (glVelocity < 0.001 && glIntensity < 0.001 && glTargetVel < 0.001 && glTargetInt < 0.001) return;
   glUniforms.uTime.value      = ts * 0.001;
   glUniforms.uVelocity.value  = glVelocity;
   glUniforms.uIntensity.value = glIntensity;
   glRenderer.render(glScene, glCamera);
 }
+
+document.addEventListener('visibilitychange', () => {
+  glPageHidden = document.hidden;
+});
 
 function triggerGLGlitch(velocity) {
   if (!glUniforms) return;
@@ -584,6 +608,7 @@ function initEnlargerBg() {
 }
 
   const loader = new THREE.GLTFLoader();
+  if (sharedDracoLoader) loader.setDRACOLoader(sharedDracoLoader);
   loader.load(
     'models/durst_enlarger_darkroom_asset.glb',
     (gltf) => {
@@ -625,6 +650,7 @@ function initEnlargerBg() {
 
       /* Load watch */
       const loader2 = new THREE.GLTFLoader();
+  if (sharedDracoLoader) loader2.setDRACOLoader(sharedDracoLoader);
       loader2.load(
         'models/stopwatch-284.glb',
         (gltf2) => {
@@ -686,6 +712,7 @@ function stopEnlargerBg() {
 
 function enlargerLoop() {
   pgAnimFrame = requestAnimationFrame(enlargerLoop);
+  if (document.hidden) return; // tab not visible — don't burn GPU/battery in the background
   const now = performance.now() * 0.001;
   if (!pgLastTime) pgLastTime = now;
   const delta = Math.min(now - pgLastTime, 0.05);
@@ -906,6 +933,7 @@ setInterval(applyMood, 60 * 1000);
     renderLoop(0);
 
     const loader = new THREE.GLTFLoader();
+  if (sharedDracoLoader) loader.setDRACOLoader(sharedDracoLoader);
     loader.load(
       'models/call_of_duty_infinite_warfare_projector.glb',
       (gltf) => {
@@ -974,14 +1002,11 @@ setInterval(applyMood, 60 * 1000);
 
     const tl = gsap.timeline({
       scrollTrigger: {
-        // Starts exactly where the hero ends (right after "SCROLL_TO_PROCEED"
-        // scrolls out) and ends exactly where the showreel section begins —
-        // bound directly to those two elements' real positions instead of a
-        // fixed vh distance, so it can't drift into a gap or an overlap
-        // regardless of how tall either section actually renders.
-        trigger: "#hero-section",
-        //start: "bottom top",
-        start: () => "bottom top+=" + (window.innerHeight * 0.5),
+        // Starts exactly where the "SCROLL_TO_PROCEED" hint itself scrolls
+        // out of view (not the whole hero section), and ends exactly where
+        // the showreel section begins.
+        trigger: "#scroll-hint",
+        start: "bottom top",
         endTrigger: "#showreel-3d-track",
         end: "top top",
         scrub: 1.3,
@@ -1020,6 +1045,7 @@ setInterval(applyMood, 60 * 1000);
 
   function renderLoop(ts) {
     requestAnimationFrame(renderLoop);
+    if (document.hidden) return; // tab not visible — don't burn GPU/battery in the background
     if (renderer && scene && camera) renderer.render(scene, camera);
   }
 
