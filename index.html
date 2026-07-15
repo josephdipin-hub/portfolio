@@ -119,16 +119,29 @@
 
 <div id="site-loader">
   <div id="site-loader-inner">
-    <div id="film-loader-ring">
-      <div id="gear-teeth"></div>
-      <div id="gear-hub"></div>
-      <div id="film-loader-ring-inner">
-        <div id="site-loader-pct">00</div>
+    <div class="winder-scale-wrapper">
+      <div class="winder-loader-container">
+        <div class="winder-main-circle"></div>
+        <div class="winder-top-circle"></div>
+        <div class="winder-arm-pivot">
+          <div class="winder-arm-obround"></div>
+          <div class="winder-grip-pivot">
+            <div class="winder-grip-circle"></div>
+          </div>
+        </div>
       </div>
     </div>
-    <div id="site-loader-label">WINDING</div>
+    <div id="site-loader-label">WINDING <span id="site-loader-pct">00</span>%</div>
   </div>
 </div>
+
+<svg width="0" height="0" style="position:absolute;">
+  <defs>
+    <clipPath id="winder-fluid-gear" clipPathUnits="objectBoundingBox">
+      <path id="winder-gear-path" d=""></path>
+    </clipPath>
+  </defs>
+</svg>
 
 <div id="site-ambient-glow"></div>
 <canvas id="glsl-canvas"></canvas>
