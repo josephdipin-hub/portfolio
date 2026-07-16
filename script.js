@@ -150,7 +150,12 @@ if (window.THREE && THREE.DRACOLoader) {
 }
 
 /* ═══════════════════════════════════════════════════════
-   GLSL SHADER SYSTEM
+   UNIFIED WEBGL LAYER — background glitch shader + 3D projector,
+   consolidated into ONE WebGLRenderer/canvas instead of two separate
+   GPU contexts. Two scenes (glitch ortho pass, projector perspective
+   pass) render sequentially into the same canvas each frame via
+   autoClear toggling — the same compositing technique already used
+   elsewhere on this site (see enlargerLoop's noise+model layering).
 ════════════════════════════════════════════════════════ */
 const VERT_SHADER = `
   varying vec2 vUv;
@@ -192,14 +197,21 @@ const FRAG_SHADER = `
   }
 `;
 const glCanvas = document.getElementById('glsl-canvas');
-let glRenderer, glScene, glCamera, glMesh, glUniforms;
+let sceneRenderer, glScene, glCamera, glMesh, glUniforms;
 let glVelocity = 0, glIntensity = 0, glTargetVel = 0, glTargetInt = 0, glLastY = window.pageYOffset;
 
-function initGL() {
+let projectorScene, projectorCamera, projectorModel, leftReel, rightReel, lensMesh;
+let projectorEngineReady = false;
+
+function initUnifiedGL() {
   if (!window.THREE) return;
-  glRenderer = new THREE.WebGLRenderer({ canvas: glCanvas, alpha: true, antialias: true });
-  glRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
-  glRenderer.setSize(window.innerWidth, window.innerHeight);
+  sceneRenderer = new THREE.WebGLRenderer({ canvas: glCanvas, alpha: true, antialias: true });
+  sceneRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  sceneRenderer.setSize(window.innerWidth, window.innerHeight, false);
+  sceneRenderer.setClearColor(0x000000, 0);
+  sceneRenderer.outputEncoding = THREE.sRGBEncoding;
+
+  // --- Glitch pass ---
   glScene = new THREE.Scene();
   glCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
   const texCanvas = document.createElement('canvas');
@@ -219,34 +231,176 @@ function initGL() {
   });
   glMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat);
   glScene.add(glMesh);
+
+  // --- Projector pass ---
+  projectorScene = new THREE.Scene();
+  projectorCamera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+  projectorCamera.position.set(0, 0, 8);
+  projectorCamera.lookAt(0, 0, 0);
+  projectorScene.add(new THREE.AmbientLight(0xffffff, 0.35));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1.3);
+  dirLight.position.set(5, 8, 5);
+  projectorScene.add(dirLight);
+
+  let lastKnownWidth = window.innerWidth;
   window.addEventListener('resize', () => {
-    glRenderer.setSize(window.innerWidth, window.innerHeight);
+    sceneRenderer.setSize(window.innerWidth, window.innerHeight, false);
     glUniforms.uResolution.value.set(window.innerWidth, window.innerHeight);
+    // Mobile browsers fire 'resize' when the URL bar collapses/expands
+    // during scroll, changing innerHeight with no real resize happening —
+    // only react to actual width changes for the projector's camera aspect
+    // (a real resize or orientation change), or it silently "contracts"
+    // the model mid-scroll every time the URL bar toggles.
+    if (window.innerWidth === lastKnownWidth) return;
+    lastKnownWidth = window.innerWidth;
+    projectorCamera.aspect = window.innerWidth / window.innerHeight;
+    projectorCamera.updateProjectionMatrix();
   });
+
+  loadProjectorModel();
+}
+
+function loadProjectorModel() {
+  if (typeof gsap === 'undefined') return;
+  gsap.registerPlugin(ScrollTrigger);
+
+  const loader = new THREE.GLTFLoader();
+  if (sharedDracoLoader) loader.setDRACOLoader(sharedDracoLoader);
+  loader.load(
+    'models/call_of_duty_infinite_warfare_projector.glb',
+    (gltf) => {
+      projectorModel = gltf.scene;
+
+      projectorModel.traverse((child) => {
+        if (child.isMesh) {
+          const name = child.name.toLowerCase();
+          if (name.includes('reel') || name.includes('wheel') || name.includes('gear')) {
+            if (name.includes('01') || name.includes('front') || name.includes('l')) leftReel = child;
+            if (name.includes('02') || name.includes('back') || name.includes('r')) rightReel = child;
+          }
+          if (name.includes('lens') || name.includes('glass') || name.includes('optic')) {
+            lensMesh = child;
+          }
+        }
+      });
+
+      // Auto-fit: game-ripped GLBs come in at arbitrary scale/pivot.
+      const box = new THREE.Box3().setFromObject(projectorModel);
+      const size = new THREE.Vector3();
+      box.getSize(size);
+      const center = new THREE.Vector3();
+      box.getCenter(center);
+      const maxDim = Math.max(size.x, size.y, size.z) || 1;
+      const fitScale = 1.7 / maxDim;
+      projectorModel.scale.setScalar(fitScale);
+      projectorModel.position.sub(center.multiplyScalar(fitScale));
+
+      // Narrow (portrait/mobile) viewports have a much tighter HORIZONTAL
+      // field of view than vertical at a fixed vertical FOV camera — push
+      // the camera back based on the ACTUAL current aspect ratio so it
+      // always fits both dimensions instead of clipping off an edge.
+      const aspect = window.innerWidth / window.innerHeight;
+      const vFovRad = projectorCamera.fov * Math.PI / 180;
+      const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
+      const requiredDist = (1.7 * 0.75) / Math.tan(hFovRad / 2);
+      projectorCamera.position.z = Math.max(8, requiredDist);
+      projectorCamera.updateProjectionMatrix();
+
+      buildScrollTimeline();
+      projectorEngineReady = true;
+      if (window.__reportProjectorProgress) window.__reportProjectorProgress(1);
+    },
+    (xhr) => {
+      if (xhr.lengthComputable && window.__reportProjectorProgress) {
+        window.__reportProjectorProgress(xhr.loaded / xhr.total);
+      }
+    },
+    (err) => {
+      console.error('[projector] GLB failed to load', err);
+      if (window.__reportProjectorProgress) window.__reportProjectorProgress(1);
+    }
+  );
+}
+
+function buildScrollTimeline() {
+  projectorModel.rotation.set(0.3, Math.PI / 2, 0);
+  projectorModel.position.x = 0;
+  projectorModel.position.y -= 0.65;
+  projectorModel.position.z -= 1;
+  projectorModel.visible = false;
+  projectorScene.add(projectorModel);
+
+  const tl = gsap.timeline({
+    scrollTrigger: {
+      // Starts exactly where the "SCROLL_TO_PROCEED" hint itself scrolls
+      // out of view (not the whole hero section), and ends exactly where
+      // the showreel section begins.
+      trigger: "#scroll-hint",
+      start: "bottom top",
+      endTrigger: "#showreel-3d-track",
+      end: "top top",
+      scrub: 1.3,
+      onEnter: () => { projectorModel.visible = true; },
+      onEnterBack: () => { projectorModel.visible = true; },
+      onLeave: () => { projectorModel.visible = false; },
+      onLeaveBack: () => { projectorModel.visible = false; },
+      onUpdate: (self) => {
+        const spinSpeed = self.getVelocity() * 0.0007;
+        if (leftReel) leftReel.rotation.z += spinSpeed;
+        if (rightReel) rightReel.rotation.z -= spinSpeed;
+      }
+    }
+  });
+
+  // Step 1: an actual 90° turn from the starting profile pose. power3.inOut
+  // gives a curved ease-in/ease-out feel instead of a flat, linear turn.
+  tl.to(projectorModel.rotation, { x: 0, y: Math.PI, z: 0, duration: 2, ease: "power3.inOut" })
+    .to(projectorModel.position, { z: 1.5, duration: 2, ease: "power3.inOut" }, "<")
+    // Step 2: camera dives MUCH closer into the lens before cutting to the
+    // showreel. expo.in gives a strong accelerating curve into the glass.
+    .to(projectorCamera.position, {
+        x: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).x : 0,
+        y: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).y : 0,
+        z: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).z + 0.15 : 2.5,
+        duration: 3,
+        ease: "expo.in",
+        onUpdate: function() {
+            if (lensMesh) projectorCamera.lookAt(lensMesh.getWorldPosition(new THREE.Vector3()));
+        }
+    });
 }
 
 let glPageHidden = false;
-
-function glRenderLoop(ts) {
-  requestAnimationFrame(glRenderLoop);
-  if (glPageHidden) return; // tab not visible — don't burn GPU/battery in the background
-  glVelocity  += (glTargetVel - glVelocity)  * 0.12;
-  glIntensity += (glTargetInt - glIntensity) * 0.08;
-  glTargetVel *= 0.88; glTargetInt *= 0.92;
-  // At rest, the shader's own alpha is already ~0 (intensity multiplies the
-  // output alpha directly) — skipping the render call here just leaves the
-  // canvas showing its last (already near-invisible) frame instead of
-  // paying for a full-screen redraw on every single frame forever.
-  if (glVelocity < 0.001 && glIntensity < 0.001 && glTargetVel < 0.001 && glTargetInt < 0.001) return;
-  glUniforms.uTime.value      = ts * 0.001;
-  glUniforms.uVelocity.value  = glVelocity;
-  glUniforms.uIntensity.value = glIntensity;
-  glRenderer.render(glScene, glCamera);
-}
-
 document.addEventListener('visibilitychange', () => {
   glPageHidden = document.hidden;
 });
+
+function unifiedRenderLoop(ts) {
+  requestAnimationFrame(unifiedRenderLoop);
+  if (glPageHidden) return; // tab not visible — don't burn GPU/battery in the background
+
+  glVelocity  += (glTargetVel - glVelocity)  * 0.12;
+  glIntensity += (glTargetInt - glIntensity) * 0.08;
+  glTargetVel *= 0.88; glTargetInt *= 0.92;
+  const glitchActive = !(glVelocity < 0.001 && glIntensity < 0.001 && glTargetVel < 0.001 && glTargetInt < 0.001);
+  const projectorActive = !!(projectorModel && projectorModel.visible);
+
+  // Nothing changed since last frame on either layer — skip the redraw
+  // entirely rather than paying for a full-screen render for no reason.
+  if (!glitchActive && !projectorActive) return;
+
+  glUniforms.uTime.value      = ts * 0.001;
+  glUniforms.uVelocity.value  = glVelocity;
+  glUniforms.uIntensity.value = glIntensity;
+
+  sceneRenderer.autoClear = true;
+  sceneRenderer.render(glScene, glCamera); // background glitch layer, always drawn first (clears the canvas)
+  if (projectorActive) {
+    sceneRenderer.autoClear = false;
+    sceneRenderer.clearDepth();
+    sceneRenderer.render(projectorScene, projectorCamera); // projector composited on top, same canvas
+  }
+}
 
 function triggerGLGlitch(velocity) {
   if (!glUniforms) return;
@@ -254,8 +408,8 @@ function triggerGLGlitch(velocity) {
   glTargetInt = 0.4 + glTargetVel * 0.6;
 }
 
-initGL();
-if (glRenderer) glRenderLoop(0);
+initUnifiedGL();
+if (sceneRenderer) unifiedRenderLoop(0);
 
 window.addEventListener('scroll', () => {
   const currentY = window.pageYOffset;
@@ -330,6 +484,13 @@ let albumTicking  = false;
 
 function createMoshStamp(yPos) {
   if (isAlbumOpen) return;
+  // Hero-only: once the hero has fully scrolled out of view, the effect
+  // stops entirely rather than following down the rest of the page.
+  const heroEl = document.getElementById('hero-section');
+  if (heroEl) {
+    const heroRect = heroEl.getBoundingClientRect();
+    if (heroRect.bottom <= 0) return;
+  }
   const existing = container.querySelectorAll('.brush-stamp');
   if (existing.length >= 2) existing[0].remove();
   const vh = window.innerHeight;
@@ -338,7 +499,7 @@ function createMoshStamp(yPos) {
   // separately below by physically stripping them out of the clone, since
   // being full-viewport fixed elements they'd otherwise always force
   // safeHeight to 0 and silently disable the whole effect everywhere.
-  const noMoshEls = document.querySelectorAll('[data-no-mosh]:not(#projector-background-track):not(#showreel-3d-track)');
+  const noMoshEls = document.querySelectorAll('[data-no-mosh]:not(#showreel-3d-track)');
   let safeHeight = vh;
   noMoshEls.forEach(el => {
     const rect = el.getBoundingClientRect();
@@ -896,174 +1057,3 @@ setInterval(applyMood, 60 * 1000);
   updateShowreelCamera();
 })();
 
-/* ═══════════════════════════════════════════════════════
-   3D REEL PROJECTOR — background GLB model that turns from a side
-   profile to face-on as you scroll past the hero, reels spinning
-   with scroll velocity. Purely decorative on the landing page; the
-   showreel reveal below is now its own independent section.
-════════════════════════════════════════════════════════ */
-(function () {
-  if (typeof gsap === 'undefined' || typeof THREE === 'undefined') return;
-  gsap.registerPlugin(ScrollTrigger);
-
-  const canvas = document.getElementById('three-projector-canvas');
-  if (!canvas) return;
-
-  let renderer, scene, camera;
-  let projectorModel, leftReel, rightReel, lensMesh;
-  let engineReady = false;
-
-  function initProjectorEngine() {
-    renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.setSize(window.innerWidth, window.innerHeight, false);
-    renderer.setClearColor(0x000000, 0);
-    renderer.outputEncoding = THREE.sRGBEncoding;
-
-    scene = new THREE.Scene();
-    camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.set(0, 0, 8);
-    camera.lookAt(0, 0, 0);
-
-    scene.add(new THREE.AmbientLight(0xffffff, 0.35));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.3);
-    dirLight.position.set(5, 8, 5);
-    scene.add(dirLight);
-
-    renderLoop(0);
-
-    const loader = new THREE.GLTFLoader();
-  if (sharedDracoLoader) loader.setDRACOLoader(sharedDracoLoader);
-    loader.load(
-      'models/call_of_duty_infinite_warfare_projector.glb',
-      (gltf) => {
-        projectorModel = gltf.scene;
-
-        projectorModel.traverse((child) => {
-          if (child.isMesh) {
-            const name = child.name.toLowerCase();
-            if (name.includes('reel') || name.includes('wheel') || name.includes('gear')) {
-              if (name.includes('01') || name.includes('front') || name.includes('l')) leftReel = child;
-              if (name.includes('02') || name.includes('back') || name.includes('r')) rightReel = child;
-            }
-            if (name.includes('lens') || name.includes('glass') || name.includes('optic')) {
-              lensMesh = child;
-            }
-          }
-        });
-
-        // Auto-fit: game-ripped GLBs come in at arbitrary scale/pivot.
-        const box = new THREE.Box3().setFromObject(projectorModel);
-        const size = new THREE.Vector3();
-        box.getSize(size);
-        const center = new THREE.Vector3();
-        box.getCenter(center);
-        const maxDim = Math.max(size.x, size.y, size.z) || 1;
-        const fitScale = 1.7 / maxDim; // smaller target size — more conservative margin against clipping
-        projectorModel.scale.setScalar(fitScale);
-        projectorModel.position.sub(center.multiplyScalar(fitScale));
-
-        // Narrow (portrait/mobile) viewports have a much tighter HORIZONTAL
-        // field of view than vertical at a fixed vertical FOV camera — that
-        // mismatch is what was clipping the model off the left edge on
-        // phones even though it looked fine at wider aspect ratios. Push the
-        // camera back based on the ACTUAL current aspect ratio instead of a
-        // fixed guess, so it always fits both dimensions.
-        const aspect = window.innerWidth / window.innerHeight;
-        const vFovRad = camera.fov * Math.PI / 180;
-        const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
-        const requiredDist = (1.7 * 0.75) / Math.tan(hFovRad / 2); // 0.75 = safety margin
-        camera.position.z = Math.max(8, requiredDist);
-        camera.updateProjectionMatrix();
-
-        buildScrollTimeline();
-        engineReady = true;
-        if (window.__reportProjectorProgress) window.__reportProjectorProgress(1);
-      },
-      (xhr) => {
-        if (xhr.lengthComputable && window.__reportProjectorProgress) {
-          window.__reportProjectorProgress(xhr.loaded / xhr.total);
-        }
-      },
-      (err) => {
-        console.error('[projector] GLB failed to load', err);
-        if (window.__reportProjectorProgress) window.__reportProjectorProgress(1); // don't block the loader on a failed asset
-      }
-    );
-  }
-
-  function buildScrollTimeline() {
-    projectorModel.rotation.set(0.3, Math.PI / 2, 0);
-    projectorModel.position.x = 0;
-    projectorModel.position.y -= 0.65;
-    projectorModel.position.z -= 1;
-    projectorModel.visible = false;
-    scene.add(projectorModel);
-
-    const tl = gsap.timeline({
-      scrollTrigger: {
-        // Starts exactly where the "SCROLL_TO_PROCEED" hint itself scrolls
-        // out of view (not the whole hero section), and ends exactly where
-        // the showreel section begins.
-        trigger: "#scroll-hint",
-        //start: "bottom top",
-        start: () => "bottom top+=" + (window.innerHeight * 0.5),
-        endTrigger: "#showreel-3d-track",
-        end: "top top",
-        scrub: 1.3,
-        onEnter: () => { projectorModel.visible = true; },
-        onEnterBack: () => { projectorModel.visible = true; },
-        onLeave: () => { projectorModel.visible = false; },     // instant — no fade, hands off straight to the showreel
-        onLeaveBack: () => { projectorModel.visible = false; },
-        onUpdate: (self) => {
-          const spinSpeed = self.getVelocity() * 0.0007;
-          if (leftReel) leftReel.rotation.z += spinSpeed;
-          if (rightReel) rightReel.rotation.z -= spinSpeed;
-        }
-      }
-    });
-
-    // Step 1: an ACTUAL 90° turn from the starting profile pose (previous
-    // version accidentally targeted the same value it started at, so it
-    // never visibly rotated at all). power3.inOut gives a curved ease-in/
-    // ease-out feel instead of a flat, linear-feeling turn.
-    tl.to(projectorModel.rotation, { x: 0, y: Math.PI, z: 0, duration: 2, ease: "power3.inOut" })
-      .to(projectorModel.position, { z: 1.5, duration: 2, ease: "power3.inOut" }, "<")
-      // Step 2: camera dives MUCH closer into the lens before cutting to the
-      // showreel. expo.in gives a strong accelerating curve — slow at first,
-      // then a fast final rush into the glass — instead of a steady linear zoom.
-      .to(camera.position, {
-          x: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).x : 0,
-          y: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).y : 0,
-          z: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).z + 0.15 : 2.5,
-          duration: 3,
-          ease: "expo.in",
-          onUpdate: function() {
-              if (lensMesh) camera.lookAt(lensMesh.getWorldPosition(new THREE.Vector3()));
-          }
-      });
-  }
-
-  function renderLoop(ts) {
-    requestAnimationFrame(renderLoop);
-    if (document.hidden) return; // tab not visible — don't burn GPU/battery in the background
-    if (renderer && scene && camera) renderer.render(scene, camera);
-  }
-
-  let lastKnownWidth = window.innerWidth;
-  window.addEventListener('resize', () => {
-    if (!camera || !renderer) return;
-    // Mobile browsers fire 'resize' when the URL bar collapses/expands
-    // during scroll, changing innerHeight with no real resize happening —
-    // that was causing a tiny, unwanted "contraction" of the model mid-
-    // scroll as the camera/canvas silently recalculated. Only react to
-    // actual width changes (real resize or orientation change).
-    if (window.innerWidth === lastKnownWidth) return;
-    lastKnownWidth = window.innerWidth;
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight, false);
-  });
-
-  initProjectorEngine();
-})();
