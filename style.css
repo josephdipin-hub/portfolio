@@ -1164,3 +1164,12 @@ body.loading #site-ambient-glow,
 body.loading #showreel-3d-track {
     opacity: 0;
 }
+#glsl-canvas, 
+#showreel-3d-track, 
+#showreel-3d-viewport {
+    /* 1. Prevent CSS/JS "tug-of-war" snapping */
+    transition: none !important; 
+    
+    /* 2. Optimize for GPU performance */
+    will-change: transform;       
+}
