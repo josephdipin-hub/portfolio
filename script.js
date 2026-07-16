@@ -350,7 +350,7 @@ function updateProjectorScroll() {
   const trackTopY   = trackEl.getBoundingClientRect().top;
   const totalSpan   = hintBottomY - trackTopY; // recomputed fresh every frame — self-correcting, nothing cached to go stale
 
-  const active = hintBottomY <= 0 && trackTopY > 0;
+  const active = hintBottomY <= window.innerHeight * 0.5 && trackTopY > 0;
   projectorModel.visible = active;
   if (!active) return;
 
