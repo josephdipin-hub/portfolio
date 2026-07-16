@@ -293,12 +293,7 @@
   </div>
 </section>
 
-<!-- 3D REEL PROJECTOR — background element, animates in as you scroll past the hero -->
-<div id="projector-background-track" data-no-mosh>
-  <div class="projector-sticky-window">
-    <canvas id="three-projector-canvas"></canvas>
-  </div>
-</div>
+<!-- 3D REEL PROJECTOR — now renders into the shared #glsl-canvas (see UNIFIED WEBGL LAYER in script.js) instead of its own separate canvas/context -->
 <div id="projector-trigger-anchor" style="width:100%;height:130vh;height:130dvh;pointer-events:none;"></div>
 
 <!-- VOLUMETRIC SHOWREEL PROJECTION — local video, reveals + tilts as you keep scrolling -->
