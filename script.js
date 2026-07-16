@@ -263,6 +263,13 @@ function initUnifiedGL() {
 function loadProjectorModel() {
   if (typeof gsap === 'undefined') return;
   gsap.registerPlugin(ScrollTrigger);
+  // Mobile browsers fire 'resize' constantly during scroll (URL bar
+  // collapsing/expanding). ScrollTrigger normally auto-refreshes all
+  // trigger positions on resize, which was mid-scroll suddenly
+  // reinterpreting the timeline's progress against newly-recalculated
+  // boundaries — the visible "abrupt jump." This tells it to ignore that
+  // specific class of resize event.
+  ScrollTrigger.config({ ignoreMobileResize: true });
 
   const loader = new THREE.GLTFLoader();
   if (sharedDracoLoader) loader.setDRACOLoader(sharedDracoLoader);
@@ -415,6 +422,21 @@ window.addEventListener('scroll', () => {
   const currentY = window.pageYOffset;
   const delta = Math.abs(currentY - glLastY);
   glLastY = currentY;
+
+  // No glitch effect over the showreel video — the video section should
+  // read as clean and undistorted, not have the background shader
+  // bleeding through it.
+  const showreelEl = document.getElementById('showreel-3d-track');
+  const overShowreel = showreelEl && (() => {
+    const r = showreelEl.getBoundingClientRect();
+    return r.top < window.innerHeight && r.bottom > 0;
+  })();
+  if (overShowreel) {
+    glTargetVel = 0;
+    glTargetInt = 0;
+    return;
+  }
+
   if (delta > 2) triggerGLGlitch(delta * 8);
 }, { passive: true });
 
