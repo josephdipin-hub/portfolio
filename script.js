@@ -354,7 +354,7 @@ function updateProjectorScroll() {
   projectorModel.visible = active;
   if (!active) return;
 
-  const raw = totalSpan > 0 ? Math.max(0, Math.min(1, hintBottomY / totalSpan)) : 0;
+  const raw = Math.abs(totalSpan) > 1 ? Math.max(0, Math.min(1, hintBottomY / totalSpan)) : 0;
 
   // Phase A (first half): profile → 90° turn. Phase B (second half): camera
   // dive into the lens. Each phase gets its own eased curve instead of a
