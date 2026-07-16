@@ -1,3 +1,11 @@
+// Add these at the top of script.js
+let currentScrollY = window.pageYOffset;
+let smoothedScrollY = 0;
+const VIEW_HEIGHT = window.innerHeight;
+
+window.addEventListener('scroll', () => {
+  currentScrollY = window.pageYOffset;
+}, { passive: true });
 /* ═══════════════════════════════════════════════════════
    SITE LOADER — tracks REAL loading progress of the hero photos, the
    projector GLB, and the showreel video. The rest of the page stays
@@ -341,21 +349,6 @@ let projectorLastScrollY = window.scrollY;
 ════════════════════════════════════════════════════════ */
 let projectorWasActive = false;
 
-// Hysteresis / debounce + smooth reset state to avoid popping on small
-// viewport/layout jitters (mobile address bar collapse/expand, sub-pixel
-// changes, etc.). These replace the previous immediate visible toggle
-// and hard reset that caused the snap.
-let projectorWantedActive = false;
-let projectorActivationCounter = 0;
-let projectorResetting = false;
-let projectorResetStart = 0;
-let projectorResetFrom = null;
-let projectorResetTo = null;
-const ACTIVATION_ENTER_PX = -16; // hint bottom must be this far past top to enter
-const ACTIVATION_EXIT_PX  =  24; // must be this far back to exit
-const ACTIVATION_DEBOUNCE_FRAMES = 3; // ~50ms at 60fps
-const RESET_DURATION = 220; // ms to smoothly interpolate into the "placed" pose
-
 function updateProjectorScroll() {
   if (!projectorEngineReady || !projectorModel) return;
 
@@ -367,65 +360,21 @@ function updateProjectorScroll() {
   const trackTopY   = trackEl.getBoundingClientRect().top;
   const totalSpan   = hintBottomY - trackTopY; // recomputed fresh every frame — self-correcting, nothing cached to go stale
 
-  // HYSTERESIS: use stable pixel thresholds rather than a fragile boolean
-  // that can flip for a single frame when the URL bar or layout nudges.
-  const enter = hintBottomY <= ACTIVATION_ENTER_PX && trackTopY > 0;
-  const exit  = hintBottomY > ACTIVATION_EXIT_PX || trackTopY <= 0;
+  const active = hintBottomY <= 0 && trackTopY > 0;
+  projectorModel.visible = active;
 
-  if (enter) projectorWantedActive = true;
-  if (exit)  projectorWantedActive = false;
-
-  if (projectorWantedActive !== projectorWasActive) {
-    // debounce change for a few frames to avoid single-frame flips
-    projectorActivationCounter++;
-    if (projectorActivationCounter >= ACTIVATION_DEBOUNCE_FRAMES) {
-      projectorWasActive = projectorWantedActive;
-      projectorActivationCounter = 0;
-
-      // toggle visibility only when the state actually flips
-      projectorModel.visible = projectorWasActive;
-
-      if (projectorWasActive) {
-        // start a short smooth reset instead of an instant hard snap
-        projectorResetting = true;
-        projectorResetStart = performance.now();
-        projectorResetFrom = {
-          rotY: projectorModel.rotation.y,
-          posZ: projectorModel.position.z,
-          camZ: projectorCamera.position.z
-        };
-        projectorResetTo = {
-          rotY: Math.PI / 2,
-          posZ: -1,
-          camZ: projectorBaseCameraZ
-        };
-      } else {
-        // leaving the zone — we simply hide the model (already set above)
-        // and clear any pending reset state.
-        projectorResetting = false;
-      }
-    }
-  } else {
-    projectorActivationCounter = 0;
+  if (active && !projectorWasActive) {
+    // Freshly entering the zone — hard reset to the clean starting pose so
+    // it always visibly appears "placed" first, never pops in already
+    // mid-rotation/mid-zoom from a fast scroll or flick.
+    projectorModel.rotation.set(0.3, Math.PI / 2, 0);
+    projectorModel.position.x = 0;
+    projectorModel.position.z = -1;
+    projectorCamera.position.set(0, 0, projectorBaseCameraZ);
   }
+  projectorWasActive = active;
 
-  // If we're currently performing the smooth "placed" reset, just
-  // interpolate the few properties we want and skip the rest of the
-  // per-frame motion until the interpolation completes. This removes
-  // the instant snap that was visible when the old code set values
-  // immediately.
-  if (projectorResetting) {
-    const t = Math.min(1, (performance.now() - projectorResetStart) / RESET_DURATION);
-    const eased = easeInOutCubic(t);
-    projectorModel.rotation.y = THREE.MathUtils.lerp(projectorResetFrom.rotY, projectorResetTo.rotY, eased);
-    projectorModel.position.z   = THREE.MathUtils.lerp(projectorResetFrom.posZ, projectorResetTo.posZ, eased);
-    projectorCamera.position.z   = THREE.MathUtils.lerp(projectorResetFrom.camZ, projectorResetTo.camZ, eased);
-    projectorCamera.updateProjectionMatrix();
-    if (t >= 1) projectorResetting = false;
-    return; // don't apply further scroll-driven motion until reset done
-  }
-
-  if (!projectorWasActive) return;
+  if (!active) return;
 
   const raw = Math.abs(totalSpan) > 1 ? Math.max(0, Math.min(1, hintBottomY / totalSpan)) : 0;
 
@@ -770,4 +719,472 @@ function toggleProductGallery(open) {
   }
 }
 
-/* (rest of file unchanged) */
+/* ══ DURST ENLARGER 3D BACKGROUND ══ */
+let pgRenderer    = null, pgScene   = null, pgCamera  = null;
+let pgNoiseScene  = null, pgNoiseCamera = null;
+let pgAnimFrame   = null, pgEnlargerModel = null;
+let pgWatchModel  = null;
+let pgBgInited    = false, pgTime = 0, pgLastTime = null;
+let pgNoiseMesh   = null, pgNoiseUniforms = null;
+let pgScrollRot   = 0;
+let pgModelFailed = false;
+
+const PG_NOISE_VERT = `
+  varying vec2 vUv;
+  void main() { vUv = uv; gl_Position = vec4(position, 1.0); }
+`;
+const PG_NOISE_FRAG = `
+  uniform float uTime;
+  uniform vec2  uRes;
+  varying vec2  vUv;
+  float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1,311.7))) * 43758.5453); }
+  float noise(vec2 p) {
+    vec2 i = floor(p); vec2 f = fract(p);
+    f = f*f*(3.0-2.0*f);
+    return mix(mix(hash(i), hash(i+vec2(1,0)), f.x), mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), f.x), f.y);
+  }
+  float fbm(vec2 p) {
+    float v=0.; float a=0.5;
+    for(int i=0;i<5;i++){ v+=a*noise(p); p*=2.1; a*=0.5; }
+    return v;
+  }
+  void main() {
+    vec2 uv = vUv;
+    float t = uTime * 0.18;
+    float blockY    = floor(uv.y * 32.0) / 32.0;
+    float blockRand = hash(vec2(blockY, floor(t * 4.0)));
+    float blockShift = step(0.82, blockRand) * (blockRand - 0.5) * 0.06;
+    uv.x += blockShift;
+    vec3 grad = mix(vec3(0.05, 0.0, 0.14), vec3(0.38, 0.09, 0.01), vUv.y);
+    float n1 = fbm(uv * 3.5 + vec2(t * 0.6, t * 0.4));
+    float n2 = fbm(uv * 6.0 - vec2(t * 0.3, t * 0.7));
+    float n  = n1 * 0.7 + n2 * 0.3;
+    float scan = sin(vUv.y * uRes.y * 0.8 + t * 12.0) * 0.012;
+    vec3 col = grad;
+    col.r += n * 0.12;
+    col.b += (1.0 - n) * 0.08;
+    col   += scan * vec3(0.3, 0.05, 0.1);
+    float grain = hash(vUv * uRes + t * 137.0) * 0.06;
+    col += grain * vec3(0.5, 0.15, 0.3);
+    gl_FragColor = vec4(col, 0.82);
+  }
+`;
+
+function showBgFallback() {
+  const canvas = document.getElementById('pg-bg-canvas');
+  if (canvas) canvas.classList.add('visible');
+  if (productScroll) productScroll.classList.add('ready');
+}
+
+function initEnlargerBg() {
+  const canvas = document.getElementById('pg-bg-canvas');
+  if (!canvas) return;
+  if (pgBgInited) { if (!pgAnimFrame) enlargerLoop(); return; }
+  if (typeof THREE === 'undefined') { showBgFallback(); return; }
+
+  pgBgInited = true;
+
+  pgRenderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  pgRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.5));
+  pgRenderer.setClearColor(0x000000, 0);
+  pgRenderer.setSize(window.innerWidth, window.innerHeight);
+  pgRenderer.toneMapping = THREE.ACESFilmicToneMapping;
+  pgRenderer.toneMappingExposure = 1.1;
+  pgRenderer.outputEncoding = THREE.sRGBEncoding;
+
+  pgScene  = new THREE.Scene();
+  pgCamera = new THREE.PerspectiveCamera(38, window.innerWidth / window.innerHeight, 0.1, 200);
+  pgCamera.position.set(0, 0.5, 7.0);
+  pgCamera.lookAt(0, 0, 0);
+
+  pgNoiseUniforms = {
+    uTime: { value: 0.0 },
+    uRes:  { value: new THREE.Vector2(window.innerWidth, window.innerHeight) }
+  };
+  const noiseMat = new THREE.ShaderMaterial({
+    uniforms: pgNoiseUniforms, vertexShader: PG_NOISE_VERT,
+    fragmentShader: PG_NOISE_FRAG, depthWrite: false, depthTest: false, transparent: true
+  });
+  pgNoiseMesh = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), noiseMat);
+  pgNoiseMesh.frustumCulled = false;
+  pgNoiseScene  = new THREE.Scene();
+  pgNoiseCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+  pgNoiseScene.add(pgNoiseMesh);
+
+  pgScene.add(new THREE.HemisphereLight(0x2a0010, 0x080015, 0.2));
+  const backLight = new THREE.PointLight(0xff2255, 28, 15, 0.1);
+  backLight.position.set(-4, 2, -3); pgScene.add(backLight);
+  const fill = new THREE.PointLight(0xff1144, 5, 60, 0.1);
+  fill.position.set(6, 6, 5); pgScene.add(fill);
+  const rim = new THREE.PointLight(0x880033, 6, 20, 2.8);
+  rim.position.set(3, 5, -5); pgScene.add(rim);
+
+  /* Start noise loop immediately so bg isn't blank while model loads */
+  enlargerLoop();
+
+  /* ── Loading tracker ── */
+  const loaderEl  = document.getElementById('pg-loader');
+  const pctEl     = document.getElementById('pg-loader-pct');
+  let enlargerPct = 0;
+  let watchPct    = 0;
+
+  function updatePct() {
+  const total = Math.round(enlargerPct * 0.8 + watchPct * 0.2);
+
+  let stage;
+  if      (total < 25)  stage = 'DEVELOPER';
+  else if (total < 55)  stage = 'STOP_BATH';
+  else if (total < 80)  stage = 'FIXER';
+  else if (total < 100) stage = 'WASH';
+  else                  stage = 'READY //';
+
+  if (pctEl) pctEl.textContent = total < 100
+    ? `${stage} // ${total}%`
+    : stage;
+
+  if (total >= 100 && loaderEl) {
+    setTimeout(() => loaderEl.classList.add('hidden'), 800);
+  }
+}
+
+  const loader = new THREE.GLTFLoader();
+  if (sharedDracoLoader) loader.setDRACOLoader(sharedDracoLoader);
+  loader.load(
+    'models/durst_enlarger_darkroom_asset.glb',
+    (gltf) => {
+      enlargerPct = 100;
+      updatePct();
+
+      pgEnlargerModel = gltf.scene;
+      pgEnlargerModel.traverse((n) => {
+        if (!n.isMesh) return;
+        n.material = new THREE.MeshPhysicalMaterial({
+          color: new THREE.Color(0xffffff), metalness: 0.3, roughness: 0.0,
+          transmission: 1.0, thickness: 3.5, ior: 2.5,
+          transparent: true, opacity: 1.0, envMapIntensity: 2.5
+        });
+        n.castShadow = true; n.receiveShadow = true;
+      });
+      const box = new THREE.Box3().setFromObject(pgEnlargerModel);
+      const sz  = new THREE.Vector3(); box.getSize(sz);
+      const ctr = new THREE.Vector3(); box.getCenter(ctr);
+      const sc  = 2.9 / Math.max(sz.x, sz.y, sz.z);
+      pgEnlargerModel.scale.setScalar(sc);
+      pgEnlargerModel.position.set(-ctr.x * sc, -ctr.y * sc, -ctr.z * sc);
+      pgScene.add(pgEnlargerModel);
+
+      const cubeRT = new THREE.WebGLCubeRenderTarget(128, {
+        format: THREE.RGBFormat, generateMipmaps: true,
+        minFilter: THREE.LinearMipmapLinearFilter
+      });
+      const cubeCamera = new THREE.CubeCamera(0.1, 100, cubeRT);
+      pgScene.add(cubeCamera);
+      cubeCamera.update(pgRenderer, pgScene);
+      pgScene.environment = cubeRT.texture;
+      pgEnlargerModel.traverse((n) => {
+        if (n.isMesh && n.material) n.material.envMap = cubeRT.texture;
+      });
+
+      canvas.classList.add('visible');
+      if (productScroll) productScroll.classList.add('ready');
+
+      /* Load watch */
+      const loader2 = new THREE.GLTFLoader();
+  if (sharedDracoLoader) loader2.setDRACOLoader(sharedDracoLoader);
+      loader2.load(
+        'models/stopwatch-284.glb',
+        (gltf2) => {
+          watchPct = 100;
+          updatePct();
+
+          pgWatchModel = gltf2.scene;
+          pgWatchModel.traverse((n) => {
+            if (!n.isMesh) return;
+            n.material = new THREE.MeshStandardMaterial({
+              color: new THREE.Color(0xd0c8d8), metalness: 1.0,
+              roughness: 0.04, envMapIntensity: 2.0
+            });
+            n.castShadow = false; n.receiveShadow = false; n.renderOrder = 1;
+            if (n.material) n.material.envMap = cubeRT.texture;
+          });
+          const box2 = new THREE.Box3().setFromObject(pgWatchModel);
+          const sz2  = new THREE.Vector3(); box2.getSize(sz2);
+          const ctr2 = new THREE.Vector3(); box2.getCenter(ctr2);
+          const sc2  = 2.0 / Math.max(sz2.x, sz2.y, sz2.z);
+          pgWatchModel.scale.setScalar(sc2);
+          pgWatchModel.position.set(-ctr2.x * sc2, -ctr2.y * sc2 + 6.0, -ctr2.z * sc2);
+          pgScene.add(pgWatchModel);
+        },
+        (xhr2) => {                               /* watch progress */
+          if (xhr2.lengthComputable) {
+            watchPct = (xhr2.loaded / xhr2.total) * 100;
+            updatePct();
+          }
+        },
+        () => {                                   /* watch load fail — silent */
+          watchPct = 100;
+          updatePct();
+        }
+      );
+    },
+    (xhr) => {                                    /* enlarger progress */
+      if (xhr.lengthComputable) {
+        enlargerPct = (xhr.loaded / xhr.total) * 100;
+        updatePct();
+      }
+    },
+    () => {
+      /* Enlarger load fail — show noise bg + scroll, no crash */
+      pgModelFailed = true;
+      enlargerPct = 100; watchPct = 100;
+      updatePct();
+      canvas.classList.add('visible');
+      showBgFallback();
+    }
+  );
+}
+
+function stopEnlargerBg() {
+  if (pgAnimFrame) { cancelAnimationFrame(pgAnimFrame); pgAnimFrame = null; }
+  const canvas = document.getElementById('pg-bg-canvas');
+  if (canvas) canvas.classList.remove('visible');
+}
+
+function enlargerLoop() {
+  pgAnimFrame = requestAnimationFrame(enlargerLoop);
+  if (document.hidden) return; // tab not visible — don't burn GPU/battery in the background
+  const now = performance.now() * 0.001;
+  if (!pgLastTime) pgLastTime = now;
+  const delta = Math.min(now - pgLastTime, 0.05);
+  pgLastTime = now;
+  pgTime += delta * 0.5;
+
+  if (pgNoiseUniforms) pgNoiseUniforms.uTime.value = pgTime;
+
+  if (pgEnlargerModel) {
+    pgScrollRot += (pgScrollRotTarget - pgScrollRot) * 0.04;
+    const targetY = pgScrollRot + Math.sin(pgTime * 0.12) * 0.04;
+    const targetX = Math.sin(pgTime * 0.07) * 0.03;
+    pgEnlargerModel.rotation.y += (targetY - pgEnlargerModel.rotation.y) * 0.08;
+    pgEnlargerModel.rotation.x += (targetX - pgEnlargerModel.rotation.x) * 0.08;
+  }
+
+  if (pgWatchModel && productScroll) {
+    const fraction = productScroll.scrollLeft /
+      (productScroll.scrollWidth - productScroll.clientWidth || 1);
+    const watchTargetY = 4.5 - (fraction * 10.0);
+    pgWatchModel.position.y += (watchTargetY - pgWatchModel.position.y) * 0.05;
+    pgWatchModel.rotation.y += (pgTime * 0.3 - pgWatchModel.rotation.y) * 0.08;
+  }
+
+  if (pgCamera) {
+    pgCamera.position.x = Math.sin(pgTime * 0.09) * 0.25;
+    pgCamera.position.y = 0.5 + Math.sin(pgTime * 0.06) * 0.15;
+    pgCamera.lookAt(0, 0, 0);
+  }
+
+  if (pgRenderer && pgScene && pgCamera) {
+    pgRenderer.autoClear = false;
+    pgRenderer.clearDepth();
+    pgRenderer.autoClearColor = false;
+    if (pgNoiseScene && pgNoiseCamera) {
+      pgRenderer.autoClear = true;
+      pgRenderer.render(pgNoiseScene, pgNoiseCamera);
+      pgRenderer.autoClear = false;
+    }
+    pgRenderer.clearDepth();
+    pgRenderer.render(pgScene, pgCamera);
+  }
+}
+
+/* ═══════════════════════════════════════════════════════
+   TIME-OF-DAY MOOD SYSTEM
+════════════════════════════════════════════════════════ */
+const MOODS = {
+  dawn:      { label: 'DAWN_LIGHT',  heroFilter: 'brightness(0.6) saturate(0.5) hue-rotate(200deg)',              triggerFilter: 'grayscale(0.8) brightness(0.25) hue-rotate(180deg)', tint: 'rgba(30,60,120,0.08)' },
+  morning:   { label: 'GOLDEN_HOUR', heroFilter: 'brightness(1.1) saturate(1.3) sepia(0.25)',                     triggerFilter: 'grayscale(0.4) brightness(0.35) sepia(0.3)',          tint: 'rgba(255,200,80,0.05)' },
+  midday:    { label: 'MIDDAY_FLAT', heroFilter: 'brightness(1.3) saturate(0.7) contrast(1.2)',                   triggerFilter: 'grayscale(0.6) brightness(0.45) contrast(1.1)',       tint: 'rgba(255,255,240,0.04)' },
+  afternoon: { label: 'AMBER_HOUR',  heroFilter: 'brightness(1.0) saturate(1.5) sepia(0.4) hue-rotate(-10deg)',  triggerFilter: 'grayscale(0.2) brightness(0.4) sepia(0.4)',           tint: 'rgba(200,100,20,0.06)' },
+  night:     { label: 'NIGHT_MODE',  heroFilter: 'brightness(0.7) saturate(0.3) hue-rotate(220deg)',             triggerFilter: 'grayscale(1) brightness(0.2) hue-rotate(200deg)',     tint: 'rgba(10,10,40,0.12)' },
+};
+function getMood() {
+  const h = new Date().getHours();
+  if (h >= 5  && h < 8)  return 'dawn';
+  if (h >= 8  && h < 12) return 'morning';
+  if (h >= 12 && h < 15) return 'midday';
+  if (h >= 15 && h < 19) return 'afternoon';
+  return 'night';
+}
+function applyMood() {
+  const mood = getMood(), cfg = MOODS[mood];
+  const heroOverlay = document.getElementById('hero-overlay');
+  if (heroOverlay) heroOverlay.style.filter = cfg.heroFilter;
+  const fashionImg = document.getElementById('fashion-trigger-img');
+  const productImg = document.getElementById('product-trigger-img');
+  if (fashionImg) fashionImg.style.filter = cfg.triggerFilter;
+  if (productImg) productImg.style.filter = cfg.triggerFilter;
+  const moodLabel = document.getElementById('mood-label');
+  if (moodLabel) moodLabel.textContent = cfg.label;
+  document.body.dataset.mood = mood;
+}
+applyMood();
+setInterval(applyMood, 60 * 1000);
+
+/* ═══════════════════════════════════════════════════════
+   VOLUMETRIC SHOWREEL PROJECTION — local video (videos/ folder),
+   scroll-driven 3D tilt + fade-in reveal. Scoped to its own scroll
+   track (getBoundingClientRect-based), not global document scroll —
+   it only reacts while the viewer is actually scrolling through this
+   section. Both the sharp foreground video and the blurred ambient
+   background video are kept in sync (played/paused together).
+════════════════════════════════════════════════════════ */
+(function () {
+  const track       = document.getElementById('showreel-3d-track');
+  const viewport     = document.getElementById('showreel-3d-viewport');
+  const cameraView   = document.getElementById('showreelCameraView');
+  const fgVideo       = document.getElementById('showreelVideo');
+  const moshContainer = document.getElementById('brush-container');
+  if (!track || !viewport || !cameraView || !fgVideo) return;
+
+  const basePitch = 12;
+  const baseYaw   = -15;
+  const basePanY  = -20;
+  let started = false;
+  let isRevealed = false;
+
+  // The site-wide datamosh effect clones DOM nodes, which doesn't work for
+  // <video> — a cloned <video> element has no live playing frame, it just
+  // shows black/frame-zero. So the showreel gets its own version: capture
+  // the ACTUAL current video frame to a small canvas and mosh that instead.
+  function createVideoMoshStamp() {
+    if (!moshContainer || !fgVideo.videoWidth) return;
+    const rect = fgVideo.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return;
+    if (rect.bottom < 0 || rect.top > window.innerHeight) return;
+
+    const canvas = document.createElement('canvas');
+    canvas.width = 180;
+    canvas.height = Math.round(180 * (rect.height / rect.width));
+    const ctx = canvas.getContext('2d');
+    try {
+      ctx.drawImage(fgVideo, 0, 0, canvas.width, canvas.height);
+    } catch (e) { return; }
+
+    canvas.className = 'video-mosh-stamp';
+    Object.assign(canvas.style, {
+      position: 'fixed',
+      left: rect.left + 'px',
+      top: rect.top + 'px',
+      width: rect.width + 'px',
+      height: rect.height + 'px'
+    });
+    moshContainer.appendChild(canvas);
+    canvas.animate([
+      { opacity: 0.65, transform: 'translateY(0px) scale(1)' },
+      { opacity: 0,     transform: 'translateY(36px) scale(1.02)' }
+    ], { duration: 700, easing: 'cubic-bezier(0.25, 1, 0.5, 1)' }).onfinish = () => canvas.remove();
+  }
+
+  let lastVideoMoshY = window.pageYOffset;
+  let videoMoshTicking = false;
+  window.addEventListener('scroll', () => {
+    if (!isRevealed || videoMoshTicking) return;
+    videoMoshTicking = true;
+    requestAnimationFrame(() => {
+      const currentY = window.pageYOffset;
+      if (Math.abs(currentY - lastVideoMoshY) > 35) {
+        createVideoMoshStamp();
+        lastVideoMoshY = currentY;
+      }
+      videoMoshTicking = false;
+    });
+  }, { passive: true });
+
+  function updateShowreelCamera() {
+    const rect = track.getBoundingClientRect();
+    const trackHeight = rect.height - window.innerHeight;
+    if (trackHeight <= 0) return;
+    const scrollPercent = Math.min(1, Math.max(0, -rect.top / trackHeight));
+
+    // Fade the whole panel in over the first 12% of its own track instead
+    // of popping in abruptly.
+    const revealed = scrollPercent > 0.02;
+    isRevealed = revealed;
+    viewport.classList.toggle('revealed', revealed);
+    if (revealed && !started) {
+      fgVideo.play().catch(() => {});
+      started = true;
+    } else if (!revealed && started) {
+      fgVideo.pause();
+      started = false;
+    }
+
+    // Grow in from slightly smaller over the first 18% of this section's
+    // scroll, so the screen feels like it's continuing to emerge out of the
+    // projector hand-off rather than appearing at full size immediately.
+    const growProgress = Math.min(1, scrollPercent / 0.18);
+    const scale = 0.82 + growProgress * 0.18;
+
+    const currentPitch = basePitch - (scrollPercent * 24);
+    const currentYaw   = baseYaw   + (scrollPercent * 30);
+    const currentPanY  = basePanY  + (scrollPercent * 40);
+    cameraView.style.transform = `translateY(${currentPanY}px) rotateX(${currentPitch}deg) rotateY(${currentYaw}deg) scale(${scale})`;
+  }
+
+  window.addEventListener('scroll', updateShowreelCamera, { passive: true });
+  window.addEventListener('resize', updateShowreelCamera);
+  updateShowreelCamera();
+   /* --- PASTE THIS AT THE END OF script.js --- */
+
+// Overwrite your existing unifiedRenderLoop
+function unifiedRenderLoop(ts) {
+  requestAnimationFrame(unifiedRenderLoop);
+  if (glPageHidden) return;
+
+  // Smoothing
+  smoothedScrollY += (currentScrollY - smoothedScrollY) * 0.08;
+
+  // Sync scroll-based 3D animations
+  updateProjectorScroll(smoothedScrollY);
+
+  // Render Logic
+  glUniforms.uTime.value = ts * 0.001;
+  sceneRenderer.autoClear = true;
+  sceneRenderer.render(glScene, glCamera);
+  
+  if (projectorModel && projectorModel.visible) {
+    sceneRenderer.autoClear = false;
+    sceneRenderer.clearDepth();
+    projectorModel.updateMatrixWorld(); // Ensure matrix is synced
+    sceneRenderer.render(projectorScene, projectorCamera);
+  }
+}
+
+// Overwrite your existing updateProjectorScroll
+function updateProjectorScroll(scrollY) {
+  if (!projectorEngineReady || !projectorModel) return;
+
+  const trackEl = document.getElementById('showreel-3d-track');
+  if (!trackEl) return;
+  
+  const rect = trackEl.getBoundingClientRect();
+  const active = (rect.top < VIEW_HEIGHT && rect.bottom > 0);
+  projectorModel.visible = active;
+  if (!active) return;
+
+  const startY = trackEl.offsetTop - VIEW_HEIGHT;
+  const progress = Math.min(Math.max((scrollY - startY) / 2000, 0), 1);
+
+  const targetRotY = THREE.MathUtils.lerp(Math.PI / 2, Math.PI, progress);
+  projectorModel.rotation.y += (targetRotY - projectorModel.rotation.y) * 0.12;
+  
+  // Velocity-based reel spin
+  const scrollDelta = scrollY - (window.lastSmoothedY || 0);
+  window.lastSmoothedY = scrollY;
+  const spinSpeed = scrollDelta * 0.02;
+  if (leftReel) leftReel.rotation.z += spinSpeed;
+  if (rightReel) rightReel.rotation.z -= spinSpeed;
+}
+
+})();
+
