@@ -1,0 +1,1000 @@
+/* --- CORE STYLES --- */
+body { 
+    background: #000; 
+    color: #fff; 
+    font-family: 'Space Mono', monospace; 
+    overflow-x: hidden; 
+    margin: 0; 
+}
+
+.main-content { position: relative; z-index: 20; mix-blend-mode: screen; }
+
+/* --- HERO SECTION --- */
+section.min-h-screen {
+    position: relative;
+    height: 100vh;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    overflow: hidden;
+}
+
+/* --- GLSL CANVAS --- */
+#glsl-canvas {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    pointer-events: none;
+    z-index: 10;
+    mix-blend-mode: screen;
+}
+
+#brush-container { position: fixed; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 11; }
+.brush-stamp { position: absolute; width: 100%; filter: url(#datamosh-filter); opacity: 0.6; pointer-events: none; }
+.hero-text { font-family: 'Inter', sans-serif; font-size: 14vw; line-height: 0.8; letter-spacing: -0.06em; text-transform: uppercase; }
+.section-label { font-size: 12px; opacity: 0.3; letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 2rem; display: block; }
+.golden-container { display: grid; grid-template-columns: 1.618fr 1fr; gap: 4rem; }
+
+/* --- PORTFOLIO TRIGGER --- */
+.portfolio-bg-container {
+    position: relative; 
+    width: 100%; 
+    padding: 8vw 0; 
+    overflow: hidden;
+    display: flex; 
+    align-items: center; 
+    justify-content: center;
+    border-top: 1px solid rgba(255,255,255,0.05); 
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    cursor: pointer;
+    background: transparent;
+}
+.portfolio-bg-container img { 
+    display: none !important; 
+}
+.portfolio-trigger {
+    position: relative; 
+    font-family: 'Inter', sans-serif; 
+    font-size: 10vw; 
+    font-weight: 900;
+    line-height: 1; 
+    letter-spacing: -0.05em; 
+    text-transform: uppercase; 
+    z-index: 30; 
+    pointer-events: none;
+    color: transparent;
+    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.3);
+    transition: all 0.5s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.portfolio-bg-container:hover .portfolio-trigger { 
+    color: rgba(255, 255, 255, 0.9);
+    -webkit-text-stroke: 1px transparent;
+    text-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
+    transform: scale(1.02) skewX(-2deg); 
+}
+
+/* --- FASHION GALLERY --- */
+#portfolio-page {
+    position: fixed; inset: 0; width: 100vw; height: 100vh;
+    background: #000; z-index: 1000;
+    display: none; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.5s ease; overflow: hidden;
+}
+#portfolio-page.active { display: flex; opacity: 1; }
+
+/* --- PRODUCT GALLERY OVERLAY --- */
+#product-page {
+    position: fixed; inset: 0; width: 100vw; height: 100vh;
+    background: linear-gradient(to top, #080012 0%, #0d0024 40%, #1a0300 80%, #2a0600 100%);
+    z-index: 1000;
+    display: none; align-items: center; justify-content: center;
+    opacity: 0; transition: opacity 0.5s ease; overflow: hidden;
+}
+#product-page.active { display: flex; opacity: 1; }
+
+/* --- EXIT BTN (shared) --- */
+.exit-btn {
+    position: fixed !important;
+    top: 24px;
+    right: 24px;
+    z-index: 9999 !important;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    font-family: 'Inter', sans-serif;
+    font-size: 32px;
+    font-weight: 300;
+    line-height: 1;
+    color: rgba(255, 255, 255, 0.6);
+    mix-blend-mode: normal !important;
+    transition: color 0.3s ease, transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+}
+.exit-btn:hover { 
+    color: #fff;
+    transform: rotate(90deg) scale(1.1);
+}
+
+/* --- HORIZONTAL SCROLL SYSTEM --- */
+.horizontal-scroll {
+    display: flex; flex-direction: row; align-items: center;
+    width: 100%; height: 100%; padding: 0 10vw; gap: 8vw;
+    overflow-x: auto; overflow-y: hidden; scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+.horizontal-scroll::-webkit-scrollbar { display: none; }
+.album-photo { flex: 0 0 auto; height: 75vh; display: flex; align-items: center; justify-content: center; }
+.album-photo img { height: 100%; width: auto; object-fit: contain; }
+.asdf-stamp { position: absolute; pointer-events: none; z-index: 110; mix-blend-mode: lighten; filter: url(#asdf-sideways-filter); }
+
+/* ═══════════════════════════════════════
+   DARKROOM — Three.js canvas
+════════════════════════════════════════ */
+#darkroom-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    cursor: default;
+}
+
+/* Zone label — appears on hover */
+#darkroom-label {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Space Mono', monospace;
+    font-size: 9px;
+    letter-spacing: 0.35em;
+    color: rgba(255, 100, 60, 0.7);
+    text-transform: uppercase;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+    z-index: 50;
+    white-space: nowrap;
+}
+
+/* Entry hint */
+#darkroom-hint {
+    position: absolute;
+    bottom: 36px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.3em;
+    color: rgba(255, 255, 255, 0.2);
+    text-transform: uppercase;
+    pointer-events: none;
+    z-index: 50;
+    white-space: nowrap;
+    transition: opacity 1.5s ease;
+    animation: dr-pulse 3s ease infinite;
+}
+@keyframes dr-pulse {
+    0%, 100% { opacity: 0.2; }
+    50%       { opacity: 0.6; }
+}
+
+/* ── Fullscreen viewer ── */
+#darkroom-viewer {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.96);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    z-index: 300;
+}
+#darkroom-viewer.active { display: flex; }
+
+#darkroom-viewer-img {
+    max-width: 90vw;
+    max-height: 80vh;
+    object-fit: contain;
+    display: block;
+}
+
+#darkroom-viewer-meta {
+    margin-top: 16px;
+    font-family: 'Space Mono', monospace;
+    font-size: 8px;
+    letter-spacing: 0.3em;
+    color: rgba(255, 255, 255, 0.3);
+    text-transform: uppercase;
+}
+
+#darkroom-viewer-prev,
+#darkroom-viewer-next {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 24px;
+    cursor: pointer;
+    padding: 20px;
+    transition: color 0.2s ease;
+    z-index: 310;
+}
+#darkroom-viewer-prev:hover,
+#darkroom-viewer-next:hover { color: rgba(255,255,255,0.9); }
+#darkroom-viewer-prev { left: 20px; }
+#darkroom-viewer-next { right: 20px; }
+
+#darkroom-viewer-close {
+    position: absolute;
+    top: 24px;
+    right: 24px;
+    background: none;
+    border: none;
+    color: rgba(255, 255, 255, 0.3);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 10px;
+    transition: color 0.2s ease;
+    z-index: 310;
+}
+#darkroom-viewer-close:hover { color: rgba(255,255,255,0.9); }
+
+/* --- RTL TICKER --- */
+.ticker-wrap {
+    width: 100%; overflow: hidden; background: transparent;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    padding: 1rem 0; margin: 1.5rem 0;
+}
+.ticker { display: flex; width: fit-content; flex-wrap: nowrap; animation: marquee-rtl 10s linear infinite; }
+.ticker__item {
+    flex-shrink: 0; padding: 0 2rem; font-size: 16px;
+    letter-spacing: 0.2em; color: rgba(255,255,255,0.3);
+    font-family: 'Space Mono', monospace; text-transform: uppercase;
+}
+@keyframes marquee-rtl {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+}
+
+/* --- SCROLL HINT --- */
+.scroll-hint {
+    position: absolute; bottom: 40px; left: 50%;
+    transform: translateX(-50%);
+    display: flex; flex-direction: column; align-items: center; gap: 15px;
+    opacity: 0.6; transition: opacity 0.3s ease; z-index: 40;
+}
+.scroll-hint .section-label { margin-bottom: 0; font-size: 8px; opacity: 0.4; letter-spacing: 0.4em; }
+.scroll-line {
+    width: 1px; height: 60px;
+    background: linear-gradient(to bottom, rgba(255,255,255,1), rgba(255,255,255,0));
+    position: relative; overflow: hidden;
+}
+.scroll-line::after {
+    content: ''; position: absolute; top: -60px; left: 0;
+    width: 100%; height: 100%; background: #fff;
+    animation: scroll-draw 2s infinite cubic-bezier(0.19, 1, 0.22, 1);
+}
+@keyframes scroll-draw {
+    0% { top: -60px; }
+    100% { top: 60px; }
+}
+.scrolled .scroll-hint { opacity: 0; pointer-events: none; }
+
+/* --- FOOTER --- */
+footer .section-label { margin-bottom: 0; padding-bottom: 5px; white-space: nowrap; text-align: right; }
+
+/* ── Zone dots — hidden (no UI navigation) ── */
+#darkroom-zones {
+    display: none;
+}
+.dr-zone-dot {
+    width: 4px; height: 4px;
+    border-radius: 50%;
+    background: rgba(255,60,20,0.25);
+    transition: background 0.4s ease, transform 0.4s ease;
+}
+.dr-zone-dot.active {
+    background: rgba(255,60,20,0.8);
+    transform: scale(1.5);
+}
+
+/* ── MOBILE DARKROOM — vertical scroll UI ── */
+#darkroom-mobile {
+    display: none;
+    position: absolute;
+    inset: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    background: #000;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+}
+#darkroom-mobile::-webkit-scrollbar { display: none; }
+
+.dr-mobile-zone {
+    padding: 60px 24px 40px;
+    border-bottom: 1px solid rgba(255,40,10,0.08);
+}
+.dr-mobile-zone-label {
+    font-family: 'Space Mono', monospace;
+    font-size: 7px;
+    letter-spacing: 0.4em;
+    color: rgba(255,60,20,0.5);
+    text-transform: uppercase;
+    margin-bottom: 24px;
+    display: block;
+}
+.dr-mobile-photos {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+.dr-mobile-photo {
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    background: #0a0002;
+    cursor: pointer;
+}
+.dr-mobile-photo img {
+    width: 100%;
+    display: block;
+    opacity: 0;
+    transition: opacity 1.8s ease;
+    filter: sepia(0.15) brightness(0.92);
+}
+.dr-mobile-photo img.developed {
+    opacity: 1;
+}
+
+/* Mobile safelight overlay */
+.dr-mobile-photo::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at center, transparent 40%, rgba(180,20,0,0.12) 100%);
+    pointer-events: none;
+}
+
+/* ── develop animation for viewer ── */
+@keyframes dr-develop {
+    0%   { filter: sepia(1) brightness(0.1); opacity: 0.2; }
+    40%  { filter: sepia(0.6) brightness(0.5); opacity: 0.7; }
+    100% { filter: sepia(0.08) brightness(1); opacity: 1; }
+}
+
+/* Mobile: show 3D canvas, hide legacy list */
+@media (max-width: 900px) {
+    #darkroom-canvas { display: block !important; }
+    #darkroom-mobile { display: none !important; }
+    #darkroom-zones  { display: none; }
+    #darkroom-label  {
+        font-size: 7px;
+        letter-spacing: 0.25em;
+        bottom: 48px;
+    }
+    #darkroom-hint {
+        font-size: 7px;
+        bottom: 28px;
+        letter-spacing: 0.25em;
+    }
+}
+
+/* ── ZONE PILLS — David Langarica style navigation ── */
+#darkroom-zone-pills {
+    position: absolute;
+    top: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 8px;
+    z-index: 100;
+    pointer-events: auto;
+}
+
+.dr-zone-pill {
+    font-family: 'Space Mono', monospace;
+    font-size: 7px;
+    letter-spacing: 0.25em;
+    text-transform: uppercase;
+    padding: 6px 14px;
+    border: 1px solid rgba(255,60,20,0.2);
+    background: rgba(0,0,0,0.4);
+    color: rgba(255,255,255,0.3);
+    cursor: pointer;
+    transition: all 0.4s ease;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    white-space: nowrap;
+}
+
+.dr-zone-pill:hover {
+    color: rgba(255,255,255,0.7);
+    border-color: rgba(255,60,20,0.5);
+}
+
+.dr-zone-pill.active {
+    color: rgba(255, 80, 20, 0.95);
+    border-color: rgba(255,60,20,0.7);
+    background: rgba(20,5,0,0.7);
+}
+
+/* ── LOADING SCREEN ── */
+#dr-loading {
+    position: absolute;
+    inset: 0;
+    background: #030100;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    transition: opacity 0.8s ease;
+    font-family: 'Space Mono', monospace;
+}
+
+#dr-loading.hidden { display: none; }
+
+#dr-loading-text {
+    font-size: 10px;
+    letter-spacing: 0.5em;
+    color: rgba(255, 60, 20, 0.6);
+    margin-bottom: 32px;
+    text-transform: uppercase;
+}
+
+#dr-loading-bar {
+    width: 160px;
+    height: 1px;
+    background: rgba(255,255,255,0.06);
+    position: relative;
+    overflow: hidden;
+}
+
+#dr-loading-fill {
+    height: 100%;
+    background: rgba(255, 60, 20, 0.7);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+#dr-loading-sub {
+    margin-top: 16px;
+    font-size: 7px;
+    letter-spacing: 0.3em;
+    color: rgba(255,255,255,0.15);
+    text-transform: uppercase;
+}
+
+/* Zone sublabel */
+#darkroom-sublabel {
+    position: absolute;
+    bottom: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: 'Space Mono', monospace;
+    font-size: 7px;
+    letter-spacing: 0.2em;
+    color: rgba(255, 255, 255, 0.18);
+    text-transform: uppercase;
+    pointer-events: none;
+    z-index: 50;
+    white-space: nowrap;
+    text-align: center;
+}
+
+/* ══════════════════════════════════════
+   PRODUCT GALLERY — INLINE EXPANDABLE
+══════════════════════════════════════ */
+
+/* Grid wrapper — collapsed by default */
+#pg-grid-wrap {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+#pg-grid-wrap.open {
+  max-height: 9999px;
+}
+
+/* Trigger label toggle */
+#pg-trigger { cursor: pointer; }
+#pg-trigger.open .portfolio-trigger::after {
+  content: ' ↑';
+}
+
+/* Inner grid */
+#pg-grid {
+  padding: 60px 40px 20px;
+}
+
+/* Category block */
+.pg-category {
+  margin-bottom: 56px;
+}
+.pg-cat-label {
+  display: block;
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.4em;
+  color: rgba(255,255,255,0.18);
+  text-transform: uppercase;
+  margin-bottom: 20px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+/* Horizontal scrolling row */
+.pg-row {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+}
+.pg-row::-webkit-scrollbar { display: none; }
+
+/* Individual image card */
+.pg-item {
+  flex: 0 0 auto;
+  width: 260px;
+  height: 340px;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+  opacity: 0;
+  transform: translateY(18px);
+  transition:
+    opacity 0.9s ease,
+    transform 0.9s ease,
+    box-shadow 0.5s ease;
+}
+.pg-item.revealed {
+  opacity: 1;
+  transform: translateY(0);
+}
+.pg-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: brightness(0.72) saturate(0.85);
+  transition: filter 0.6s ease, transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.pg-item:hover img {
+  filter: brightness(0.95) saturate(1.05);
+  transform: scale(1.03);
+}
+
+/* Stagger delay per item */
+.pg-item:nth-child(1)  { transition-delay: 0.00s; }
+.pg-item:nth-child(2)  { transition-delay: 0.06s; }
+.pg-item:nth-child(3)  { transition-delay: 0.12s; }
+.pg-item:nth-child(4)  { transition-delay: 0.18s; }
+.pg-item:nth-child(5)  { transition-delay: 0.24s; }
+.pg-item:nth-child(6)  { transition-delay: 0.30s; }
+.pg-item:nth-child(7)  { transition-delay: 0.36s; }
+.pg-item:nth-child(8)  { transition-delay: 0.42s; }
+.pg-item:nth-child(9)  { transition-delay: 0.48s; }
+.pg-item:nth-child(10) { transition-delay: 0.54s; }
+
+/* Collapse button */
+#pg-collapse {
+  font-family: 'Space Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.35em;
+  color: rgba(255,255,255,0.18);
+  text-align: center;
+  padding: 32px 0 48px;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: color 0.3s ease;
+}
+#pg-collapse:hover { color: rgba(255,255,255,0.5); }
+
+/* Lightbox */
+#pg-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.97);
+  z-index: 2000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  cursor: pointer;
+}
+#pg-lightbox.active { display: flex; }
+#pg-lightbox-img {
+  max-width: 88vw;
+  max-height: 82vh;
+  object-fit: contain;
+  display: block;
+  animation: pg-reveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+@keyframes pg-reveal {
+  from { opacity: 0; transform: scale(0.97); filter: brightness(0.3) saturate(0); }
+  to   { opacity: 1; transform: scale(1);    filter: brightness(1)   saturate(1); }
+}
+#pg-lightbox-meta {
+  margin-top: 18px;
+  font-family: 'Space Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.3em;
+  color: rgba(255,255,255,0.22);
+  text-transform: uppercase;
+}
+#pg-lightbox-close {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  background: none;
+  border: none;
+  color: rgba(255,255,255,0.25);
+  font-size: 18px;
+  cursor: pointer;
+  padding: 10px;
+  transition: color 0.2s ease;
+}
+#pg-lightbox-close:hover { color: rgba(255,255,255,0.8); }
+
+@media (max-width: 768px) {
+  #pg-grid { padding: 40px 20px 16px; }
+  .pg-item { width: 200px; height: 260px; }
+}
+
+/* ── 3D BG CANVAS inside #product-page overlay ── */
+#pg-bg-canvas {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 1.6s ease;
+}
+#pg-bg-canvas.visible { opacity: 1; }
+
+/* scroll strip above canvas */
+#product-scroll { position: relative; z-index: 1; }
+
+/* ── LIGHTBOX outside main — override blend mode ── */
+#pg-lightbox {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.97);
+  z-index: 9000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  cursor: pointer;
+  mix-blend-mode: normal;
+}
+#pg-lightbox.active { display: flex; }
+#pg-lightbox-img {
+  max-width: 88vw;
+  max-height: 82vh;
+  object-fit: contain;
+  display: block;
+  animation: pg-reveal 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  mix-blend-mode: normal;
+}
+@keyframes pg-reveal {
+  from { opacity: 0; transform: scale(0.97); filter: brightness(0.3) saturate(0); }
+  to   { opacity: 1; transform: scale(1);    filter: brightness(1)   saturate(1); }
+}
+#pg-lightbox-meta {
+  margin-top: 18px;
+  font-family: 'Space Mono', monospace;
+  font-size: 8px;
+  letter-spacing: 0.3em;
+  color: rgba(255,255,255,0.35);
+  text-transform: uppercase;
+}
+#pg-lightbox-close {
+  position: absolute;
+  top: 24px; right: 28px;
+  background: none; border: none;
+  color: rgba(255,255,255,0.3);
+  font-size: 20px;
+  cursor: pointer;
+  padding: 12px;
+  line-height: 1;
+  transition: color 0.2s;
+}
+#pg-lightbox-close:hover { color: #fff; }
+
+/* ── pg-item — no pointer-events conflict on mobile ── */
+.pg-item {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+#product-scroll { opacity: 0; transition: opacity 0.6s ease 0.3s; }
+#product-scroll.ready { opacity: 1; }
+
+/* ══════════════════════════════════════
+   CONTACT FORM
+══════════════════════════════════════ */
+#contact {
+  background: #000;
+  color: #fff;
+  padding: 80px 40px;
+  font-family: 'Space Mono', monospace;
+}
+
+#contact .contact-inner {
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+#contact .section-label {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: #888;
+  margin: 0 0 60px;
+  display: block;
+  opacity: 1;
+}
+
+.contact-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cf-row {
+  border-top: 1px solid #1a1a1a;
+  display: flex;
+  flex-direction: column;
+  padding: 28px 0 8px;
+  position: relative;
+}
+
+.cf-row:last-of-type {
+  border-bottom: 1px solid #1a1a1a;
+}
+
+.cf-label {
+  font-size: 8px;
+  letter-spacing: 0.35em;
+  color: #444;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  display: block;
+  transition: color 0.3s ease;
+}
+
+.cf-row:focus-within .cf-label {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.cf-input,
+.cf-textarea {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #fff;
+  font-family: 'Space Mono', monospace;
+  font-size: 13px;
+  letter-spacing: 0.05em;
+  width: 100%;
+  padding: 0 0 16px;
+  caret-color: rgba(255, 255, 255, 0.6);
+  resize: none;
+}
+
+.cf-input::placeholder,
+.cf-textarea::placeholder {
+  color: #2a2a2a;
+}
+
+.cf-textarea {
+  min-height: 100px;
+}
+
+.cf-submit {
+  margin-top: 36px;
+  align-self: flex-start;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.4);
+  font-family: 'Space Mono', monospace;
+  font-size: 9px;
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  padding: 16px 32px;
+  cursor: pointer;
+  transition: color 0.3s ease, border-color 0.3s ease, background 0.3s ease;
+}
+
+.cf-submit:hover {
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.cf-submit:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* Status message */
+#cf-status {
+  margin-top: 20px;
+  font-size: 9px;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  height: 16px;
+  color: rgba(255, 255, 255, 0.3);
+  transition: color 0.4s ease;
+}
+
+#cf-status.success { color: rgba(80, 220, 140, 0.7); }
+#cf-status.error   { color: rgba(255, 80, 60, 0.7); }
+
+@media (max-width: 768px) {
+  #contact { padding: 60px 24px; }
+}
+
+/* ── PRODUCT GALLERY LOADER ── */
+#pg-loader {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  z-index: 10;
+  transition: opacity 0.6s ease;
+  background: #000;
+}
+#pg-loader.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+#pg-loader-pct {
+  font-family: 'Space Mono', monospace;
+  font-size: 12px;
+  letter-spacing: 0.35em;
+  color: rgba(255, 255, 255, 0.45);
+  font-weight: 400;
+  text-transform: uppercase;
+}
+
+/* ═══════════════════════════════════════════════════════
+   VOLUMETRIC SHOWREEL PROJECTION — replaces the old click-to-play
+   YouTube facade with an always-playing, floating 3D "screen" that
+   pans/tilts with scroll (VR-glasses feel — no scanlines, no squish,
+   just a clean video inside a soft-lit 3D projection space).
+   Everything below is scoped under #showreel-3d-viewport so it can never
+   collide with other elements elsewhere on the page.
+════════════════════════════════════════════════════════ */
+#showreel-3d-track {
+    position: relative;
+    height: 100vh; /* scroll distance that drives the camera pan — local to this section only */
+}
+#showreel-3d-viewport {
+    position: sticky;
+    top: 0;
+    width: 100%;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    perspective: 1400px;
+    background: transparent; /* ambient lighting is now global — see #site-ambient-glow */
+}
+#showreel-3d-viewport .scene {
+    width: 300px;
+    height: 533px;
+    position: relative;
+    transform-style: preserve-3d;
+    will-change: transform;
+    transform: translateY(-20px) rotateX(12deg) rotateY(-15deg);
+    z-index: 3;
+}
+#showreel-3d-viewport .projection-container {
+    width: 110%;
+    height: 110%;
+    position: relative;
+    box-shadow:
+        0 0 140px rgba(160, 200, 255, 0.08),
+        0 40px 100px rgba(0, 0, 0, 0.7);
+    mask-image: radial-gradient(ellipse 90% 90% at center, rgba(0,0,0,1) 38%, rgba(0,0,0,0.6) 62%, rgba(0,0,0,0) 92%);
+    -webkit-mask-image: radial-gradient(ellipse 90% 90% at center, rgba(0,0,0,1) 38%, rgba(0,0,0,0.6) 62%, rgba(0,0,0,0) 92%);
+}
+#showreel-3d-viewport .projection-container video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    filter: brightness(1.08) contrast(1.08) saturate(1.05) blur(0.5px);
+}
+#showreel-3d-viewport {
+    opacity: 0;
+    transition: opacity 1s ease;
+}
+#showreel-3d-viewport.revealed {
+    opacity: 1;
+}
+#showreel-3d-viewport .projection-vignette {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at center, transparent 20%, rgba(2, 4, 6, 0.65) 100%);
+    pointer-events: none;
+    z-index: 3;
+    mix-blend-mode: multiply;
+}
+@media (max-width: 480px) {
+    #showreel-3d-viewport .scene { width: 240px; height: 427px; }
+}
+
+/* ═══════════════════════════════════════════════════════
+   SITE-WIDE AMBIENT DEPTH GLOW — replaces flat pitch-black with a
+   soft, fixed, very low-opacity glow behind the whole page (sits just
+   above the raw black body, below the GLSL canvas/content layers).
+   Purely atmospheric — pointer-events off, never intercepts anything.
+════════════════════════════════════════════════════════ */
+#site-ambient-glow {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: 2;
+    pointer-events: none;
+    background:
+        radial-gradient(ellipse 70vw 60vh at 20% 10%, rgba(60, 90, 130, 0.10) 0%, rgba(0,0,0,0) 60%),
+        radial-gradient(ellipse 70vw 60vh at 85% 90%, rgba(90, 70, 60, 0.08) 0%, rgba(0,0,0,0) 60%),
+        radial-gradient(ellipse 100vw 100vh at 50% 50%, rgba(20, 25, 32, 0.4) 0%, rgba(0,0,0,0) 70%);
+}
+
+/* ═══════════════════════════════════════════════════════
+   3D REEL PROJECTOR — background element, sits above the GLSL glitch
+   canvas but below the main content text/gallery, pointer-events off
+   so it never intercepts touch.
+════════════════════════════════════════════════════════ */
+#projector-background-track {
+    position: fixed;
+    top: 0;
+    left: -50;
+    width: 100vw;
+    height: 100vh;
+    z-index: 18;
+    background: transparent;
+    pointer-events: none;
+    opacity: 1;
+    transition: opacity 1s ease;
+}
+#projector-background-track.faded {
+    opacity: 0;
+}
+.projector-sticky-window {
+    width: 100%;
+    height: 130%;
+    overflow: hidden;
+    position: relative;
+}
+#three-projector-canvas {
+    width: 100%;
+    height: 100%;
+    display: block;
+    mix-blend-mode: screen;
+}
