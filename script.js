@@ -261,16 +261,6 @@ function initUnifiedGL() {
 }
 
 function loadProjectorModel() {
-  if (typeof gsap === 'undefined') return;
-  gsap.registerPlugin(ScrollTrigger);
-  // Mobile browsers fire 'resize' constantly during scroll (URL bar
-  // collapsing/expanding). ScrollTrigger normally auto-refreshes all
-  // trigger positions on resize, which was mid-scroll suddenly
-  // reinterpreting the timeline's progress against newly-recalculated
-  // boundaries — the visible "abrupt jump." This tells it to ignore that
-  // specific class of resize event.
-  ScrollTrigger.config({ ignoreMobileResize: true });
-
   const loader = new THREE.GLTFLoader();
   if (sharedDracoLoader) loader.setDRACOLoader(sharedDracoLoader);
   loader.load(
@@ -311,9 +301,16 @@ function loadProjectorModel() {
       const hFovRad = 2 * Math.atan(Math.tan(vFovRad / 2) * aspect);
       const requiredDist = (1.7 * 0.75) / Math.tan(hFovRad / 2);
       projectorCamera.position.z = Math.max(8, requiredDist);
+      projectorBaseCameraZ = projectorCamera.position.z;
       projectorCamera.updateProjectionMatrix();
 
-      buildScrollTimeline();
+      projectorModel.rotation.set(0.3, Math.PI / 2, 0);
+      projectorModel.position.x = 0;
+      projectorModel.position.y -= 0.65;
+      projectorModel.position.z -= 1;
+      projectorModel.visible = false;
+      projectorScene.add(projectorModel);
+
       projectorEngineReady = true;
       if (window.__reportProjectorProgress) window.__reportProjectorProgress(1);
     },
@@ -329,52 +326,72 @@ function loadProjectorModel() {
   );
 }
 
-function buildScrollTimeline() {
-  projectorModel.rotation.set(0.3, Math.PI / 2, 0);
-  projectorModel.position.x = 0;
-  projectorModel.position.y -= 0.65;
-  projectorModel.position.z -= 1;
-  projectorModel.visible = false;
-  projectorScene.add(projectorModel);
+function easeInOutCubic(t) { return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2; }
+function easeInCubic(t) { return t * t * t; }
 
-  const tl = gsap.timeline({
-    scrollTrigger: {
-      // Starts exactly where the "SCROLL_TO_PROCEED" hint itself scrolls
-      // out of view (not the whole hero section), and ends exactly where
-      // the showreel section begins.
-      trigger: "#scroll-hint",
-      start: "bottom top",
-      endTrigger: "#showreel-3d-track",
-      end: "top top",
-      scrub: 1.3,
-      onEnter: () => { projectorModel.visible = true; },
-      onEnterBack: () => { projectorModel.visible = true; },
-      onLeave: () => { projectorModel.visible = false; },
-      onLeaveBack: () => { projectorModel.visible = false; },
-      onUpdate: (self) => {
-        const spinSpeed = self.getVelocity() * 0.0007;
-        if (leftReel) leftReel.rotation.z += spinSpeed;
-        if (rightReel) rightReel.rotation.z -= spinSpeed;
-      }
-    }
-  });
+let projectorBaseCameraZ = 8;
+let projectorLastScrollY = window.scrollY;
 
-  // Step 1: an actual 90° turn from the starting profile pose. power3.inOut
-  // gives a curved ease-in/ease-out feel instead of a flat, linear turn.
-  tl.to(projectorModel.rotation, { x: 0, y: Math.PI, z: 0, duration: 2, ease: "power3.inOut" })
-    .to(projectorModel.position, { z: 1.5, duration: 2, ease: "power3.inOut" }, "<")
-    // Step 2: camera dives MUCH closer into the lens before cutting to the
-    // showreel. expo.in gives a strong accelerating curve into the glass.
-    .to(projectorCamera.position, {
-        x: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).x : 0,
-        y: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).y : 0,
-        z: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).z + 0.15 : 2.5,
-        duration: 3,
-        ease: "expo.in",
-        onUpdate: function() {
-            if (lensMesh) projectorCamera.lookAt(lensMesh.getWorldPosition(new THREE.Vector3()));
-        }
-    });
+/* ═══════════════════════════════════════════════════════
+   PROJECTOR SCROLL UPDATE — same pattern as the product-gallery
+   enlarger's smoothing loop: recompute live scroll position fresh
+   every single frame (no cached trigger boundaries to drift out of
+   sync), then LERP the actual object properties toward the freshly-
+   computed target each frame. Called from unifiedRenderLoop.
+════════════════════════════════════════════════════════ */
+function updateProjectorScroll() {
+  if (!projectorEngineReady || !projectorModel) return;
+
+  const hintEl = document.getElementById('scroll-hint');
+  const trackEl = document.getElementById('showreel-3d-track');
+  if (!hintEl || !trackEl) return;
+
+  const hintBottomY = hintEl.getBoundingClientRect().bottom;
+  const trackTopY   = trackEl.getBoundingClientRect().top;
+  const totalSpan   = hintBottomY - trackTopY; // recomputed fresh every frame — self-correcting, nothing cached to go stale
+
+  const active = hintBottomY <= 0 && trackTopY > 0;
+  projectorModel.visible = active;
+  if (!active) return;
+
+  const raw = totalSpan > 0 ? Math.max(0, Math.min(1, hintBottomY / totalSpan)) : 0;
+
+  // Phase A (first half): profile → 90° turn. Phase B (second half): camera
+  // dive into the lens. Each phase gets its own eased curve instead of a
+  // flat linear mapping.
+  const phaseARaw = Math.max(0, Math.min(1, raw / 0.5));
+  const phaseBRaw = Math.max(0, Math.min(1, (raw - 0.5) / 0.5));
+  const phaseA = easeInOutCubic(phaseARaw);
+  const phaseB = easeInCubic(phaseBRaw);
+
+  const targetRotY = THREE.MathUtils.lerp(Math.PI / 2, Math.PI, phaseA);
+  const targetPosZ = THREE.MathUtils.lerp(-1, 1.5, phaseA);
+
+  // Smooth catch-up toward the target — this IS the "scrub lag" feel,
+  // just computed as a plain per-frame lerp instead of GSAP scrub.
+  projectorModel.rotation.y += (targetRotY - projectorModel.rotation.y) * 0.12;
+  projectorModel.position.z += (targetPosZ - projectorModel.position.z) * 0.12;
+
+  if (lensMesh) {
+    const lensWorld = new THREE.Vector3();
+    lensMesh.getWorldPosition(lensWorld);
+    const targetCamX = phaseBRaw > 0 ? lensWorld.x : projectorCamera.position.x;
+    const targetCamY = phaseBRaw > 0 ? lensWorld.y : projectorCamera.position.y;
+    const targetCamZ = phaseBRaw > 0 ? (lensWorld.z + 0.15) : projectorBaseCameraZ;
+    const camLerp = phaseBRaw > 0 ? (0.06 + phaseB * 0.14) : 0.08; // dives faster as it gets closer
+    projectorCamera.position.x += (targetCamX - projectorCamera.position.x) * camLerp;
+    projectorCamera.position.y += (targetCamY - projectorCamera.position.y) * camLerp;
+    projectorCamera.position.z += (targetCamZ - projectorCamera.position.z) * camLerp;
+    projectorCamera.lookAt(lensWorld);
+  }
+
+  // Reel spin driven by actual frame-to-frame scroll velocity, not a
+  // GSAP-reported value.
+  const scrollDelta = window.scrollY - projectorLastScrollY;
+  projectorLastScrollY = window.scrollY;
+  const spinSpeed = scrollDelta * 0.02;
+  if (leftReel) leftReel.rotation.z += spinSpeed;
+  if (rightReel) rightReel.rotation.z -= spinSpeed;
 }
 
 let glPageHidden = false;
@@ -385,6 +402,8 @@ document.addEventListener('visibilitychange', () => {
 function unifiedRenderLoop(ts) {
   requestAnimationFrame(unifiedRenderLoop);
   if (glPageHidden) return; // tab not visible — don't burn GPU/battery in the background
+
+  updateProjectorScroll();
 
   glVelocity  += (glTargetVel - glVelocity)  * 0.12;
   glIntensity += (glTargetInt - glIntensity) * 0.08;
@@ -1048,16 +1067,6 @@ setInterval(applyMood, 60 * 1000);
     const trackHeight = rect.height - window.innerHeight;
     if (trackHeight <= 0) return;
     const scrollPercent = Math.min(1, Math.max(0, -rect.top / trackHeight));
-
-    // Hide the projector using this SAME live measurement, in this same
-    // tick, instead of relying on GSAP's separately-cached ScrollTrigger
-    // boundary — that was the actual source of the overlap: two
-    // independent systems both aiming at "the video's start" but not
-    // guaranteed to agree at every instant. This can't drift out of sync
-    // with itself.
-    if (typeof projectorModel !== 'undefined' && projectorModel) {
-      projectorModel.visible = rect.top > 0;
-    }
 
     // Fade the whole panel in over the first 12% of its own track instead
     // of popping in abruptly.
