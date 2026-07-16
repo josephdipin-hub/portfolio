@@ -339,6 +339,8 @@ let projectorLastScrollY = window.scrollY;
    sync), then LERP the actual object properties toward the freshly-
    computed target each frame. Called from unifiedRenderLoop.
 ════════════════════════════════════════════════════════ */
+let projectorWasActive = false;
+
 function updateProjectorScroll() {
   if (!projectorEngineReady || !projectorModel) return;
 
@@ -350,17 +352,36 @@ function updateProjectorScroll() {
   const trackTopY   = trackEl.getBoundingClientRect().top;
   const totalSpan   = hintBottomY - trackTopY; // recomputed fresh every frame — self-correcting, nothing cached to go stale
 
-  const active = hintBottomY <= window.innerHeight * 0.5 && trackTopY > 0;
+  const active = hintBottomY <= 0 && trackTopY > 0;
   projectorModel.visible = active;
+
+  if (active && !projectorWasActive) {
+    // Freshly entering the zone — hard reset to the clean starting pose so
+    // it always visibly appears "placed" first, never pops in already
+    // mid-rotation/mid-zoom from a fast scroll or flick.
+    projectorModel.rotation.set(0.3, Math.PI / 2, 0);
+    projectorModel.position.x = 0;
+    projectorModel.position.z = -1;
+    projectorCamera.position.set(0, 0, projectorBaseCameraZ);
+  }
+  projectorWasActive = active;
+
   if (!active) return;
 
   const raw = Math.abs(totalSpan) > 1 ? Math.max(0, Math.min(1, hintBottomY / totalSpan)) : 0;
 
-  // Phase A (first half): profile → 90° turn. Phase B (second half): camera
-  // dive into the lens. Each phase gets its own eased curve instead of a
-  // flat linear mapping.
-  const phaseARaw = Math.max(0, Math.min(1, raw / 0.5));
-  const phaseBRaw = Math.max(0, Math.min(1, (raw - 0.5) / 0.5));
+  // A flat hold at the very start — the model sits still, fully placed,
+  // for the first 10% of this section's scroll before any motion begins
+  // at all. Combined with the hard reset above, this is what actually
+  // kills the snap: there's no motion happening at the instant it appears.
+  const HOLD = 0.10;
+  const moveRaw = Math.max(0, Math.min(1, (raw - HOLD) / (1 - HOLD)));
+
+  // Phase A (first ~55% of the remaining motion): profile → 90° turn.
+  // Phase B (rest): camera dive into the lens — pushed slightly later so
+  // the zoom doesn't begin before the turn has clearly progressed.
+  const phaseARaw = Math.max(0, Math.min(1, moveRaw / 0.55));
+  const phaseBRaw = Math.max(0, Math.min(1, (moveRaw - 0.55) / 0.45));
   const phaseA = easeInOutCubic(phaseARaw);
   const phaseB = easeInCubic(phaseBRaw);
 
@@ -605,10 +626,19 @@ window.addEventListener('scroll', () => {
   scrollTicking = true;
   requestAnimationFrame(() => {
     const currentY = window.pageYOffset;
-    if (Math.abs(currentY - lastScrollY) > 35) {
+
+    // Absolute guarantee against any trailing ghost near the projector/
+    // video: the instant we're past the hero, kill any in-flight stamp
+    // immediately rather than letting its ~850ms fade-out animation keep
+    // playing over content further down the page.
+    const heroEl = document.getElementById('hero-section');
+    if (heroEl && heroEl.getBoundingClientRect().bottom <= 0) {
+      container.querySelectorAll('.brush-stamp').forEach(el => el.remove());
+    } else if (Math.abs(currentY - lastScrollY) > 35) {
       createMoshStamp(currentY);
       lastScrollY = currentY;
     }
+
     document.body.classList.toggle('scrolled', currentY > 50);
     scrollTicking = false;
   });
