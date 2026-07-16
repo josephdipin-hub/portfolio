@@ -1049,6 +1049,16 @@ setInterval(applyMood, 60 * 1000);
     if (trackHeight <= 0) return;
     const scrollPercent = Math.min(1, Math.max(0, -rect.top / trackHeight));
 
+    // Hide the projector using this SAME live measurement, in this same
+    // tick, instead of relying on GSAP's separately-cached ScrollTrigger
+    // boundary — that was the actual source of the overlap: two
+    // independent systems both aiming at "the video's start" but not
+    // guaranteed to agree at every instant. This can't drift out of sync
+    // with itself.
+    if (typeof projectorModel !== 'undefined' && projectorModel) {
+      projectorModel.visible = rect.top > 0;
+    }
+
     // Fade the whole panel in over the first 12% of its own track instead
     // of popping in abruptly.
     const revealed = scrollPercent > 0.02;
