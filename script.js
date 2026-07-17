@@ -969,7 +969,7 @@ setInterval(applyMood, 60 * 1000);
         start: () => "bottom top+=" + (window.innerHeight * 0.5),
         endTrigger: "#showreel-3d-track",
         end: "top top",
-        scrub: 1.3,
+        scrub: true,
         onEnter: () => { projectorModel.visible = true; },
         onEnterBack: () => { projectorModel.visible = true; },
         onLeave: () => { projectorModel.visible = false; },     // instant — no fade, hands off straight to the showreel
@@ -986,8 +986,8 @@ setInterval(applyMood, 60 * 1000);
     // version accidentally targeted the same value it started at, so it
     // never visibly rotated at all). power3.inOut gives a curved ease-in/
     // ease-out feel instead of a flat, linear-feeling turn.
-    tl.to(projectorModel.rotation, { x: 0, y: 0, z: 0, duration: 2, ease: "power3.inOut" })
-      .to(projectorModel.position, { z: 1.5, duration: 2, ease: "power3.inOut" }, "<")
+    tl.to(projectorModel.rotation, { x: 0, y: 0, z: 0, duration: 2, ease: "none" })
+      .to(projectorModel.position, { z: 1.5, duration: 2, ease: "none" }, "<")
       // Step 2: camera dives MUCH closer into the lens before cutting to the
       // showreel. expo.in gives a strong accelerating curve — slow at first,
       // then a fast final rush into the glass — instead of a steady linear zoom.
@@ -996,7 +996,7 @@ setInterval(applyMood, 60 * 1000);
           y: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).y : 0,
           z: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).z + 0.15 : 2.5,
           duration: 3,
-          ease: "expo.in",
+          ease: "none",
           onUpdate: function() {
               if (lensMesh) camera.lookAt(lensMesh.getWorldPosition(new THREE.Vector3()));
           }
