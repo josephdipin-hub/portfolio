@@ -401,7 +401,7 @@ window.addEventListener('scroll', () => {
 
     if (!inHero) {
       container.querySelectorAll('.brush-stamp').forEach(el => el.remove());
-    } else if (!heightChanged && Math.abs(currentY - lastScrollY) > 35) {
+    } else if (!heightChanged && Math.abs(currentY - lastScrollY) > 11) {
       createMoshStamp(currentY);
       lastScrollY = currentY;
     } else {
