@@ -946,7 +946,7 @@ setInterval(applyMood, 60 * 1000);
   }
 
   function buildScrollTimeline() {
-    projectorModel.rotation.set(0.3, Math.PI / 2, 0);
+    projectorModel.rotation.set(0.3, -Math.PI / 2, 0);
     projectorModel.position.x = 0;
     projectorModel.position.y -= 0.65;
     projectorModel.position.z -= 1;
