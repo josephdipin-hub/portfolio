@@ -946,7 +946,7 @@ setInterval(applyMood, 60 * 1000);
   }
 
   function buildScrollTimeline() {
-    projectorModel.rotation.set(0.3, -Math.PI / 2, 0);
+    projectorModel.rotation.set(0.3, Math.PI / 2, 0);
     projectorModel.position.x = 0;
     projectorModel.position.y -= 0.65;
     projectorModel.position.z -= 1;
@@ -982,7 +982,7 @@ setInterval(applyMood, 60 * 1000);
     // version accidentally targeted the same value it started at, so it
     // never visibly rotated at all). power3.inOut gives a curved ease-in/
     // ease-out feel instead of a flat, linear-feeling turn.
-    tl.to(projectorModel.rotation, { x: 0, y: Math.PI, z: 0, duration: 2, ease: "power3.inOut" })
+    tl.to(projectorModel.rotation, { x: 0, y: 0, z: 0, duration: 2, ease: "power3.inOut" })
       .to(projectorModel.position, { z: 1.5, duration: 2, ease: "power3.inOut" }, "<")
       // Step 2: camera dives MUCH closer into the lens before cutting to the
       // showreel. expo.in gives a strong accelerating curve — slow at first,
