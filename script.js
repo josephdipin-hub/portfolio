@@ -401,7 +401,7 @@ window.addEventListener('scroll', () => {
 
     if (!inHero) {
       container.querySelectorAll('.brush-stamp').forEach(el => el.remove());
-    } else if (!heightChanged && Math.abs(currentY - lastScrollY) > 11) {
+    } else if (!heightChanged && Math.abs(currentY - lastScrollY) > 12) {
       createMoshStamp(currentY);
       lastScrollY = currentY;
     } else {
@@ -865,6 +865,7 @@ setInterval(applyMood, 60 * 1000);
 
   let renderer, scene, camera;
   let projectorModel, leftReel, rightReel, lensMesh;
+  let projectorWobbleGroup, projTime = 0;
   let engineReady = false;
 
   function initProjectorEngine() {
@@ -946,12 +947,15 @@ setInterval(applyMood, 60 * 1000);
   }
 
   function buildScrollTimeline() {
+    projectorWobbleGroup = new THREE.Group();
+    scene.add(projectorWobbleGroup);
+
     projectorModel.rotation.set(0.3, Math.PI / 2, 0);
     projectorModel.position.x = 0;
     projectorModel.position.y -= 0.65;
     projectorModel.position.z -= 1;
     projectorModel.visible = false;
-    scene.add(projectorModel);
+    projectorWobbleGroup.add(projectorModel);
 
     const tl = gsap.timeline({
       scrollTrigger: {
@@ -1001,6 +1005,14 @@ setInterval(applyMood, 60 * 1000);
 
   function renderLoop(ts) {
     requestAnimationFrame(renderLoop);
+    projTime += 0.016;
+    if (projectorWobbleGroup) {
+      // Same idle "breathing" wobble the product-gallery enlarger/watch
+      // models have — a little organic life even while scroll is static,
+      // instead of the model sitting perfectly rigid between scroll ticks.
+      projectorWobbleGroup.rotation.y = Math.sin(projTime * 0.12) * 0.025;
+      projectorWobbleGroup.rotation.x = Math.sin(projTime * 0.07) * 0.02;
+    }
     if (renderer && scene && camera) renderer.render(scene, camera);
   }
 
