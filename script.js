@@ -378,7 +378,7 @@ function triggerAsdf() {
   });
 }
 
-let lastInnerHeightForMosh = window.innerHeight;
+
 
 window.addEventListener('scroll', () => {
   if (scrollTicking) return;
