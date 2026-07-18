@@ -5,8 +5,6 @@
    mid-scroll on half-loaded assets. A safety timeout guarantees no one
    gets stuck staring at a stalled screen if something fails to load.
 ════════════════════════════════════════════════════════ */
-let lastKnownWidth = window.innerWidth;
-let lastInnerHeightForMosh = window.innerHeight; // (You likely already have this one)
 (function () {
   const loaderEl = document.getElementById('site-loader');
   const pctEl    = document.getElementById('site-loader-pct');
@@ -391,15 +389,19 @@ window.addEventListener('scroll', () => {
     // a single tick even though the user didn't actually scroll that far —
     // that spurious "delta" was triggering a mosh stamp (visible as a
     // flash/snap) purely from the viewport resizing, not real scrolling.
-    const widthChanged = window.innerWidth !== lastKnownWidth;
+    const heightChanged = window.innerHeight !== lastInnerHeightForMosh;
     lastInnerHeightForMosh = window.innerHeight;
 
+    // Hero-only, fail CLOSED: if the hero element can't be found, treat it
+    // as "not in hero" rather than silently letting the effect run
+    // unscoped anywhere on the page (that was the actual cause of cloning
+    // showing up on the video and on PROFILE_DATA).
     const heroEl = document.getElementById('hero-section');
     const inHero = heroEl && heroEl.getBoundingClientRect().bottom > 0;
 
     if (!inHero) {
       container.querySelectorAll('.brush-stamp').forEach(el => el.remove());
-    } else if (!widthChanged && Math.abs(currentY - lastScrollY) > 12) {
+    } else if (!heightChanged && Math.abs(currentY - lastScrollY) > 12) {
       createMoshStamp(currentY);
       lastScrollY = currentY;
     } else {
@@ -856,10 +858,7 @@ setInterval(applyMood, 60 * 1000);
   // reinterpreting the timeline's progress against newly-recalculated
   // boundaries — visible as an abrupt jump/snap. This ignores that
   // specific class of resize event.
-  ScrollTrigger.config({ 
-    ignoreMobileResize: true,
-    autoRefreshEvents: "visibilitychange,DOMContentLoaded,load" 
-  });
+  ScrollTrigger.config({ ignoreMobileResize: true });
 
   const canvas = document.getElementById('three-projector-canvas');
   if (!canvas) return;
@@ -1027,7 +1026,7 @@ setInterval(applyMood, 60 * 1000);
     if (renderer && scene && camera) renderer.render(scene, camera);
   }
 
-  
+  let lastKnownWidth = window.innerWidth;
   window.addEventListener('resize', () => {
     if (!camera || !renderer) return;
     // Mobile browsers fire 'resize' when the URL bar collapses/expands
