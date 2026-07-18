@@ -5,6 +5,8 @@
    mid-scroll on half-loaded assets. A safety timeout guarantees no one
    gets stuck staring at a stalled screen if something fails to load.
 ════════════════════════════════════════════════════════ */
+let lastKnownWidth = window.innerWidth;
+let lastInnerHeightForMosh = window.innerHeight; // (You likely already have this one)
 (function () {
   const loaderEl = document.getElementById('site-loader');
   const pctEl    = document.getElementById('site-loader-pct');
@@ -1026,7 +1028,7 @@ setInterval(applyMood, 60 * 1000);
     if (renderer && scene && camera) renderer.render(scene, camera);
   }
 
-  let lastKnownWidth = window.innerWidth;
+
   window.addEventListener('resize', () => {
     if (!camera || !renderer) return;
     // Mobile browsers fire 'resize' when the URL bar collapses/expands
