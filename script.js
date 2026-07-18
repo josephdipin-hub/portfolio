@@ -901,25 +901,18 @@ setInterval(applyMood, 60 * 1000);
               if (name.includes('02') || name.includes('back') || name.includes('r')) rightReel = child;
             }
             // Split by the model's actual source material name (confirmed from
-            // the GLB: every optical element uses 'Glass_new', everything else
-            // uses 'LowPoly_Eumig') — NOT by mesh-name substring, since parts
-            // like "Lens_small_2_grip" or "Lens_middle_feet" contain "lens" but
-            // are body/mechanism meshes, not glass.
+            // the GLB: every optical element uses 'Glass_new'). Only these get
+            // a material override — everything else keeps its original GLB
+            // material/texture untouched.
             const isGlass = child.material && child.material.name === 'Glass_new';
-            if (isGlass) lensMesh = child;
-
-            child.material = isGlass
-              ? new THREE.MeshPhysicalMaterial({
-                  color: new THREE.Color(0xffffff), metalness: 0.1, roughness: 0.0,
-                  transmission: 1.0, thickness: 1.0, ior: 1.5,
-                  transparent: true, opacity: 1.0, envMapIntensity: 2.5
-                })
-              // Leather finish — matte with a faint clearcoat sheen instead of
-              // the flat chrome metal look.
-              : new THREE.MeshPhysicalMaterial({
-                  color: new THREE.Color(0x3b2a1f), metalness: 0.0, roughness: 0.65,
-                  clearcoat: 0.25, clearcoatRoughness: 0.4, envMapIntensity: 0.6
-                });
+            if (isGlass) {
+              lensMesh = child;
+              child.material = new THREE.MeshPhysicalMaterial({
+                color: new THREE.Color(0xffffff), metalness: 0.1, roughness: 0.0,
+                transmission: 1.0, thickness: 1.0, ior: 1.5,
+                transparent: true, opacity: 1.0, envMapIntensity: 2.5
+              });
+            }
           }
         });
 
@@ -973,20 +966,6 @@ setInterval(applyMood, 60 * 1000);
     projectorModel.position.z -= 1;
     projectorModel.visible = false;
     projectorWobbleGroup.add(projectorModel);
-
-    // Chrome needs something to reflect — bake a cube env map from the
-    // scene's lights, same trick used for the product-gallery stopwatch.
-    const cubeRT = new THREE.WebGLCubeRenderTarget(128, {
-      format: THREE.RGBFormat, generateMipmaps: true,
-      minFilter: THREE.LinearMipmapLinearFilter
-    });
-    const cubeCamera = new THREE.CubeCamera(0.1, 100, cubeRT);
-    projectorWobbleGroup.add(cubeCamera);
-    cubeCamera.update(renderer, scene);
-    scene.environment = cubeRT.texture;
-    projectorModel.traverse((n) => {
-      if (n.isMesh && n.material) n.material.envMap = cubeRT.texture;
-    });
 
     const tl = gsap.timeline({
       scrollTrigger: {
