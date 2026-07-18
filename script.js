@@ -236,10 +236,31 @@ initGL();
 if (glRenderer) glRenderLoop(0);
 
 window.addEventListener('scroll', () => {
-  const currentY = window.pageYOffset;
-  const delta = Math.abs(currentY - glLastY);
-  glLastY = currentY;
-  if (delta > 2) triggerGLGlitch(delta * 8);
+  if (scrollTicking) return;
+  scrollTicking = true;
+  requestAnimationFrame(() => {
+    const currentY = window.pageYOffset;
+
+    // Use our new "memory" variables to detect layout changes
+    const widthChanged = window.innerWidth !== lastKnownWidth;
+    lastKnownWidth = window.innerWidth; // Keep the memory updated
+    lastInnerHeightForMosh = window.innerHeight;
+
+    const heroEl = document.getElementById('hero-section');
+    const inHero = heroEl && heroEl.getBoundingClientRect().bottom > 0;
+
+    if (!inHero) {
+      container.querySelectorAll('.brush-stamp').forEach(el => el.remove());
+    } else if (!widthChanged && Math.abs(currentY - lastScrollY) > 12) {
+      createMoshStamp(currentY);
+      lastScrollY = currentY;
+    } else {
+      lastScrollY = currentY;
+    }
+
+    document.body.classList.toggle('scrolled', currentY > 50);
+    scrollTicking = false;
+  });
 }, { passive: true });
 
 /* ═══════════════════════════════════════════════════════
