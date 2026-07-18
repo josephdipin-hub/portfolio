@@ -814,9 +814,12 @@ setInterval(applyMood, 60 * 1000);
     if (trackHeight <= 0) return;
     const scrollPercent = Math.min(1, Math.max(0, -rect.top / trackHeight));
 
-    // Fade the whole panel in over the first 12% of its own track instead
-    // of popping in abruptly.
-    const revealed = scrollPercent > 0.02;
+    // Reveal at the exact same instant the projector's own ScrollTrigger
+    // hands off (both keyed to this track's top hitting viewport top) —
+    // was `scrollPercent > 0.02`, which needed a bit of extra scroll past
+    // that point before firing, leaving a blank beat where the projector
+    // had already disappeared but the video panel was still opacity:0.
+    const revealed = rect.top <= 0;
     viewport.classList.toggle('revealed', revealed);
     if (revealed && !started) {
       fgVideo.play().catch(() => {});
