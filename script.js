@@ -1031,12 +1031,11 @@ setInterval(applyMood, 60 * 1000);
 
   window.addEventListener('resize', () => {
     if (!camera || !renderer) return;
-    // Mobile browsers fire 'resize' when the URL bar collapses/expands
-    // during scroll, changing innerHeight with no real resize happening —
-    // that was causing a tiny, unwanted "contraction" of the model mid-
-    // scroll as the camera/canvas silently recalculated. Only react to
-    // actual width changes (real resize or orientation change).
+
+    // This line ignores height changes (the URL bar) 
+    // and only runs if the actual screen width changes.
     if (window.innerWidth === lastKnownWidth) return;
+    
     lastKnownWidth = window.innerWidth;
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
