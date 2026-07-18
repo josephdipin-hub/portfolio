@@ -814,12 +814,9 @@ setInterval(applyMood, 60 * 1000);
     if (trackHeight <= 0) return;
     const scrollPercent = Math.min(1, Math.max(0, -rect.top / trackHeight));
 
-    // Reveal at the exact same instant the projector's own ScrollTrigger
-    // hands off (both keyed to this track's top hitting viewport top) —
-    // was `scrollPercent > 0.02`, which needed a bit of extra scroll past
-    // that point before firing, leaving a blank beat where the projector
-    // had already disappeared but the video panel was still opacity:0.
-    const revealed = rect.top <= 0;
+    // Fade the whole panel in over the first 12% of its own track instead
+    // of popping in abruptly.
+    const revealed = scrollPercent > 0.02;
     viewport.classList.toggle('revealed', revealed);
     if (revealed && !started) {
       fgVideo.play().catch(() => {});
@@ -862,30 +859,6 @@ setInterval(applyMood, 60 * 1000);
   // boundaries — visible as an abrupt jump/snap. This ignores that
   // specific class of resize event.
   ScrollTrigger.config({ ignoreMobileResize: true });
-
-  // ignoreMobileResize (above) stops ScrollTrigger from refreshing on every
-  // address-bar show/hide during scroll — that's what fixed the continuous
-  // mid-scroll jitter. But it also blocks the ONE refresh that's actually
-  // needed: on load, the address bar is still expanded, so trigger start/end
-  // positions get calculated against a too-small innerHeight. The bar then
-  // collapses on the first scroll gesture, innerHeight jumps to its real
-  // value, and — with auto-refresh suppressed — the stale positions cause a
-  // single visible snap as that mismatch corrects itself.
-  // Fix: do exactly one manual refresh, the first time height changes after
-  // load, then stop listening — so this never reintroduces the jitter.
-  let loadInnerHeight = window.innerHeight;
-  let hasSettledInitialViewport = false;
-  function settleInitialViewport() {
-    if (hasSettledInitialViewport) return;
-    if (window.innerHeight === loadInnerHeight) return; // no bar collapse yet
-    hasSettledInitialViewport = true;
-    window.removeEventListener('resize', settleInitialViewport);
-    window.removeEventListener('scroll', settleInitialViewport);
-    // Let the browser finish animating the bar collapse before measuring.
-    setTimeout(() => ScrollTrigger.refresh(), 150);
-  }
-  window.addEventListener('resize', settleInitialViewport, { passive: true });
-  window.addEventListener('scroll', settleInitialViewport, { passive: true });
 
   const canvas = document.getElementById('three-projector-canvas');
   if (!canvas) return;
