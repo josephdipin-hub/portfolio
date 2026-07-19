@@ -904,7 +904,7 @@ setInterval(applyMood, 60 * 1000);
     camera.lookAt(0, 0, 0);
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.35));
-    const dirLight = new THREE.DirectionalLight(0x9fffb0, 1.3);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.6);
     dirLight.position.set(5, 8, 5);
     scene.add(dirLight);
 
