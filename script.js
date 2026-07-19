@@ -5,8 +5,6 @@
    mid-scroll on half-loaded assets. A safety timeout guarantees no one
    gets stuck staring at a stalled screen if something fails to load.
 ════════════════════════════════════════════════════════ */
-let lastKnownWidth = window.innerWidth;
-let lastInnerHeightForMosh = window.innerHeight; // (You likely already have this one)
 (function () {
   const loaderEl = document.getElementById('site-loader');
   const pctEl    = document.getElementById('site-loader-pct');
@@ -236,31 +234,10 @@ initGL();
 if (glRenderer) glRenderLoop(0);
 
 window.addEventListener('scroll', () => {
-  if (scrollTicking) return;
-  scrollTicking = true;
-  requestAnimationFrame(() => {
-    const currentY = window.pageYOffset;
-
-    // Use our new "memory" variables to detect layout changes
-    const widthChanged = window.innerWidth !== lastKnownWidth;
-    lastKnownWidth = window.innerWidth; // Keep the memory updated
-    lastInnerHeightForMosh = window.innerHeight;
-
-    const heroEl = document.getElementById('hero-section');
-    const inHero = heroEl && heroEl.getBoundingClientRect().bottom > 0;
-
-    if (!inHero) {
-      container.querySelectorAll('.brush-stamp').forEach(el => el.remove());
-    } else if (!widthChanged && Math.abs(currentY - lastScrollY) > 12) {
-      createMoshStamp(currentY);
-      lastScrollY = currentY;
-    } else {
-      lastScrollY = currentY;
-    }
-
-    document.body.classList.toggle('scrolled', currentY > 50);
-    scrollTicking = false;
-  });
+  const currentY = window.pageYOffset;
+  const delta = Math.abs(currentY - glLastY);
+  glLastY = currentY;
+  if (delta > 2) triggerGLGlitch(delta * 8);
 }, { passive: true });
 
 /* ═══════════════════════════════════════════════════════
@@ -399,7 +376,7 @@ function triggerAsdf() {
   });
 }
 
-
+let lastInnerHeightForMosh = window.innerHeight;
 
 window.addEventListener('scroll', () => {
   if (scrollTicking) return;
@@ -837,9 +814,12 @@ setInterval(applyMood, 60 * 1000);
     if (trackHeight <= 0) return;
     const scrollPercent = Math.min(1, Math.max(0, -rect.top / trackHeight));
 
-    // Fade the whole panel in over the first 12% of its own track instead
-    // of popping in abruptly.
-    const revealed = scrollPercent > 0.02;
+    // Reveal at the exact same instant the projector's own ScrollTrigger
+    // hands off (both keyed to this track's top hitting viewport top) —
+    // was `scrollPercent > 0.02`, which needed a bit of extra scroll past
+    // that point before firing, leaving a blank beat where the projector
+    // had already disappeared but the video panel was still opacity:0.
+    const revealed = rect.top <= 0;
     viewport.classList.toggle('revealed', revealed);
     if (revealed && !started) {
       fgVideo.play().catch(() => {});
@@ -883,6 +863,30 @@ setInterval(applyMood, 60 * 1000);
   // specific class of resize event.
   ScrollTrigger.config({ ignoreMobileResize: true });
 
+  // ignoreMobileResize (above) stops ScrollTrigger from refreshing on every
+  // address-bar show/hide during scroll — that's what fixed the continuous
+  // mid-scroll jitter. But it also blocks the ONE refresh that's actually
+  // needed: on load, the address bar is still expanded, so trigger start/end
+  // positions get calculated against a too-small innerHeight. The bar then
+  // collapses on the first scroll gesture, innerHeight jumps to its real
+  // value, and — with auto-refresh suppressed — the stale positions cause a
+  // single visible snap as that mismatch corrects itself.
+  // Fix: do exactly one manual refresh, the first time height changes after
+  // load, then stop listening — so this never reintroduces the jitter.
+  let loadInnerHeight = window.innerHeight;
+  let hasSettledInitialViewport = false;
+  function settleInitialViewport() {
+    if (hasSettledInitialViewport) return;
+    if (window.innerHeight === loadInnerHeight) return; // no bar collapse yet
+    hasSettledInitialViewport = true;
+    window.removeEventListener('resize', settleInitialViewport);
+    window.removeEventListener('scroll', settleInitialViewport);
+    // Let the browser finish animating the bar collapse before measuring.
+    setTimeout(() => ScrollTrigger.refresh(), 150);
+  }
+  window.addEventListener('resize', settleInitialViewport, { passive: true });
+  window.addEventListener('scroll', settleInitialViewport, { passive: true });
+
   const canvas = document.getElementById('three-projector-canvas');
   if (!canvas) return;
 
@@ -904,9 +908,13 @@ setInterval(applyMood, 60 * 1000);
     camera.lookAt(0, 0, 0);
 
     scene.add(new THREE.AmbientLight(0xffffff, 0.35));
-    const dirLight = new THREE.DirectionalLight(0xffffff, 1.6);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 1.3);
     dirLight.position.set(5, 8, 5);
     scene.add(dirLight);
+
+    const rimLight = new THREE.DirectionalLight(0x42322B, 0.6);
+    rimLight.position.set(-6, 2, -3);
+    scene.add(rimLight);
 
     renderLoop(0);
 
@@ -984,7 +992,7 @@ setInterval(applyMood, 60 * 1000);
     scene.add(projectorWobbleGroup);
 
     projectorModel.rotation.set(0.3, Math.PI / 2, 0);
-    projectorModel.position.x = 0.4;
+    projectorModel.position.x = 0;
     projectorModel.position.z -= 1;
     projectorModel.visible = false;
     projectorWobbleGroup.add(projectorModel);
@@ -1048,14 +1056,15 @@ setInterval(applyMood, 60 * 1000);
     if (renderer && scene && camera) renderer.render(scene, camera);
   }
 
-
+  let lastKnownWidth = window.innerWidth;
   window.addEventListener('resize', () => {
     if (!camera || !renderer) return;
-
-    // This line ignores height changes (the URL bar) 
-    // and only runs if the actual screen width changes.
+    // Mobile browsers fire 'resize' when the URL bar collapses/expands
+    // during scroll, changing innerHeight with no real resize happening —
+    // that was causing a tiny, unwanted "contraction" of the model mid-
+    // scroll as the camera/canvas silently recalculated. Only react to
+    // actual width changes (real resize or orientation change).
     if (window.innerWidth === lastKnownWidth) return;
-    
     lastKnownWidth = window.innerWidth;
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
