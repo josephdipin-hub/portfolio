@@ -5,8 +5,6 @@
    mid-scroll on half-loaded assets. A safety timeout guarantees no one
    gets stuck staring at a stalled screen if something fails to load.
 ════════════════════════════════════════════════════════ */
-let lastKnownWidth = window.innerWidth;
-let lastInnerHeightForMosh = window.innerHeight; // (You likely already have this one)
 (function () {
   const loaderEl = document.getElementById('site-loader');
   const pctEl    = document.getElementById('site-loader-pct');
@@ -44,6 +42,12 @@ let lastInnerHeightForMosh = window.innerHeight; // (You likely already have thi
     setTimeout(() => {
       loaderEl.classList.add('loader-hidden');
       document.body.classList.remove('loading');
+      // Root fix for the first-scroll snap: this is the exact, deterministic
+      // moment scrolling first becomes possible (overflow:hidden just lifted)
+      // AND the moment all tracked assets (hero images, projector GLB, video)
+      // are guaranteed loaded — so it's the right point to force ScrollTrigger
+      // to re-measure everything, instead of guessing from a resize event.
+      if (typeof ScrollTrigger !== 'undefined') ScrollTrigger.refresh();
     }, 300);
   }
 
@@ -236,31 +240,10 @@ initGL();
 if (glRenderer) glRenderLoop(0);
 
 window.addEventListener('scroll', () => {
-  if (scrollTicking) return;
-  scrollTicking = true;
-  requestAnimationFrame(() => {
-    const currentY = window.pageYOffset;
-
-    // Use our new "memory" variables to detect layout changes
-    const widthChanged = window.innerWidth !== lastKnownWidth;
-    lastKnownWidth = window.innerWidth; // Keep the memory updated
-    lastInnerHeightForMosh = window.innerHeight;
-
-    const heroEl = document.getElementById('hero-section');
-    const inHero = heroEl && heroEl.getBoundingClientRect().bottom > 0;
-
-    if (!inHero) {
-      container.querySelectorAll('.brush-stamp').forEach(el => el.remove());
-    } else if (!widthChanged && Math.abs(currentY - lastScrollY) > 12) {
-      createMoshStamp(currentY);
-      lastScrollY = currentY;
-    } else {
-      lastScrollY = currentY;
-    }
-
-    document.body.classList.toggle('scrolled', currentY > 50);
-    scrollTicking = false;
-  });
+  const currentY = window.pageYOffset;
+  const delta = Math.abs(currentY - glLastY);
+  glLastY = currentY;
+  if (delta > 2) triggerGLGlitch(delta * 8);
 }, { passive: true });
 
 /* ═══════════════════════════════════════════════════════
@@ -399,7 +382,7 @@ function triggerAsdf() {
   });
 }
 
-
+let lastInnerHeightForMosh = window.innerHeight;
 
 window.addEventListener('scroll', () => {
   if (scrollTicking) return;
@@ -837,9 +820,12 @@ setInterval(applyMood, 60 * 1000);
     if (trackHeight <= 0) return;
     const scrollPercent = Math.min(1, Math.max(0, -rect.top / trackHeight));
 
-    // Fade the whole panel in over the first 12% of its own track instead
-    // of popping in abruptly.
-    const revealed = scrollPercent > 0.02;
+    // Reveal at the exact same instant the projector's own ScrollTrigger
+    // hands off (both keyed to this track's top hitting viewport top) —
+    // was `scrollPercent > 0.02`, which needed a bit of extra scroll past
+    // that point before firing, leaving a blank beat where the projector
+    // had already disappeared but the video panel was still opacity:0.
+    const revealed = rect.top <= 0;
     viewport.classList.toggle('revealed', revealed);
     if (revealed && !started) {
       fgVideo.play().catch(() => {});
@@ -883,12 +869,37 @@ setInterval(applyMood, 60 * 1000);
   // specific class of resize event.
   ScrollTrigger.config({ ignoreMobileResize: true });
 
+  // ignoreMobileResize (above) stops ScrollTrigger from refreshing on every
+  // address-bar show/hide during scroll — that's what fixed the continuous
+  // mid-scroll jitter. But it also blocks the ONE refresh that's actually
+  // needed: on load, the address bar is still expanded, so trigger start/end
+  // positions get calculated against a too-small innerHeight. The bar then
+  // collapses on the first scroll gesture, innerHeight jumps to its real
+  // value, and — with auto-refresh suppressed — the stale positions cause a
+  // single visible snap as that mismatch corrects itself.
+  // Fix: do exactly one manual refresh, the first time height changes after
+  // load, then stop listening — so this never reintroduces the jitter.
+  let loadInnerHeight = window.innerHeight;
+  let hasSettledInitialViewport = false;
+  function settleInitialViewport() {
+    if (hasSettledInitialViewport) return;
+    if (window.innerHeight === loadInnerHeight) return; // no bar collapse yet
+    hasSettledInitialViewport = true;
+    window.removeEventListener('resize', settleInitialViewport);
+    window.removeEventListener('scroll', settleInitialViewport);
+    // Let the browser finish animating the bar collapse before measuring.
+    setTimeout(() => ScrollTrigger.refresh(), 150);
+  }
+  window.addEventListener('resize', settleInitialViewport, { passive: true });
+  window.addEventListener('scroll', settleInitialViewport, { passive: true });
+
   const canvas = document.getElementById('three-projector-canvas');
   if (!canvas) return;
 
   let renderer, scene, camera;
   let projectorModel, leftReel, rightReel, lensMesh;
   let projectorWobbleGroup, projTime = 0;
+  let reelSpinVelocity = 0;
   let engineReady = false;
 
   function initProjectorEngine() {
@@ -907,6 +918,10 @@ setInterval(applyMood, 60 * 1000);
     const dirLight = new THREE.DirectionalLight(0xffffff, 1.3);
     dirLight.position.set(5, 8, 5);
     scene.add(dirLight);
+
+    const rimLight = new THREE.DirectionalLight(0x42322B, 0.6);
+    rimLight.position.set(-6, 2, -3);
+    scene.add(rimLight);
 
     renderLoop(0);
 
@@ -984,7 +999,7 @@ setInterval(applyMood, 60 * 1000);
     scene.add(projectorWobbleGroup);
 
     projectorModel.rotation.set(0.3, Math.PI / 2, 0);
-    projectorModel.position.x = 0.285;
+    projectorModel.position.x = 0;
     projectorModel.position.z -= 1;
     projectorModel.visible = false;
     projectorWobbleGroup.add(projectorModel);
@@ -1001,15 +1016,17 @@ setInterval(applyMood, 60 * 1000);
         start: () => "bottom top+=" + (window.innerHeight * 0.5),
         endTrigger: "#showreel-3d-track",
         end: "top top",
-        scrub: true,
+        scrub: 1.1,
         onEnter: () => { projectorModel.visible = true; },
         onEnterBack: () => { projectorModel.visible = true; },
         onLeave: () => { projectorModel.visible = false; },     // instant — no fade, hands off straight to the showreel
         onLeaveBack: () => { projectorModel.visible = false; },
         onUpdate: (self) => {
-          const spinSpeed = self.getVelocity() * 0.0007;
-          if (leftReel) leftReel.rotation.z += spinSpeed;
-          if (rightReel) rightReel.rotation.z -= spinSpeed;
+          // Scroll adds spin impulse — the reels' own momentum (decayed each
+          // frame in renderLoop) is what actually drives rotation now, so
+          // they keep coasting after you stop scrolling instead of
+          // stopping dead the instant velocity hits zero.
+          reelSpinVelocity += self.getVelocity() * 0.000002;
         }
       }
     });
@@ -1018,8 +1035,24 @@ setInterval(applyMood, 60 * 1000);
     // version accidentally targeted the same value it started at, so it
     // never visibly rotated at all). power3.inOut gives a curved ease-in/
     // ease-out feel instead of a flat, linear-feeling turn.
-    tl.to(projectorModel.rotation, { x: 0, y: 0, z: 0, duration: 2, ease: "none" })
-      .to(projectorModel.position, { z: 1.5, duration: 2, ease: "none" }, "<")
+    tl.to(projectorModel.rotation, { x: 0, y: 0, z: 0, duration: 2, ease: "power3.inOut" })
+      .to(projectorModel.position, { z: 1.5, duration: 2, ease: "power3.inOut" }, "<")
+      // Punch-in: rotation.y starts at 90° and eases (power3.inOut) toward 0°
+      // — at t≈0.55s into that 2s turn it's crossed roughly the 80-85° mark.
+      // Right there, do a fast partial zoom halfway toward the eventual lens
+      // position. power2.out = fast start, decelerating landing (a "sloped"
+      // curve, not a linear snap) — reads as a deliberate camera punch, not
+      // a glitch, even if there's still a hair of positional snap under it.
+      .to(camera.position, {
+          x: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).x * 0.5 : 0,
+          y: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).y * 0.5 : 0,
+          z: () => lensMesh ? (8 + lensMesh.getWorldPosition(new THREE.Vector3()).z + 0.15) / 2 : 5,
+          duration: 0.45,
+          ease: "power2.out",
+          onUpdate: function() {
+              if (lensMesh) camera.lookAt(lensMesh.getWorldPosition(new THREE.Vector3()));
+          }
+      }, 0.55)
       // Step 2: camera dives MUCH closer into the lens before cutting to the
       // showreel. expo.in gives a strong accelerating curve — slow at first,
       // then a fast final rush into the glass — instead of a steady linear zoom.
@@ -1028,7 +1061,7 @@ setInterval(applyMood, 60 * 1000);
           y: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).y : 0,
           z: () => lensMesh ? lensMesh.getWorldPosition(new THREE.Vector3()).z + 0.15 : 2.5,
           duration: 3,
-          ease: "none",
+          ease: "expo.in",
           onUpdate: function() {
               if (lensMesh) camera.lookAt(lensMesh.getWorldPosition(new THREE.Vector3()));
           }
@@ -1045,17 +1078,25 @@ setInterval(applyMood, 60 * 1000);
       projectorWobbleGroup.rotation.y = Math.sin(projTime * 0.12) * 0.025;
       projectorWobbleGroup.rotation.x = Math.sin(projTime * 0.07) * 0.02;
     }
+    // Flywheel coast: keep spinning the reels off their own momentum and
+    // bleed it off gradually (friction), instead of tracking scroll velocity
+    // 1:1 and stopping dead the instant scrolling does.
+    if (leftReel) leftReel.rotation.z += reelSpinVelocity;
+    if (rightReel) rightReel.rotation.z -= reelSpinVelocity;
+    reelSpinVelocity *= 0.94;
+
     if (renderer && scene && camera) renderer.render(scene, camera);
   }
 
-
+  let lastKnownWidth = window.innerWidth;
   window.addEventListener('resize', () => {
     if (!camera || !renderer) return;
-
-    // This line ignores height changes (the URL bar) 
-    // and only runs if the actual screen width changes.
+    // Mobile browsers fire 'resize' when the URL bar collapses/expands
+    // during scroll, changing innerHeight with no real resize happening —
+    // that was causing a tiny, unwanted "contraction" of the model mid-
+    // scroll as the camera/canvas silently recalculated. Only react to
+    // actual width changes (real resize or orientation change).
     if (window.innerWidth === lastKnownWidth) return;
-    
     lastKnownWidth = window.innerWidth;
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
