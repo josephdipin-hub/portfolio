@@ -985,7 +985,7 @@ setInterval(applyMood, 60 * 1000);
     scene.add(projectorWobbleGroup);
 
     projectorModel.rotation.set(0.3, Math.PI / 2, 0);
-    projectorModel.position.x = 0.285;
+    projectorModel.position.x = 0.26;
     projectorModel.position.z -= 1;
     projectorModel.visible = false;
     projectorWobbleGroup.add(projectorModel);
