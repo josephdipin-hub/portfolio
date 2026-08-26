@@ -1066,3 +1066,37 @@ setInterval(applyMood, 60 * 1000);
 
   initProjectorEngine();
 })();
+
+/* ═══════════════════════════════════════════════════════
+   GALLERY TRIGGERS — SCROLL-IN GLITCH REVEAL
+   Reuses the same "photo fills the outline text" trick as the hero,
+   plus the site's own datamosh/asdf glitch filters, so the
+   FASHION_GALLERY / PRODUCT_GALLERY bands announce themselves as
+   you scroll to them instead of blending into the page.
+════════════════════════════════════════════════════════ */
+(function () {
+  if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
+  gsap.registerPlugin(ScrollTrigger);
+
+  document.querySelectorAll('.portfolio-bg-container').forEach((container) => {
+    const img = container.querySelector('img');
+    const label = container.querySelector('.portfolio-trigger');
+    if (!img || !label) return;
+
+    const overlay = document.createElement('span');
+    overlay.className = 'trigger-clip-overlay';
+    overlay.textContent = label.textContent;
+    overlay.style.backgroundImage = `url('${img.getAttribute('src')}')`;
+    container.appendChild(overlay);
+
+    ScrollTrigger.create({
+      trigger: container,
+      start: 'top 82%',
+      end: 'bottom 18%',
+      onEnter: () => container.classList.add('in-view'),
+      onEnterBack: () => container.classList.add('in-view'),
+      onLeave: () => container.classList.remove('in-view'),
+      onLeaveBack: () => container.classList.remove('in-view'),
+    });
+  });
+})();
