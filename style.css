@@ -64,21 +64,19 @@ section.min-h-screen {
     text-transform: uppercase; 
     z-index: 30; 
     pointer-events: none;
-    color: rgba(255, 255, 255, 0.1);
-    -webkit-text-stroke: 1px rgba(255, 255, 255, 0.55);
+    color: rgba(255, 255, 255, 0.9);
     transition: all 0.4s cubic-bezier(0.19, 1, 0.22, 1);
 }
 .portfolio-bg-container:hover .portfolio-trigger,
 .portfolio-bg-container:active .portfolio-trigger { 
-    color: rgba(255, 255, 255, 0.9);
-    -webkit-text-stroke: 1px transparent;
+    color: #fff;
     text-shadow: 0 0 40px rgba(255, 255, 255, 0.3);
     transform: scale(1.02) skewX(-2deg); 
 }
 .portfolio-bg-container::after {
     content: 'TAP TO VIEW →';
     position: absolute;
-    bottom: 1.2vw;
+    bottom: 0.6vw;
     left: 50%;
     transform: translateX(-50%);
     font-family: 'Space Mono', monospace;
@@ -106,7 +104,7 @@ section.min-h-screen {
    an underline draws in beneath it, and the CTA fades up after. */
 .decode-line {
     position: absolute;
-    bottom: 3.6vw;
+    top: 0;
     left: 50%;
     transform: translateX(-50%);
     height: 1px;
