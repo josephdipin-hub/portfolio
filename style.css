@@ -92,6 +92,56 @@ section.min-h-screen {
     color: rgba(255, 255, 255, 0.7);
 }
 
+/* --- GALLERY TRIGGER: SCROLL-IN GLITCH REVEAL ---
+   Reuses the hero's "photo fills the outline text" trick, plus the
+   site's own datamosh/asdf glitch filters, so these bands announce
+   themselves as you scroll to them instead of blending into the page. */
+.trigger-clip-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', sans-serif;
+    font-size: 10vw;
+    font-weight: 900;
+    line-height: 1;
+    letter-spacing: -0.05em;
+    text-transform: uppercase;
+    background-size: 140%;
+    background-position: center;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: transparent;
+    opacity: 0;
+    pointer-events: none;
+    z-index: 31;
+}
+.portfolio-bg-container.in-view .trigger-clip-overlay {
+    animation: triggerGlitchFlicker 1.1s steps(1) both;
+}
+.portfolio-bg-container.in-view .portfolio-trigger {
+    color: rgba(255, 255, 255, 0.9);
+    -webkit-text-stroke: 1px transparent;
+    text-shadow: 0 0 40px rgba(255, 255, 255, 0.25);
+    transform: scale(1.02) skewX(-2deg);
+}
+.portfolio-bg-container.in-view::after {
+    animation: ctaPulse 1.6s ease-in-out infinite;
+}
+@keyframes triggerGlitchFlicker {
+    0%   { opacity: 0;   filter: url(#asdf-sideways-filter); transform: translateX(-6px); }
+    12%  { opacity: 0.9; filter: url(#datamosh-filter);      transform: translateX(4px);  }
+    24%  { opacity: 0.2; filter: none;                       transform: translateX(-2px); }
+    40%  { opacity: 1;   filter: none;                       transform: translateX(0);    }
+    100% { opacity: 1;   filter: none;                       transform: translateX(0);    }
+}
+@keyframes ctaPulse {
+    0%, 100% { opacity: 0.35; letter-spacing: 0.3em; }
+    50%      { opacity: 0.9;  letter-spacing: 0.4em; }
+}
+
 /* --- FASHION GALLERY --- */
 #portfolio-page {
     position: fixed; inset: 0; width: 100vw; height: 100vh;
