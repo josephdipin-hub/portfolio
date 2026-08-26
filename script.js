@@ -1092,6 +1092,14 @@ setInterval(applyMood, 60 * 1000);
     line.className = 'decode-line';
     container.appendChild(line);
 
+    function positionLine() {
+      const labelRect = label.getBoundingClientRect();
+      const containerRect = container.getBoundingClientRect();
+      line.style.top = `${labelRect.bottom - containerRect.top + 12}px`;
+    }
+    positionLine();
+    window.addEventListener('resize', positionLine, { passive: true });
+
     let running = false;
     let rafId = null;
 
