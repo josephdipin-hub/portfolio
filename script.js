@@ -1068,35 +1068,74 @@ setInterval(applyMood, 60 * 1000);
 })();
 
 /* ═══════════════════════════════════════════════════════
-   GALLERY TRIGGERS — SCROLL-IN GLITCH REVEAL
-   Reuses the same "photo fills the outline text" trick as the hero,
-   plus the site's own datamosh/asdf glitch filters, so the
-   FASHION_GALLERY / PRODUCT_GALLERY bands announce themselves as
-   you scroll to them instead of blending into the page.
+   GALLERY TRIGGERS — TERMINAL DECODE REVEAL
+   Matches the site's own monospace/terminal language (loader %,
+   // SECTION_DATA labels) instead of a new visual effect: as each
+   band scrolls into view, its label scrambles through random
+   characters and resolves letter-by-letter, an underline draws in
+   beneath it, and the CTA fades up a beat later.
 ════════════════════════════════════════════════════════ */
 (function () {
   if (typeof gsap === 'undefined' || typeof ScrollTrigger === 'undefined') return;
   gsap.registerPlugin(ScrollTrigger);
 
-  document.querySelectorAll('.portfolio-bg-container').forEach((container) => {
-    const img = container.querySelector('img');
-    const label = container.querySelector('.portfolio-trigger');
-    if (!img || !label) return;
+  const DECODE_CHARS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ_0123456789';
 
-    const overlay = document.createElement('span');
-    overlay.className = 'trigger-clip-overlay';
-    overlay.textContent = label.textContent;
-    overlay.style.backgroundImage = `url('${img.getAttribute('src')}')`;
-    container.appendChild(overlay);
+  document.querySelectorAll('.portfolio-bg-container').forEach((container) => {
+    const label = container.querySelector('.portfolio-trigger');
+    if (!label) return;
+
+    const finalText = label.textContent.trim();
+    label.textContent = finalText;
+
+    const line = document.createElement('span');
+    line.className = 'decode-line';
+    container.appendChild(line);
+
+    let running = false;
+    let rafId = null;
+
+    function decode() {
+      if (running) return;
+      running = true;
+      const start = performance.now();
+      const duration = 700;
+      function frame(now) {
+        const progress = Math.min(1, (now - start) / duration);
+        const revealCount = Math.floor(progress * finalText.length);
+        let out = '';
+        for (let i = 0; i < finalText.length; i++) {
+          if (finalText[i] === '_' || i < revealCount) {
+            out += finalText[i];
+          } else {
+            out += DECODE_CHARS[Math.floor(Math.random() * DECODE_CHARS.length)];
+          }
+        }
+        label.textContent = out;
+        if (progress < 1) {
+          rafId = requestAnimationFrame(frame);
+        } else {
+          label.textContent = finalText;
+          running = false;
+        }
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    function reset() {
+      cancelAnimationFrame(rafId);
+      running = false;
+      label.textContent = finalText;
+    }
 
     ScrollTrigger.create({
       trigger: container,
       start: 'top 82%',
       end: 'bottom 18%',
-      onEnter: () => container.classList.add('in-view'),
-      onEnterBack: () => container.classList.add('in-view'),
-      onLeave: () => container.classList.remove('in-view'),
-      onLeaveBack: () => container.classList.remove('in-view'),
+      onEnter: () => { container.classList.add('in-view'); decode(); },
+      onEnterBack: () => { container.classList.add('in-view'); decode(); },
+      onLeave: () => { container.classList.remove('in-view'); reset(); },
+      onLeaveBack: () => { container.classList.remove('in-view'); reset(); },
     });
   });
 })();
