@@ -1170,3 +1170,38 @@ setInterval(applyMood, 60 * 1000);
     });
   }
 })();
+
+/* ═══════════════════════════════════════════════════════
+   TEMP DEBUG — tap diagnostic for the gallery hood buttons.
+   Shows, right on screen, exactly which element a tap actually
+   landed on near the FASHION/PRODUCT buttons. Remove this whole
+   block once the real culprit is found.
+════════════════════════════════════════════════════════ */
+(function () {
+  const box = document.createElement('div');
+  box.style.cssText = [
+    'position:fixed', 'left:8px', 'right:8px', 'bottom:8px',
+    'z-index:999999', 'background:rgba(0,0,0,0.9)', 'color:#0f0',
+    'font-family:monospace', 'font-size:12px', 'padding:10px',
+    'border-radius:6px', 'pointer-events:none', 'white-space:pre-wrap',
+    'display:none'
+  ].join(';');
+  document.body.appendChild(box);
+
+  document.addEventListener('touchend', (e) => {
+    const t = e.changedTouches[0];
+    if (!t) return;
+    const el = document.elementFromPoint(t.clientX, t.clientY);
+    if (!el) return;
+    const wrap = document.getElementById('gallery-camera-wrap');
+    if (!wrap || !wrap.contains(el)) return; // only log taps in that section
+    const path = [];
+    let cur = el;
+    for (let i = 0; i < 4 && cur; i++) {
+      path.push(cur.id ? `#${cur.id}` : cur.className ? `.${String(cur.className).split(' ')[0]}` : cur.tagName);
+      cur = cur.parentElement;
+    }
+    box.style.display = 'block';
+    box.textContent = 'TAP HIT: ' + path.join(' < ');
+  }, { passive: true });
+})();
