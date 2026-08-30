@@ -494,7 +494,11 @@ function toggleProductGallery(open) {
   document.body.style.overflow = open ? 'hidden' : 'auto';
   if (open) {
     if (productScroll) productScroll.scrollLeft = 0;
-    initEnlargerBg();
+    // Let the browser paint the overlay first — initEnlargerBg() builds
+    // a WebGL renderer + starts loading two GLB models synchronously,
+    // which can briefly block the main thread on mobile and delay the
+    // overlay actually appearing, making a successful tap look dead.
+    requestAnimationFrame(() => requestAnimationFrame(initEnlargerBg));
     setTimeout(() => {
       if (productScroll) productScroll.classList.add('ready');
     }, 800);
