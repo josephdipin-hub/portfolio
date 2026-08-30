@@ -77,6 +77,9 @@ section.min-h-screen {
     /* A touch of softness so the ground glass reads like real focusing
        glass rather than a razor-sharp digital screen. */
     filter: blur(0.6px);
+    /* Purely decorative — must never intercept taps meant for the
+       hit-area or the headline buttons stacked on top of it. */
+    pointer-events: none;
 }
 #gallery-camera-video {
     opacity: 0;
