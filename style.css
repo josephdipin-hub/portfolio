@@ -128,7 +128,7 @@ section.min-h-screen {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 1.7em;
+    gap: 0.6em;
     padding: 0 23%;
     opacity: 0;
     pointer-events: none;
@@ -151,7 +151,14 @@ section.min-h-screen {
     color: #111;
     background: transparent;
     border: 0;
-    padding: 0.15em 0;
+    /* Real tap target: text-only padding (0.15em) was only ~28-35px
+       tall on mobile, well under the ~44px minimum reliable touch
+       target — that's why taps needed multiple tries to land. */
+    padding: 16px 24px;
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: pointer;
     transition: opacity 0.25s ease, transform 0.25s ease;
 }
