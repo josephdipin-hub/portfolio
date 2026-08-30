@@ -1121,10 +1121,33 @@ setInterval(applyMood, 60 * 1000);
 
   // Reset back to the closed "GALLERY" state once the camera has
   // fully scrolled out of view, so scrolling back to it plays fresh.
+  //
+  // Mobile browsers resize the viewport when the URL bar shows/hides
+  // (often triggered by a tap near the bottom of the screen, right
+  // where PRODUCT GALLERY sits). That resize can make the observer
+  // briefly misreport ratio 0 mid-tap, which reset the hood and
+  // silently swallowed the click. Debounce the reset and re-check
+  // real position, and ignore resets that land right after a resize.
+  let resizeGuardUntil = 0;
+  window.addEventListener('resize', () => {
+    resizeGuardUntil = Date.now() + 600;
+  }, { passive: true });
+
   if (typeof IntersectionObserver !== 'undefined') {
+    let resetTimer = null;
     const resetObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        if (entry.intersectionRatio === 0) resetCamera();
+        if (entry.intersectionRatio === 0) {
+          clearTimeout(resetTimer);
+          resetTimer = setTimeout(() => {
+            if (Date.now() < resizeGuardUntil) return;
+            const rect = stage.getBoundingClientRect();
+            const stillOut = rect.bottom <= 0 || rect.top >= window.innerHeight;
+            if (stillOut) resetCamera();
+          }, 200);
+        } else {
+          clearTimeout(resetTimer);
+        }
       });
     }, { threshold: 0 });
     resetObserver.observe(stage);
