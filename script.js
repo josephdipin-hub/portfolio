@@ -1110,12 +1110,35 @@ setInterval(applyMood, 60 * 1000);
     }
   }
 
+  function resetCamera() {
+    if (!opened) return;
+    opened = false;
+
+    video.pause();
+    try { video.currentTime = 0; } catch (e) {}
+    stage.classList.remove('is-opening', 'is-open');
+    poster.style.opacity = '1';
+    video.style.opacity = '0';
+    if (tapHint) tapHint.style.opacity = '1';
+  }
+
   video.addEventListener('ended', () => {
     stage.classList.remove('is-opening');
     stage.classList.add('is-open');
   });
 
   hitArea.addEventListener('click', openCamera);
+
+  // Reset back to the closed "GALLERY" state once the camera has
+  // fully scrolled out of view, so scrolling back to it plays fresh.
+  if (typeof IntersectionObserver !== 'undefined') {
+    const resetObserver = new IntersectionObserver((entries) => {
+      entries.forEach((entry) => {
+        if (entry.intersectionRatio === 0) resetCamera();
+      });
+    }, { threshold: 0 });
+    resetObserver.observe(stage);
+  }
 
   if (fashionBtn) {
     fashionBtn.addEventListener('click', (e) => {
